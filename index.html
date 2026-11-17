@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Análise de Saldo de Frequência</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f2ea; --paper:#fffdf8; --ink:#1f1d1a; --muted:#6b655c; --line:#e3dccf; --line2:#efe9de;
+    --accent:#1e4d5c; --accent-soft:#e3eef0;
+    --neg:#a3342b; --neg-soft:#f6e3df; --pos:#2f6b3a; --pos-soft:#e2efe2; --neu:#6b655c; --neu-soft:#ece7dd;
+    --warn:#8a5a00; --warn-soft:#f7ecd4;
+    --serif:'Source Serif 4', Georgia, serif; --sans:'IBM Plex Sans', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+  .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 64px}
+  header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:28px}
+  h1{font-family:var(--serif);font-weight:700;font-size:30px;line-height:1.15;margin:0}
+  .kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  h2{font-family:var(--serif);font-weight:600;font-size:21px;margin:0 0 4px}
+  h3{font-family:var(--serif);font-weight:600;font-size:17px;margin:0}
+  p{margin:0 0 10px}
+  .sub{color:var(--muted);margin:0 0 16px;font-size:14px}
+  section{margin:0 0 34px}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:20px}
+  button{font-family:var(--sans);font-size:14px;cursor:pointer;border-radius:4px;border:1px solid var(--ink);background:var(--paper);color:var(--ink);padding:8px 14px}
+  button.primary{background:var(--ink);color:var(--paper)}
+  button:hover{opacity:.88}
+  button:focus-visible,.drop:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* importação */
+  .drop{border:1.5px dashed #b9ae9b;border-radius:8px;background:var(--paper);padding:44px 20px;text-align:center;cursor:pointer;transition:background .15s,border-color .15s}
+  .drop.over{background:var(--accent-soft);border-color:var(--accent)}
+  .drop .big{font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:4px}
+  .drop small{color:var(--muted)}
+  .msg{margin-top:12px;padding:10px 14px;border-radius:4px;font-size:14px}
+  .msg.err{background:var(--neg-soft);color:var(--neg)}
+  .msg.info{background:var(--accent-soft);color:var(--accent)}
+  .hidden{display:none !important}
+
+  /* empregado */
+  .emp-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .emp-name{font-family:var(--serif);font-size:24px;font-weight:700;line-height:1.2}
+  .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:6px 24px;margin-top:12px;font-size:13.5px}
+  .meta div span{color:var(--muted);display:block;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase}
+  .picker{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  select{font-family:var(--sans);font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:4px;background:var(--paper);max-width:100%}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+
+  /* números-chave */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:16px 18px;border-top:4px solid var(--neu)}
+  .kpi.main{border-top-color:var(--ink)}
+  .kpi .lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .kpi .val{font-family:var(--serif);font-size:32px;font-weight:700;line-height:1.15;margin:4px 0}
+  .kpi .note{font-size:13px;color:var(--muted)}
+  .neg{color:var(--neg)} .pos{color:var(--pos)}
+
+  /* ponte */
+  .bridge{width:100%;border-collapse:collapse;font-size:14.5px}
+  .bridge td{padding:10px 8px;border-bottom:1px solid var(--line2);vertical-align:top}
+  .bridge td.v{text-align:right;font-weight:600;width:130px}
+  .bridge tr.total td{border-top:2px solid var(--ink);border-bottom:none;font-weight:700;font-size:16px}
+  .bridge .op{color:var(--muted);width:24px;text-align:center;font-weight:600}
+  .bridge small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+  .explica{background:var(--accent-soft);border-left:3px solid var(--accent);padding:14px 16px;border-radius:0 4px 4px 0;margin-top:16px;font-size:14.5px}
+  .explica p:last-child{margin:0}
+
+  /* grupos */
+  .grupos{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+  .grupo table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+  .grupo td{padding:5px 0;border-bottom:1px solid var(--line2)}
+  .grupo td:last-child{text-align:right}
+  .grupo tr:last-child td{border-bottom:none;font-weight:700}
+  .grupo .desc{font-size:13px;color:var(--muted);margin-top:10px}
+
+  /* semanas */
+  .semana{margin-bottom:16px;padding:0;overflow:hidden}
+  .semana-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--line);background:#fbf8f1}
+  .badges{display:flex;gap:6px;flex-wrap:wrap}
+  .badge{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .b-def{background:var(--neg-soft);color:var(--neg)} .b-sup{background:var(--pos-soft);color:var(--pos)} .b-ade{background:var(--neu-soft);color:var(--neu)} .b-afa{background:var(--warn-soft);color:var(--warn)}
+  .tscroll{overflow-x:auto}
+  table.dias{width:100%;border-collapse:collapse;font-size:13.5px;min-width:720px}
+  table.dias th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  table.dias td{padding:6px 10px;border-bottom:1px solid var(--line2)}
+  table.dias th.r, table.dias td.r{text-align:right}
+  table.dias tr.fds td{color:#a29a8d}
+  table.dias tr.afa td{background:#fdf8ec}
+  table.dias tr.fer td{background:#f1f5f6}
+  table.dias tfoot td{font-weight:700;border-top:1.5px solid var(--ink);border-bottom:none;background:#fbf8f1}
+  .obs{padding:9px 18px;font-size:13px;color:var(--muted);border-top:1px solid var(--line2)}
+  .tag{font-size:11px;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:3px;margin-left:4px;white-space:nowrap}
+
+  /* conferência */
+  .conf{width:100%;border-collapse:collapse;font-size:14px}
+  .conf th,.conf td{padding:7px 8px;border-bottom:1px solid var(--line2);text-align:right}
+  .conf th:first-child,.conf td:first-child{text-align:left}
+  .conf th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .ok{color:var(--pos);font-weight:600} .nok{color:var(--neg);font-weight:600}
+  details{margin-top:14px;font-size:14px}
+  details summary{cursor:pointer;font-weight:600}
+  details ul{margin:8px 0 0;padding-left:20px;color:var(--muted)}
+  details li{margin-bottom:4px}
+  footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:4px;font-size:14px;z-index:10}
+  textarea.copybox{width:100%;height:220px;font-family:var(--sans);font-size:13px;margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:4px;background:#fff}
+  @media (max-width:600px){ h1{font-size:24px} .kpi .val{font-size:27px} .bridge td.v{width:96px} }
+  @media print{ body{background:#fff} .noprint{display:none !important} .card,.kpi{break-inside:avoid} .semana{break-inside:avoid} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="kicker">HU Brasil · Gestão da Frequência</div>
+      <h1>Análise de Saldo de Frequência</h1>
+    </div>
+    <div class="toolbar noprint hidden" id="toolbar">
+      <button id="btnCopiar" class="primary">Copiar resumo para o empregado</button>
+      <button id="btnNovo">Importar outro relatório</button>
+    </div>
+  </header>
+
+  <section id="secImport" class="noprint">
+    <p class="sub">Importe o <strong>Relatório de Frequência</strong> do MentorH em PDF. O sistema refaz a conferência semana a semana e mostra como o saldo do mês é formado, e por que ele não é a soma da coluna <em>Saldo Diário</em>.</p>
+    <label class="drop" id="drop" tabindex="0">
+      <div class="big">Arraste o PDF aqui ou clique para escolher</div>
+      <small>Aceita um ou vários relatórios (inclusive PDFs com mais de um empregado). O arquivo é lido no próprio navegador e não é enviado a lugar nenhum.</small>
+      <input type="file" id="file" accept="application/pdf,.pdf" multiple hidden>
+    </label>
+    <div id="msg" class="msg hidden"></div>
+  </section>
+
+  <div id="resultado" class="hidden">
+    <div class="picker noprint hidden" id="picker">
+      <label for="selEmp"><strong>Relatório:</strong></label>
+      <select id="selEmp"></select>
+    </div>
+
+    <section class="card" id="secEmp"></section>
+    <section id="secKpi"></section>
+    <section id="secPonte"></section>
+    <section id="secGrupos"></section>
+    <section id="secSemanas"></section>
+    <section id="secConf"></section>
+  </div>
+
+  <footer>Os cálculos usam as regras do próprio relatório: CH contratual diária nos dias úteis da jornada (feriados não contam), semanas de domingo a sábado e Horas Consideradas (HC) como CH executada.</footer>
+</div>
+<div id="toast" class="toast hidden" role="status"></div>
+
+<script type="module">
+import { parseReport, analisar, fmt, DIAS_NOME, MESES } from './parser.js';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sgn = (m) => `<span class="num ${m < 0 ? 'neg' : m > 0 ? 'pos' : ''}">${fmt(m, true)}</span>`;
+const hh = m => `<span class="num">${fmt(m)}</span>`;
+const dd = n => String(n).padStart(2, '0');
+const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
+const plural = (n, s, p) => n === 1 ? s : p;
+
+let pdfjs = null;
+async function loadPdfjs() {
+  if (pdfjs) return pdfjs;
+  pdfjs = await import('./pdf.min.js');
+  try { await import('./pdf.worker.min.js'); } catch (e) { pdfjs.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js'; }
+  if (!pdfjs.GlobalWorkerOptions.workerSrc) pdfjs.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
+  return pdfjs;
+}
+
+async function lerPdf(file) {
+  const lib = await loadPdfjs();
+  const data = new Uint8Array(await file.arrayBuffer());
+  const doc = await lib.getDocument({ data, isEvalSupported: false, verbosity: 0 }).promise;
+  const pages = [];
+  for (let p = 1; p <= doc.numPages; p++) {
+    const pg = await doc.getPage(p);
+    const tc = await pg.getTextContent();
+    pages.push(tc.items.map(i => ({ str: i.str, x: i.transform[4], y: i.transform[5] })));
+  }
+  return pages;
+}
+
+let relatorios = [];
+
+function msg(text, tipo = 'info') { const m = $('msg'); m.className = 'msg ' + tipo; m.innerHTML = text; m.classList.toggle('hidden', !text); }
+
+async function importar(files) {
+  files = [...files].filter(f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf');
+  if (!files.length) { msg('Escolha um arquivo PDF do Relatório de Frequência.', 'err'); return; }
+  msg('Lendo ' + files.length + ' ' + plural(files.length, 'arquivo', 'arquivos') + '…');
+  const novos = [], falhas = [];
+  for (const f of files) {
+    try {
+      const emps = parseReport(await lerPdf(f));
+      const validos = emps.filter(e => e.mes != null && e.ano && Object.keys(e.dias).length);
+      if (!validos.length) falhas.push(f.name);
+      validos.forEach(e => novos.push({ arquivo: f.name, emp: e }));
+    } catch (err) { console.error(err); falhas.push(f.name); }
+  }
+  if (!novos.length) { msg('Não encontrei um Relatório de Frequência do MentorH em: ' + falhas.map(esc).join(', ') + '. Confira se é o relatório “Ponto Eletrônico – Relatório de Frequência” exportado em PDF.', 'err'); return; }
+  relatorios = novos;
+  msg(falhas.length ? 'Alguns arquivos não foram reconhecidos: ' + falhas.map(esc).join(', ') : '', falhas.length ? 'err' : 'info');
+  const sel = $('selEmp');
+  sel.innerHTML = relatorios.map((r, i) => `<option value="${i}">${esc(r.emp.nome)} — ${cap(MESES[r.emp.mes])}/${r.emp.ano}</option>`).join('');
+  $('picker').classList.toggle('hidden', relatorios.length < 2);
+  $('secImport').classList.add('hidden');
+  $('resultado').classList.remove('hidden');
+  $('toolbar').classList.remove('hidden');
+  render(0);
+}
+
+let atual = null;
+function render(i) {
+  const A = analisar(relatorios[i].emp);
+  atual = A;
+  const { emp, M, semanas, grupos, conf } = A;
+  const mesNome = cap(MESES[emp.mes]);
+  const mm = dd(emp.mes + 1);
+
+  // ---- Empregado
+  $('secEmp').innerHTML = `
+    <div class="emp-head">
+      <div><div class="kicker">${mesNome} / ${emp.ano}</div><div class="emp-name">${esc(emp.nome)}</div></div>
+      <div class="num" style="color:var(--muted)">Matrícula <strong style="color:var(--ink)">${esc(emp.matricula)}</strong></div>
+    </div>
+    <div class="meta">
+      <div><span>Cargo</span>${esc(emp.cargo)}</div>
+      <div><span>Lotação de exercício</span>${esc(emp.lotacao)}</div>
+      <div><span>Unidade</span>${esc(emp.unidade)}</div>
+      <div><span>Jornada padrão</span>${esc(emp.jornadaPadrao)}</div>
+      <div><span>CH contratual</span>${fmt(A.semanal)} semanais · ${fmt(A.diaria)} diárias (${A.diasContrat.map(d => DIAS_NOME[d].slice(0,3).toLowerCase()).join(', ')})</div>
+      ${emp.homologada ? `<div><span>Situação</span>${esc(emp.homologada.replace(/\.$/, ''))}</div>` : ''}
+    </div>`;
+
+  // ---- KPIs
+  const trab = grupos.find(g => g.nome === 'Trabalho efetivo');
+  const afs = grupos.filter(g => g.nome !== 'Trabalho efetivo' && g.saldo !== 0);
+  $('secKpi').innerHTML = `
+    <h2>Resumo do mês</h2>
+    <p class="sub">O número que vale é o saldo do mês: CH executada menos CH contratual.</p>
+    <div class="kpis">
+      <div class="kpi main"><div class="lbl">Saldo do mês</div><div class="val">${sgn(M.saldo)}</div>
+        <div class="note">CH executada ${fmt(M.hc)} − CH contratual ${fmt(M.contratual)}</div></div>
+      <div class="kpi"><div class="lbl">Soma da coluna Saldo Diário</div><div class="val">${sgn(M.saldoDiario)}</div>
+        <div class="note">${M.saldoDiario === M.saldo ? 'Igual ao saldo do mês só por coincidência (veja abaixo)' : 'Não é o saldo do mês (veja abaixo)'}</div></div>
+      ${trab && afs.length ? `<div class="kpi"><div class="lbl">Saldo só dos dias trabalhados</div><div class="val">${sgn(trab.saldo)}</div>
+        <div class="note">Sem ${afs.map(g => g.nome.toLowerCase()).join(', ')}: ${fmt(trab.hc)} considerados × ${fmt(trab.contratual)} contratuais</div></div>` : ''}
+      ${afs.map(g => `<div class="kpi"><div class="lbl">Efeito de ${esc(g.nome.toLowerCase())}</div><div class="val">${sgn(g.saldo)}</div>
+        <div class="note">${fmt(g.hc)} creditados × ${fmt(g.contratual)} contratuais no período</div></div>`).join('')}
+    </div>`;
+
+  // ---- Ponte
+  const linhas = [];
+  linhas.push({ op: '', lbl: 'Soma da coluna Saldo Diário', d: 'Diferença, dia a dia, entre o que foi registrado e a jornada escalada daquele dia.', v: M.saldoDiario });
+  linhas.push({ op: M.difEscala < 0 ? '−' : '+', lbl: 'Diferença entre a escala e a CH contratual', d: `A escala do mês somou ${fmt(M.escalada)} e a CH contratual é ${fmt(M.contratual)}. Essa diferença não aparece no Saldo Diário, mas entra no saldo.`, v: M.difEscala });
+  if (M.creditoFeriado) linhas.push({ op: '+', lbl: 'Feriados creditados sem escala', d: `Feriado em dia sem plantão: o relatório credita a CH diária (${fmt(A.diaria)}) nas Horas Consideradas.`, v: M.creditoFeriado });
+  if (M.creditoOutros) linhas.push({ op: '+', lbl: 'Outros créditos em dias sem escala', d: 'Abonos ou ocorrências com horas consideradas em dias sem código de jornada.', v: M.creditoOutros });
+  if (M.outros) linhas.push({ op: M.outros < 0 ? '−' : '+', lbl: 'Outros ajustes do relatório', d: 'Diferença entre as Horas Consideradas e a soma de escala + saldo diário (ex.: dias escalados sem saldo diário lançado).', v: M.outros });
+
+  const frases = [];
+  frases.push(`<p>Somando a coluna <strong>Saldo Diário</strong>, o resultado é <strong>${fmt(M.saldoDiario, true)}</strong>. Essa coluna só compara o ponto com a <strong>jornada escalada</strong> de cada dia. O saldo oficial compara outra coisa: tudo o que foi considerado no mês (<strong>${fmt(M.hc)}</strong>) com a <strong>CH contratual</strong> do mês (<strong>${fmt(M.contratual)}</strong>), e dá <strong>${fmt(M.saldo, true)}</strong>.</p>`);
+  if (M.difEscala) frases.push(`<p>A escala do mês ficou <strong>${fmt(Math.abs(M.difEscala))} ${M.difEscala < 0 ? 'abaixo' : 'acima'}</strong> da CH contratual. Mesmo sem nenhum atraso ou hora a mais, isso já ${M.difEscala < 0 ? 'tira' : 'acrescenta'} ${fmt(Math.abs(M.difEscala))} do saldo.</p>`);
+  if (M.creditoFeriado) frases.push(`<p>O feriado sem plantão foi creditado com <strong>${fmt(M.creditoFeriado)}</strong>, que soma ao saldo.</p>`);
+  if (M.saldoDiario === M.saldo && (M.difEscala || M.credito || M.outros)) frases.push(`<p><strong>Neste mês os dois valores coincidem por acaso:</strong> os ajustes acima se compensaram. Em outro mês, com outra escala, eles podem ser bem diferentes.</p>`);
+
+  $('secPonte').innerHTML = `
+    <h2>Por que o saldo não é a soma do Saldo Diário</h2>
+    <p class="sub">Do valor que o empregado costuma somar até o saldo oficial do relatório.</p>
+    <div class="card">
+      <table class="bridge">
+        ${linhas.map(l => `<tr><td class="op">${l.op}</td><td>${l.lbl}<small>${l.d}</small></td><td class="v">${sgn(l.v)}</td></tr>`).join('')}
+        <tr class="total"><td class="op">=</td><td>Saldo do mês (CH executada − CH contratual)</td><td class="v">${sgn(M.saldo)}</td></tr>
+      </table>
+      <div class="explica">${frases.join('')}</div>
+    </div>`;
+
+  // ---- Grupos
+  if (grupos.length > 1) {
+    const periodo = g => { const ds = g.dias; return ds.length ? `${dd(Math.min(...ds))} a ${dd(Math.max(...ds))}/${mm}` : ''; };
+    $('secGrupos').innerHTML = `
+      <h2>Trabalho efetivo × afastamentos</h2>
+      <p class="sub">Separa o resultado do que foi trabalhado do efeito dos dias de afastamento, em que o sistema credita a escala prevista.</p>
+      <div class="grupos">
+        ${grupos.map(g => {
+          const ehTrab = g.nome === 'Trabalho efetivo';
+          const chJ = g.nEscala ? Math.round(g.escalada / g.nEscala) : 0;
+          const desc = ehTrab
+            ? `Dias com registro de ponto, folgas e feriados. É o saldo que reflete o que a pessoa efetivamente cumpriu.`
+            : `Período: ${periodo(g)}. Foram creditados ${g.nEscala} ${plural(g.nEscala, 'plantão escalado', 'plantões escalados')}${chJ ? ' de ' + fmt(chJ) : ''} (${fmt(g.hc)}), enquanto a CH contratual desses dias é ${g.nContrat} ${plural(g.nContrat, 'dia', 'dias')} × ${fmt(A.diaria)} = ${fmt(g.contratual)}. ${g.saldo ? `A diferença de ${fmt(g.saldo, true)} vem da escala, não de horas trabalhadas.` : ''}`;
+          return `<div class="card grupo">
+            <h3>${esc(g.nome)}</h3>
+            <table>
+              <tr><td>CH contratual</td><td>${hh(g.contratual)}</td></tr>
+              <tr><td>CH considerada</td><td>${hh(g.hc)}</td></tr>
+              <tr><td>Saldo</td><td>${sgn(g.saldo)}</td></tr>
+            </table>
+            <div class="desc">${desc}</div>
+          </div>`;
+        }).join('')}
+        <div class="card grupo">
+          <h3>Mês completo</h3>
+          <table>
+            <tr><td>CH contratual</td><td>${hh(M.contratual)}</td></tr>
+            <tr><td>CH considerada</td><td>${hh(M.hc)}</td></tr>
+            <tr><td>Saldo</td><td>${sgn(M.saldo)}</td></tr>
+          </table>
+          <div class="desc">${grupos.map(g => `${g.nome} ${fmt(g.saldo, true)}`).join(' · ')} = ${fmt(M.saldo, true)}</div>
+        </div>
+      </div>`;
+  } else $('secGrupos').innerHTML = '';
+
+  // ---- Semanas
+  const badge = (s, pre) => `<span class="badge ${s === 'Deficitária' ? 'b-def' : s === 'Superavitária' ? 'b-sup' : 'b-ade'}">${pre}${s}</span>`;
+  $('secSemanas').innerHTML = `
+    <h2>Análise semanal</h2>
+    <p class="sub">Semanas de domingo a sábado. A escala é classificada comparando a CH escalada (mais créditos de feriado) com a CH contratual da semana.</p>
+    ${semanas.map(w => {
+      const obs = [];
+      if (w.difEscala) obs.push(`Escala ${fmt(Math.abs(w.difEscala))} ${w.difEscala < 0 ? 'abaixo' : 'acima'} da CH contratual da semana.`);
+      w.dias.filter(d => d.feriado).forEach(d => obs.push(`Feriado em ${dd(d.dia)}/${mm}: não conta na CH contratual${d.credito ? ` e foi creditado com ${fmt(d.credito)}` : ''}.`));
+      if (w.afast.length) obs.push(`Semana com ${w.afast.join(', ').toLowerCase()}.`);
+      return `<div class="card semana">
+        <div class="semana-h">
+          <h3>Semana ${w.n} <span style="font-family:var(--sans);font-weight:400;font-size:14px;color:var(--muted)">· ${w.periodo}/${mm}</span></h3>
+          <div class="badges">${badge(w.statusEscala, 'Escala ')}${w.afast.map(a => `<span class="badge b-afa">${esc(a)}</span>`).join('')}<span class="badge b-ade">Saldo da semana ${fmt(w.saldo, true)}</span></div>
+        </div>
+        <div class="tscroll"><table class="dias">
+          <thead><tr><th>Data</th><th>Dia</th><th class="r">CH contratual</th><th class="r">CH escalada</th><th>Registros</th><th class="r">CH considerada</th><th class="r">Saldo diário</th><th>Ocorrência</th></tr></thead>
+          <tbody>${w.dias.map(d => {
+            const cls = d.feriado ? 'fer' : d.afast ? 'afa' : (!d.codigo && !d.hc && !d.registros) ? 'fds' : '';
+            const oc = [/^ferias$/i.test(d.ocorrencia) ? 'Férias' : d.ocorrencia, d.obs].filter(Boolean).join(' — ');
+            return `<tr class="${cls}">
+              <td class="num">${dd(d.dia)}/${mm}</td>
+              <td>${DIAS_NOME[d.dow]}</td>
+              <td class="r num">${d.contratual ? fmt(d.contratual) : d.feriado ? 'feriado' : ''}</td>
+              <td class="r num">${d.escalada ? fmt(d.escalada) : ''}</td>
+              <td class="num">${esc(d.registros || (d.regTexto && !/^(s[áa]bado|domingo)$/i.test(d.regTexto) ? d.regTexto : ''))}</td>
+              <td class="r num">${d.hc ? fmt(d.hc) : ''}${d.credito ? '<span class="tag">crédito</span>' : ''}</td>
+              <td class="r">${d.saldo != null ? sgn(d.saldo) : ''}</td>
+              <td>${esc(cap(oc))}</td></tr>`;
+          }).join('')}</tbody>
+          <tfoot><tr><td colspan="2">CH semanal</td><td class="r num">${fmt(w.contratual)}</td><td class="r num">${fmt(w.escalada)}${w.credito ? ` <span class="tag">+${fmt(w.credito)}</span>` : ''}</td><td></td><td class="r num">${fmt(w.hc)}</td><td class="r">${sgn(w.saldoDiario)}</td><td>${sgn(w.saldo)} na semana</td></tr></tfoot>
+        </table></div>
+        ${obs.length ? `<div class="obs"><strong>Observação:</strong> ${obs.join(' ')}</div>` : ''}
+      </div>`;
+    }).join('')}`;
+
+  // ---- Conferência
+  const allOk = conf.length && conf.every(c => c.ok);
+  $('secConf').innerHTML = `
+    <h2>Conferência com o relatório</h2>
+    <p class="sub">${allOk ? 'Os totais recalculados batem com os totais impressos no relatório.' : conf.length ? 'Há diferença entre o recalculado e o relatório: confira as ocorrências do mês (pode haver regra específica, como ponto facultativo ou recesso).' : 'O relatório não trouxe o quadro de totais para comparar.'}</p>
+    <div class="card">
+      <table class="conf">
+        <thead><tr><th>Item</th><th>Recalculado</th><th>No relatório</th><th></th></tr></thead>
+        <tbody>${conf.map(c => `<tr><td>${c.item}</td><td class="num">${fmt(c.calc, c.item === 'Saldo do mês')}</td><td class="num">${fmt(c.rel, c.item === 'Saldo do mês')}</td><td class="${c.ok ? 'ok' : 'nok'}">${c.ok ? '✓ confere' : '✗ ' + fmt(c.calc - c.rel, true)}</td></tr>`).join('')}</tbody>
+      </table>
+      <details>
+        <summary>Como o cálculo é feito</summary>
+        <ul>
+          <li><strong>CH contratual diária</strong> = CH semanal ÷ dias da jornada (${fmt(A.semanal)} ÷ ${A.diasContrat.length} = ${fmt(A.diaria)}), lançada de ${DIAS_NOME[A.diasContrat[0]].toLowerCase()} a ${DIAS_NOME[A.diasContrat[A.diasContrat.length - 1]].toLowerCase()}. Feriados não entram.</li>
+          <li><strong>CH escalada</strong> = carga da jornada (${Object.values(emp.jornadas).map(j => j.codigo + ': ' + fmt(j.ch)).join(', ') || '—'}) em cada dia com código de jornada, inclusive nos afastamentos.</li>
+          <li><strong>CH considerada</strong> = coluna Horas Consideradas (HC) do relatório; a soma dela é a CH executada.</li>
+          <li><strong>Saldo do mês</strong> = CH executada − CH contratual do mês.</li>
+          <li><strong>Trabalho efetivo</strong> exclui os dias de afastamento (férias, licenças, atestados etc.), em que o sistema credita a escala prevista.</li>
+        </ul>
+      </details>
+    </div>`;
+}
+
+function resumoTexto() {
+  const A = atual; if (!A) return '';
+  const { emp, M, grupos, semanas } = A;
+  const trab = grupos.find(g => g.nome === 'Trabalho efetivo');
+  const afs = grupos.filter(g => g.nome !== 'Trabalho efetivo');
+  const L = [];
+  L.push(`Análise de saldo – ${cap(MESES[emp.mes])}/${emp.ano}`);
+  L.push(`${emp.nome} – matrícula ${emp.matricula}`);
+  L.push('');
+  L.push(`Saldo do mês: ${fmt(M.saldo, true)} (CH executada ${fmt(M.hc)} − CH contratual ${fmt(M.contratual)}).`);
+  L.push(`Soma da coluna Saldo Diário: ${fmt(M.saldoDiario, true)}.`);
+  L.push('');
+  L.push('Por que são valores diferentes:');
+  L.push(`• O Saldo Diário compara o ponto com a jornada escalada de cada dia; o saldo do mês compara as horas consideradas com a CH contratual.`);
+  if (M.difEscala) L.push(`• A escala do mês somou ${fmt(M.escalada)}, ${fmt(Math.abs(M.difEscala))} ${M.difEscala < 0 ? 'abaixo' : 'acima'} da CH contratual (${fmt(M.contratual)}).`);
+  if (M.creditoFeriado) L.push(`• Feriado sem plantão creditado com ${fmt(M.creditoFeriado)}.`);
+  if (M.saldoDiario === M.saldo && (M.difEscala || M.credito)) L.push(`• Neste mês os dois valores coincidem por acaso, porque os ajustes se compensaram.`);
+  if (afs.length && trab) {
+    L.push('');
+    L.push(`Considerando só os dias trabalhados: ${fmt(trab.hc)} considerados × ${fmt(trab.contratual)} contratuais = ${fmt(trab.saldo, true)}.`);
+    afs.forEach(g => L.push(`${g.nome}: ${fmt(g.hc)} creditados × ${fmt(g.contratual)} contratuais = ${fmt(g.saldo, true)} (efeito da escala no período, não de horas trabalhadas).`));
+  }
+  L.push('');
+  L.push('Semanas:');
+  semanas.forEach(w => L.push(`• Semana ${w.n} (${w.periodo}): contratual ${fmt(w.contratual)}, escalada ${fmt(w.escalada + w.credito)}, considerada ${fmt(w.hc)} – escala ${w.statusEscala.toLowerCase()}, saldo ${fmt(w.saldo, true)}${w.afast.length ? ' – ' + w.afast.join(', ').toLowerCase() : ''}.`));
+  return L.join('\n');
+}
+
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.remove('hidden'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.add('hidden'), 2600); }
+
+$('btnCopiar').addEventListener('click', async () => {
+  const txt = resumoTexto();
+  try { await navigator.clipboard.writeText(txt); toast('Resumo copiado. Cole no e-mail ou no SEI.'); }
+  catch {
+    let box = document.querySelector('.copybox');
+    if (!box) { box = document.createElement('textarea'); box.className = 'copybox'; $('secKpi').appendChild(box); }
+    box.value = txt; box.focus(); box.select(); toast('Selecione o texto abaixo dos números e copie (Ctrl+C).');
+  }
+});
+$('btnNovo').addEventListener('click', () => {
+  $('resultado').classList.add('hidden'); $('toolbar').classList.add('hidden');
+  $('secImport').classList.remove('hidden'); $('file').value = ''; msg('');
+  window.scrollTo(0, 0);
+});
+$('selEmp').addEventListener('change', e => render(+e.target.value));
+
+const drop = $('drop'), inp = $('file');
+inp.addEventListener('change', () => importar(inp.files));
+drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inp.click(); } });
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => importar(e.dataTransfer.files));
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => e.preventDefault());
+</script>
+</body>
+</html>
