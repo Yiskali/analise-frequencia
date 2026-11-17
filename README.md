@@ -17,6 +17,12 @@ O PDF é lido no próprio navegador; nenhum dado é enviado.
 - **Semanas:** domingo a sábado, com CH contratual, escalada e considerada, classificação da escala (deficitária, adequada, superavitária) e saldo da semana.
 - **Dias do mês:** calendário ou tabela com registros, horas consideradas, saldo diário, feriados, afastamentos e acertos manuais.
 - **Conferência:** compara os totais recalculados com os impressos no PDF.
+- **Pontos de atenção:** aponta o que precisa de ajuste ou verificação:
+  - batida ímpar (falta uma entrada ou saída) e o saldo do dia que ela distorce;
+  - horas consideradas incompatíveis com os registros (com o saldo corrigido estimado);
+  - registros em duplicidade, dia escalado sem registro e registro fora da jornada;
+  - escala nas férias diferente da CH contratual do período (na 12x36, diferença admitida até 12h);
+  - dias homologados com ressalva.
 
 ## Regras de cálculo
 
@@ -24,6 +30,10 @@ O PDF é lido no próprio navegador; nenhum dado é enviado.
 - CH escalada = carga da jornada em cada dia com código de jornada.
 - CH considerada = coluna Horas Consideradas (HC); a soma é a CH executada.
 - Saldo do mês = CH executada − CH contratual.
+- Extensão de jornada remunerada: o saldo do dia é desconsiderado e vai para pagamento.
+- Plantão de sobreaviso e jornada extraordinária remunerada: todo o tempo trabalhado no dia vai para pagamento.
+- Essas ocorrências não são tratadas como inconsistência.
+- Horas consideradas recalculadas a partir dos registros: soma dos pares entrada/saída, com adicional noturno (22h às 5h) e desconto do intervalo pré-assinalado fora da jornada; tolerância de 10 minutos.
 
 ## Arquivos
 

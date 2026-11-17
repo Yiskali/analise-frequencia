@@ -142,7 +142,7 @@
   .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
   .legend span{display:inline-flex;align-items:center;gap:6px}
   .legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
-  .weeks{display:flex;flex-wrap:wrap;gap:14px;position:relative}
+  .weeks{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;position:relative}
   .week,.drop,.wbar{position:relative}
   .week{flex:1 1 190px;min-width:0;padding:16px;display:flex;flex-direction:column;gap:12px}
   .week.alert{border:1.5px solid var(--orange)}
@@ -211,6 +211,38 @@
   .conf li{margin-bottom:4px}
   footer.foot{font-size:13px;color:var(--muted);padding-bottom:40px}
 
+
+  /* resumo narrativo, alertas e pontos de atenção */
+  .alerta{display:flex;gap:10px;align-items:flex-start;background:var(--red-bg);color:var(--red-t);border-radius:var(--r-ctl);padding:12px 14px;font-size:14px;text-decoration:none}
+  .alerta:hover{color:var(--red-t);filter:brightness(.98)}
+  .alerta svg{flex:none;margin-top:2px}
+  .narr{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+  .concl{font-size:14px;font-weight:600;background:var(--bg);border-radius:var(--r-ctl);padding:10px 12px}
+  .casc-list{display:none;list-style:none;margin:0;padding:0}
+  .casc-list li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line2);font-size:14px}
+  .casc-list li.fim{border-top:1.5px solid var(--text);border-bottom:none;font-weight:700}
+  .casc-list li div b{display:block;font-weight:600}
+  .casc-list li div span{font-size:12px;color:var(--muted)}
+  .casc-list li > .n{font-weight:800}
+  .atencao{padding:24px;display:flex;flex-direction:column;gap:16px}
+  .issues{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+  .issues li{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border:1px solid var(--line2);border-radius:var(--r-ctl)}
+  .lvl{flex:none;min-width:84px;text-align:center;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px}
+  .lvl.aj{background:var(--red-bg);color:var(--red-t)} .lvl.ver{background:var(--yellow-bg);color:var(--yellow-t)} .lvl.inf{background:var(--soft);color:var(--neutral-t)}
+  .i-body{min-width:0;flex:1}
+  .i-title{font-weight:700;font-size:14px}
+  .i-body p{font-size:14px;color:var(--muted);margin-top:2px}
+  .i-imp{color:var(--red-t) !important}
+  .w-ico{display:inline-flex;align-items:center;margin-right:4px;vertical-align:-1px}
+  .w-ico.aj{color:var(--red-t)} .w-ico.ver{color:var(--yellow-t)}
+  .cell.pag{background:var(--surface);border:1.5px dashed var(--navy)}
+  .cell.pag .c-tipo{color:var(--navy)}
+  .cell.issue-aj{border:2px solid var(--red)}
+  .cell.issue-ver{box-shadow:inset 0 0 0 2px var(--yellow)}
+  table.t tr.issue th{color:var(--red-t)}
+  .chip.tiny{min-height:18px;padding:0 6px;font-size:11px}
+  .chip.danger{background:var(--red-bg);color:var(--red-t)}
+
   /* painel de resumo */
   .overlay{position:fixed;inset:0;background:rgba(23,35,64,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
   .panel{background:var(--surface);border-radius:var(--r-card);width:min(680px,100%);max-height:calc(100vh - 40px);display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(23,35,64,.25)}
@@ -238,11 +270,12 @@
     .main{gap:20px;padding-top:16px;padding-bottom:110px}
     .hero,.cascade,.dias{padding:18px}
     .hero .big{font-size:46px}
-    .chart{height:210px;gap:8px;padding:0}
-    .chart-labels{gap:8px;padding:0}
-    .chart-labels div{font-size:11.5px}
-    .chart .val{font-size:13px}
-    .weeks{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scroll-snap-type:x mandatory}
+    .chart,.chart-labels{display:none !important}
+    .casc-list{display:block}
+    .atencao{padding:18px}
+    .issues li{flex-direction:column;gap:8px}
+    .cell.quiet.keep{display:grid}
+    .weeks{display:flex;flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scroll-snap-type:x mandatory}
     .week{flex:0 0 170px;scroll-snap-align:start}
     .cal{display:flex;flex-direction:column;gap:6px}
     .cal .dow,.cell.blank,.cell.quiet{display:none}
@@ -340,6 +373,7 @@
   <nav class="tabs" aria-label="Seções da análise">
     <div class="wrap" id="tabs">
       <a href="#resumo" class="on">Resumo</a>
+      <a href="#atencao">Pontos de atenção</a>
       <a href="#semanas">Semanas</a>
       <a href="#dias">Dias do mês</a>
       <a href="#conferencia">Conferência</a>
@@ -347,6 +381,7 @@
   </nav>
   <main class="wrap main">
     <section id="resumo" class="resumo"></section>
+    <section id="atencao" class="card atencao"></section>
     <section id="semanas"></section>
     <section id="dias" class="card dias"></section>
     <section id="conferencia" class="card conf"></section>
@@ -522,16 +557,20 @@ let modoDias = 'cal';
 function render(i) {
   const A = analisar(relatorios[i].emp);
   atual = { A, i };
-  const { emp, M, semanas, grupos, conf } = A;
+  const { emp, M, semanas, conf, issues } = A;
   const mm = dd(emp.mes + 1);
-  const confOk = conf.length > 0 && conf.every(c => c.ok);
+  const confOk = conf.length > 0 && conf.filter(c => c.essencial).every(c => c.ok);
+  const nAjCtx = issues.filter(x => x.nivel === 'ajustar').length, nVerCtx = issues.filter(x => x.nivel === 'verificar').length;
 
   // contexto
   const cargo = titulo((emp.cargo.split(' - ')[0] || '').trim());
   const admissao = (emp.cargo.match(/Admiss[ãa]o:\s*([\d/]+)/) || [])[1] || '';
   const lotacao = emp.lotacao.replace(/\s*\(\d+\)\s*$/, '');
   const jornadas = Object.values(emp.jornadas);
-  const jorn = jornadas.length ? jornadas.map(j => `${(j.descricao.match(/\d{2}:\d{2}\s*[àa]s\s*\d{2}:\d{2}/i) || [j.descricao])[0].replace(/\s*[àa]s\s*/i, ' às ')} (código ${j.codigo})`).join(', ') : emp.jornadaPadrao;
+  const codPadrao = (emp.jornadaPadrao.match(/\(CH:\s*(\d+)\)/) || [])[1];
+  const jPrinc = jornadas.filter(j => j.codigo === codPadrao);
+  const descJ = j => `${(j.descricao.match(/\d{2}:\d{2}\s*[àa]s\s*\d{2}:\d{2}/i) || [j.descricao])[0].replace(/\s*[àa]s\s*/i, ' às ')} (código ${j.codigo})`;
+  const jorn = jPrinc.length ? jPrinc.map(descJ).join(', ') + (jornadas.length > 1 ? ` e mais ${jornadas.length - 1} no mês` : '') : jornadas.length ? jornadas.map(j => `${(j.descricao.match(/\d{2}:\d{2}\s*[àa]s\s*\d{2}:\d{2}/i) || [j.descricao])[0].replace(/\s*[àa]s\s*/i, ' às ')} (código ${j.codigo})`).join(', ') : emp.jornadaPadrao;
   const diasTxt = A.diasContrat.length >= 7 ? 'todos os dias' : `de ${DIAS_NOME[A.diasContrat[0]].toLowerCase()} a ${DIAS_NOME[A.diasContrat.at(-1)].toLowerCase()}`;
   const hom = emp.homologada.match(/HOMOLOGADA:\s*(.*?)\s+em\s+([\d/]+)/i);
   const opts = relatorios.map((r, k) => `<option value="${k}" ${k === i ? 'selected' : ''}>${relatorios.length > 1 ? esc(titulo(r.emp.nome)) + ' · ' : ''}${cap(MESES[r.emp.mes])}/${r.emp.ano}</option>`).join('');
@@ -548,6 +587,7 @@ function render(i) {
         </label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;padding-bottom:7px">
           ${hom ? `<span class="chip ok">${ICON_OK}Homologada em ${esc(hom[2])}</span>` : `<span class="chip warn">Não homologada</span>`}
+          ${nAjCtx ? `<a href="#atencao" class="chip danger" style="text-decoration:none">${nAjCtx} ${plural(nAjCtx, 'ponto', 'pontos')} para ajustar</a>` : nVerCtx ? `<a href="#atencao" class="chip warn" style="text-decoration:none">${nVerCtx} para verificar</a>` : ''}
           ${conf.length ? (confOk ? `<a href="#conferencia" class="chip info" style="text-decoration:none">${ICON_OK}Totais conferem com o relatório</a>` : `<a href="#conferencia" class="chip warn" style="text-decoration:none">Totais com diferença</a>`) : ''}
         </div>
       </div>
@@ -559,6 +599,7 @@ function render(i) {
         <div><dt>Lotação de exercício</dt><dd>${esc(emp.lotacao)}</dd></div>
         <div><dt>Cargo</dt><dd>${esc(emp.cargo.replace(/\s*-\s*Admiss[ãa]o:.*$/, ''))}</dd></div>
         ${admissao ? `<div><dt>Admissão</dt><dd>${esc(admissao)}</dd></div>` : ''}
+        ${jornadas.length > 1 ? `<div><dt>Jornadas do mês</dt><dd>${jornadas.map(j => esc(j.sobreaviso ? j.descricao + ' (código ' + j.codigo + ')' : descJ(j))).join('<br>')}</dd></div>` : ''}
         ${emp.vinculo ? `<div><dt>Vínculo</dt><dd>${esc(emp.vinculo)}</dd></div>` : ''}
         ${hom ? `<div><dt>Homologação</dt><dd>${esc(titulo(hom[1]))} em ${esc(hom[2])}</dd></div>` : ''}
       </dl>
@@ -566,48 +607,25 @@ function render(i) {
   const sel = $('selRel'); if (sel) sel.onchange = e => render(+e.target.value);
 
   // ---------- resumo ----------
-  const trab = grupos.find(g => g.nome === 'Trabalho efetivo');
-  const afs = grupos.filter(g => g.nome !== 'Trabalho efetivo' && (g.contratual || g.hc));
-  const maxAbs = Math.max(1, ...grupos.map(g => Math.abs(g.saldo)));
-  const linhaGrupo = (nome, s) => `<div class="split-row"><span>${esc(nome)}</span>
-      <div class="track"><div style="width:${Math.max(2, Math.abs(s) / maxAbs * 100)}%;background:${s < 0 ? 'var(--orange)' : s > 0 ? 'var(--blue)' : 'var(--bar-contr)'}"></div></div>
-      <span class="v n ${cls(s)}">${sinal(s)}</span></div>`;
-  const expAfast = afs.map(g => {
-    const chJ = g.nEscala ? Math.round(g.escalada / g.nEscala) : 0;
-    return `Em ${g.nome.toLowerCase()}, o sistema credita a escala prevista (${g.nEscala} ${plural(g.nEscala, 'plantão', 'plantões')}${chJ ? ' × ' + fmt(chJ) : ''} = ${fmt(g.hc)}) contra ${fmt(g.contratual)} contratuais.`;
-  }).join(' ');
-
-  // cascata
-  const passos = [{ t: 'Soma do Saldo Diário', s: 'o que o empregado soma', v: M.saldoDiario, tipo: 'ini' }];
-  if (M.difEscala) passos.push({ t: M.difEscala < 0 ? 'Escala abaixo da contratual' : 'Escala acima da contratual', s: `${fmt(M.escalada)} escaladas × ${fmt(M.contratual)}`, v: M.difEscala });
-  if (M.creditoFeriado) {
-    const fer = A.dias.filter(d => d.feriado && d.credito).map(d => dd(d.dia) + '/' + mm).join(', ');
-    passos.push({ t: 'Feriado creditado', s: `${fer}, sem plantão`, v: M.creditoFeriado });
-  }
-  if (M.creditoOutros) passos.push({ t: 'Outros créditos', s: 'dias sem código de jornada', v: M.creditoOutros });
-  if (M.outros) passos.push({ t: 'Outros ajustes', s: 'diferenças do relatório', v: M.outros });
-  passos.push({ t: 'Saldo do mês', s: `${fmt(M.hc)} − ${fmt(M.contratual)}`, v: M.saldo, tipo: 'fim' });
+  const narr = narrativa(A);
+  const passos = A.partes.filter(p => p.v || p.id === 'ponto').map(p => ({ ...p, t: tituloParte(p) }));
+  passos.push({ t: 'Saldo do mês', sub: `${fmt(M.hc)} − ${fmt(M.contratual)}`, v: M.saldo, tipo: 'fim' });
   let run = 0;
-  const barras = passos.map(p => {
+  const barras = passos.map((p, k) => {
     let de, ate;
-    if (p.tipo === 'ini') { de = 0; ate = p.v; run = p.v; }
+    if (k === 0) { de = 0; ate = p.v; run = p.v; }
     else if (p.tipo === 'fim') { de = 0; ate = p.v; }
     else { de = run; ate = run + p.v; run = ate; }
-    return { ...p, de, ate };
+    return { ...p, de, ate, ini: k === 0 };
   });
   const vals = barras.flatMap(b => [b.de, b.ate]).concat(0);
   let hi = Math.max(...vals), lo = Math.min(...vals);
   const pad = Math.max(30, (hi - lo) * 0.12); hi += pad; lo -= (lo < 0 ? pad : 0);
   const H = 200, k = H / (hi - lo || 1), y = v => (hi - v) * k;
-  const cor = b => b.tipo === 'ini' ? ['#8A94A8', 'var(--muted)'] : b.tipo === 'fim' ? ['var(--navy)', 'var(--navy)'] : b.v < 0 ? ['var(--orange)', 'var(--orange-t)'] : ['var(--blue)', 'var(--blue)'];
+  const cor = b => b.ini ? ['#8A94A8', 'var(--muted)'] : b.tipo === 'fim' ? ['var(--navy)', 'var(--navy)'] : b.v < 0 ? ['var(--orange)', 'var(--orange-t)'] : ['var(--blue)', 'var(--blue)'];
   const cols = `grid-template-columns:repeat(${barras.length},minmax(0,1fr))`;
   const ariaCasc = barras.map(b => `${b.t} ${sinal(b.v).replace('−', 'menos ').replace('+', 'mais ')}`).join(', ');
-
-  const frase = (M.saldoDiario === M.saldo && passos.length > 2)
-    ? `Neste mês os dois valores coincidiram <strong>por acaso</strong>: os ajustes se compensaram. Em outro mês podem ser bem diferentes.`
-    : M.saldoDiario === M.saldo
-      ? `Neste mês não houve diferença entre a escala e a CH contratual, então a soma do Saldo Diário é igual ao saldo do mês.`
-      : `A diferença entre a soma do Saldo Diário (${sinal(M.saldoDiario)}) e o saldo do mês (${sinal(M.saldo)}) vem dos ajustes acima, que não aparecem na coluna Saldo Diário.`;
+  const nAj = issues.filter(i => i.nivel === 'ajustar').length;
 
   $('resumo').innerHTML = `
     <div class="card hero">
@@ -616,17 +634,20 @@ function render(i) {
         <div class="big n ${cls(M.saldo)}">${sinal(M.saldo) || '00:00'}</div>
         <div class="formula n">${fmt(M.hc)} consideradas − ${fmt(M.contratual)} contratuais</div>
       </div>
+      ${M.impactoInconsist ? `<a href="#atencao" class="alerta">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17h.01"/></svg>
+        <span>O saldo inclui <strong class="n">${sinal(M.impactoInconsist)}</strong> de horas incompatíveis com os registros. Corrigido, ficaria em torno de <strong class="n">${sinal(M.saldoCorrigido) || '00:00'}</strong>.</span></a>`
+        : nAj ? `<a href="#atencao" class="alerta"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17h.01"/></svg><span>${nAj} ${plural(nAj, 'ponto precisa', 'pontos precisam')} de ajuste antes de fechar o saldo.</span></a>` : ''}
       <div class="split">
-        <h3>De onde vem esse saldo</h3>
-        ${afs.length ? `${trab ? linhaGrupo('Dias trabalhados', trab.saldo) : ''}${afs.map(g => linhaGrupo(g.nome, g.saldo)).join('')}
-          <p>${esc(expAfast)} O resultado do trabalho em si foi ${sinal(trab ? trab.saldo : 0)}.</p>`
-        : `<p>Sem afastamentos no mês: o saldo reflete só os dias trabalhados.</p>`}
+        <h3>Em resumo</h3>
+        <ul class="narr">${narr.itens.map(t => `<li>${t}</li>`).join('')}</ul>
+        ${narr.conclusao ? `<p class="concl">${narr.conclusao}</p>` : ''}
       </div>
     </div>
     <div class="card cascade">
       <div>
-        <h2>Por que o saldo não é a soma do Saldo Diário</h2>
-        <p class="intro">O Saldo Diário compara o ponto com o plantão do dia. O saldo do mês compara tudo o que foi considerado com a CH contratual.</p>
+        <h2>De onde vem o saldo</h2>
+        <p class="intro">A coluna Saldo Diário só compara o ponto com o plantão do dia. O saldo do mês também soma a diferença entre a escala e a CH contratual, os feriados, os afastamentos e os dias que vão para pagamento.</p>
       </div>
       <div class="chart" style="${cols}" role="img" aria-label="Gráfico em cascata: ${esc(ariaCasc)}">
         <div class="zero-line" aria-hidden="true" style="top:${y(0) + 30}px"></div>
@@ -635,12 +656,29 @@ function render(i) {
           return `<div class="col" aria-hidden="true"><div class="val n" style="top:${top - 24}px;color:${c[1]}">${sinal(b.v) || '00:00'}</div><div class="bar" style="top:${top}px;height:${h}px;background:${c[0]}"></div></div>`;
         }).join('')}
       </div>
-      <div class="chart-labels" style="${cols}">${barras.map(b => `<div><b>${esc(b.t)}</b><span>${esc(b.s)}</span></div>`).join('')}</div>
-      <div class="note">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#154899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
-        <span>${frase}</span>
-      </div>
+      <div class="chart-labels" style="${cols}" aria-hidden="true">${barras.map(b => `<div><b>${esc(b.t)}</b><span>${esc(b.sub)}</span></div>`).join('')}</div>
+      <ol class="casc-list">${barras.map(b => `<li class="${b.tipo === 'fim' ? 'fim' : ''}"><div><b>${esc(b.t)}</b><span>${esc(b.sub)}</span></div><span class="n ${b.tipo === 'fim' ? '' : cls(b.v)}">${sinal(b.v) || '00:00'}</span></li>`).join('')}</ol>
     </div>`;
+
+  // ---------- pontos de atenção ----------
+  const nVer = issues.filter(i => i.nivel === 'verificar').length;
+  const pags = A.grupos.filter(g => g.tipo === 'pag');
+  const nivelChip = { ajustar: ['aj', 'Ajustar'], verificar: ['ver', 'Verificar'], info: ['inf', 'Informação'] };
+  $('atencao').innerHTML = `
+    <div class="sec-head" style="margin:0">
+      <div><h2>Pontos de atenção</h2><p>${issues.length ? [nAj ? `${nAj} para ajustar` : '', nVer ? `${nVer} para verificar` : ''].filter(Boolean).join(' · ') || 'Só informações' : 'Nenhuma inconsistência encontrada nos registros e na escala.'}</p></div>
+    </div>
+    ${issues.length ? `<ul class="issues">${issues.map(i => `<li>
+      <span class="lvl ${nivelChip[i.nivel][0]}">${nivelChip[i.nivel][1]}</span>
+      <div class="i-body">
+        <div class="i-title"><span class="n">${esc(i.data)}</span> · ${esc(i.titulo)}</div>
+        <p>${esc(i.texto)}</p>
+        ${i.impacto && i.tipo === 'hc-divergente' ? `<p class="i-imp">Impacto no saldo do mês: <strong class="n">${sinal(i.impacto)}</strong></p>` : ''}
+      </div></li>`).join('')}</ul>` : ''}
+    ${pags.length ? `<div class="note">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#154899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+      <span>Não são inconsistências: ${pags.map(g => `<strong>${esc(g.nome.toLowerCase())}</strong> (${esc(g.lista)})`).join(', ')}. ${pags.some(g => g.modo === 'excedente') ? 'Na extensão de jornada remunerada, o saldo do dia é desconsiderado e vai para pagamento. ' : ''}${pags.some(g => g.modo === 'total') ? 'No plantão de sobreaviso e na jornada extraordinária remunerada, todo o tempo trabalhado no dia vai para pagamento.' : ''}</span>
+    </div>` : ''}`;
 
   // ---------- semanas ----------
   const maxW = Math.max(1, ...semanas.flatMap(w => [w.contratual, w.escalada + w.credito, w.hc]));
@@ -660,12 +698,14 @@ function render(i) {
       if (w.difEscala) obs.push(`Escala ${fmt(Math.abs(w.difEscala))} ${w.difEscala < 0 ? 'abaixo' : 'acima'} da CH contratual.`);
       w.dias.filter(d => d.feriado).forEach(d => obs.push(`Feriado em ${dd(d.dia)}/${mm}${d.credito ? ` creditado com ${fmt(d.credito)}` : ''}.`));
       if (w.afast.length) obs.push(`${w.afast.join(', ')} na semana.`);
+      if (w.pagamentos.length) obs.push(`${w.pagamentos.join(', ')} (vai para pagamento).`);
       return `<article class="card week ${w.statusEscala === 'Deficitária' ? 'alert' : ''}">
         <div class="week-top"><h3>Semana ${w.n}</h3><span class="n">${w.periodo}/${mm}</span></div>
         <span class="chip sm ${chipEsc(w.statusEscala)}" style="align-self:flex-start">Escala ${w.statusEscala.toLowerCase()}</span>
         <div class="wbars">${wbar(w.contratual, 'var(--bar-contr)', 'Contratual')}${wbar(w.escalada + w.credito, 'var(--navy)', 'Escalada')}${wbar(w.hc, 'var(--green)', 'Considerada')}</div>
         <div class="week-foot"><span>Saldo da semana</span><span class="n ${cls(w.saldo)}">${sinal(w.saldo) || '00:00'}</span></div>
         ${obs.length ? `<div class="obs">${esc(obs.join(' '))}</div>` : ''}
+        ${w.issues ? `<a href="#atencao" class="chip sm ${w.dias.some(d => d.issues.some(i => i.nivel === 'ajustar')) ? 'danger' : 'warn'}" style="align-self:flex-start;text-decoration:none">${w.issues} ${plural(w.issues, 'ponto', 'pontos')} de atenção</a>` : ''}
       </article>`;
     }).join('')}</div>`;
 
@@ -681,14 +721,14 @@ function render(i) {
           : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A84A08" stroke-width="2.5" stroke-linecap="round"><path d="M12 7v6M12 17h.01"/></svg>'}</span>
         <div>
           <h2 style="font-size:16px">Conferência com o relatório</h2>
-          <div class="muted" style="font-size:13px">${!conf.length ? 'O relatório não trouxe o quadro de totais para comparar.' : confOk ? `Os ${conf.length} totais recalculados são iguais aos impressos no PDF.` : 'Há diferença entre o recalculado e o relatório. Confira as ocorrências do mês (ponto facultativo, recesso ou outra regra específica).'}</div>
+          <div class="muted" style="font-size:13px">${!conf.length ? 'O relatório não trouxe o quadro de totais para comparar.' : confOk ? (conf.every(c => c.ok) ? `Os ${conf.length} totais recalculados são iguais aos impressos no PDF.` : 'CH contratual, horas consideradas e saldo conferem com o PDF. A CH escalada do relatório difere da soma dos códigos de jornada da tabela diária, o que não altera o saldo.') : 'Há diferença entre o recalculado e o relatório. Confira as ocorrências do mês (ponto facultativo, recesso ou outra regra específica).'}</div>
         </div>
       </div>
     </div>
     ${conf.length ? `<div class="conf-grid">${conf.map(c => `<div>
       <div class="k">${nomes[c.item] || c.item}</div>
       <div class="v n">${c.item === 'Saldo do mês' ? sinal(c.calc) : fmt(c.calc)}</div>
-      ${c.ok ? '' : `<div class="d neg n">Relatório: ${c.item === 'Saldo do mês' ? sinal(c.rel) : fmt(c.rel)}</div>`}
+      ${c.ok ? '' : `<div class="d n ${c.essencial ? 'neg' : 'muted'}">Relatório: ${c.item === 'Saldo do mês' ? sinal(c.rel) : fmt(c.rel)}</div>`}
     </div>`).join('')}</div>` : ''}
     <details>
       <summary>Como o cálculo é feito</summary>
@@ -704,21 +744,83 @@ function render(i) {
   ativarTabs();
 }
 
+// ---------- textos de "de onde vem o saldo" ----------
+function tituloParte(p) {
+  if (p.id === 'ponto') return 'Saldo Diário';
+  if (p.id === 'escala') return p.titulo;
+  if (p.tipo === 'feriado') return 'Feriado creditado';
+  return p.titulo;
+}
+function nomeCobertura(g) {
+  if (g.tipo === 'feriado') return g.dias.length > 1 ? 'os feriados' : 'o feriado';
+  if (/^f[ée]rias$/i.test(g.nome)) return 'as férias';
+  return 'o afastamento (' + g.nome.toLowerCase() + ')';
+}
+function narrativa(A) {
+  const { M, trabalho: T, grupos, partes } = A;
+  const itens = [];
+  const dEsc = T.esc - T.con;
+  const pT = [];
+  if (T.sd) pT.push(`o ponto ficou <strong class="n">${fmt(Math.abs(T.sd))}</strong> ${T.sd > 0 ? 'acima' : 'abaixo'} da escala (soma do Saldo Diário)`);
+  if (dEsc) pT.push(`a escala somou ${fmt(T.esc)}, <strong class="n">${fmt(Math.abs(dEsc))}</strong> ${dEsc < 0 ? 'abaixo' : 'acima'} da CH contratual desses dias (${fmt(T.con)})`);
+  itens.push(pT.length
+    ? `Nos dias trabalhados, ${pT.join(' e ')}. Resultado: <strong class="n ${cls(T.v)}">${sinal(T.v) || '00:00'}</strong>${T.v < 0 ? ', ou seja, trabalhou menos que o devido' : T.v > 0 ? ', ou seja, trabalhou mais que o devido' : ''}.`
+    : `Nos dias trabalhados, o tempo cumprido foi igual à CH contratual.`);
+  grupos.forEach(g => {
+    const v = `<strong class="n ${cls(g.v)}">${sinal(g.v) || '00:00'}</strong>`;
+    if (g.tipo === 'feriado' && g.v) itens.push(`${cap(nomeCobertura(g))} (${esc(g.lista)}) ${g.dias.length > 1 ? 'somaram' : 'somou'} ${v}: crédito da CH diária em dia sem plantão.`);
+    else if (g.tipo === 'afast' && g.v) {
+      const pl = /^f[ée]rias$/i.test(g.nome);
+      itens.push(`${cap(nomeCobertura(g))} ${pl ? (g.v > 0 ? 'somaram' : 'tiraram') : (g.v > 0 ? 'somou' : 'tirou')} ${v}: a escala registrada no período (${fmt(g.hc)}) ficou ${g.v > 0 ? 'acima' : 'abaixo'} da CH contratual desses dias (${fmt(g.contratual)}).`);
+    } else if (g.tipo === 'pag') {
+      if (g.modo === 'excedente') itens.push(`${esc(g.nome)} (${esc(g.lista)}): ${v}. O tempo além da escala foi para pagamento; o dia conta só a CH da escala.`);
+      else itens.push(`${esc(g.nome)} (${esc(g.lista)}): ${v}. O tempo trabalhado foi para pagamento e não conta no saldo${g.v < 0 ? '; a CH contratual desses dias ficou descoberta' : ''}.`);
+    }
+  });
+  const resid = partes.find(p => p.id === 'resid' || p.id === 'outros-trab');
+  if (resid) itens.push(`Outros ajustes do relatório: <strong class="n">${sinal(resid.v)}</strong>.`);
+  let conclusao = '';
+  const cobre = grupos.filter(g => (g.tipo === 'feriado' || g.tipo === 'afast') && g.v > 0);
+  const tira = grupos.filter(g => g.v < 0);
+  const junta = arr => arr.join(', ').replace(/, ([^,]*)$/, ' e $1');
+  if (T.v < 0 && M.saldo >= 0 && cobre.length) {
+    const nomes = cobre.map(nomeCobertura);
+    const plural = cobre.length > 1 || /^(os|as) /.test(nomes[0]);
+    conclusao = `O saldo só ficou ${M.saldo > 0 ? 'positivo' : 'zerado'} porque ${junta(nomes)} ${plural ? 'cobriram' : 'cobriu'} a diferença.`;
+  } else if (T.v < 0 && M.saldo < 0 && cobre.length) {
+    conclusao = `${cap(junta(cobre.map(nomeCobertura)))} cobriram parte da diferença, mas o saldo continuou negativo.`;
+  } else if (T.v > 0 && M.saldo < 0 && tira.length) {
+    conclusao = `Os dias trabalhados ficaram positivos, mas ${junta(tira.map(g => g.tipo === 'pag' ? g.nome.toLowerCase() : nomeCobertura(g)))} deixaram o saldo negativo.`;
+  }
+  if (M.saldoDiario === M.saldo && M.saldo !== 0 && partes.filter(p => p.v && p.id !== 'ponto').length) {
+    conclusao += (conclusao ? ' ' : '') + 'A soma do Saldo Diário coincidiu com o saldo do mês por acaso: os ajustes se compensaram.';
+  }
+  return { itens, conclusao };
+}
+const semTags = h => h.replace(/<[^>]+>/g, '');
+
 function renderDias(A) {
   const { emp, dias, semanas } = A;
   const mm = dd(emp.mes + 1);
   const ehManual = d => /\d{2}:\d{2}\s*m/i.test(d.registros);
-  const regCurto = d => d.registros.replace(/\s*[rmc](?=\s|$|-)/gi, '').replace(/\s*-\s*/g, '–').trim();
+  const regCurto = d => d.registros.replace(/\s*\d{2}:\d{2}\s*c(?=\s|$|-)\s*-?/gi, '').replace(/\s*[rm](?=\s|$|-)/gi, '').replace(/\s*-\s*/g, ' · ').replace(/ · $/, '').trim();
+  const turnoTxt = d => { const t = d.turno || []; const out = []; for (let k = 0; k < t.length; k += 2) out.push(t[k] + ' → ' + (t[k + 1] || '?')); return out.join(', '); };
+  const PAG_CURTO = { 'Extensão de jornada remunerada': 'Ext. de jornada remunerada', 'Jornada extraordinária remunerada': 'Jornada extra remunerada', 'Plantão de sobreaviso': 'Sobreaviso' };
   const tipoDia = d => {
-    if (d.feriado) return { c: 'feriado', t: cap(d.regTexto || d.ocorrencia || 'Feriado').replace(/^Feriado nacional$/i, 'Feriado nacional') };
+    if (d.feriado && !d.registros) return { c: 'feriado', t: cap(d.regTexto || d.ocorrencia || 'Feriado') };
     if (d.afast) return { c: 'afast', t: d.afast };
+    if (d.pagamento) return { c: 'pag', t: PAG_CURTO[d.pagamento] || d.pagamento };
     if (d.codigo && d.registros) return { c: 'plantao', t: 'Plantão' + (d.escalada ? ' ' + Math.round(d.escalada / 60) + 'h' : '') };
     if (d.codigo) return { c: 'plantao', t: 'Plantão sem registro' };
-    if (d.registros) return { c: 'plantao', t: 'Registro fora da escala' };
+    if (d.descanso) return { c: 'quiet', t: 'Sem jornada' };
+    if (d.registros) return { c: 'quiet', t: 'Sem plantão' };
     if (!d.contratual) return { c: 'quiet', t: 'Descanso' };
     return { c: 'quiet', t: 'Sem plantão' };
   };
-  const ocorr = dias.filter(d => d.ocorrencia && !d.feriado && !d.afast);
+  const nivelDia = d => d.issues.some(i => i.nivel === 'ajustar') ? 'aj' : d.issues.some(i => i.nivel === 'verificar') ? 'ver' : '';
+  const ICON_W = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17h.01"/></svg>';
+  const marcaDia = d => { const n = nivelDia(d); return n ? `<span class="w-ico ${n}" title="${esc(d.issues.map(i => i.titulo).join('; '))}">${ICON_W}<span class="sr">${n === 'aj' ? 'Precisa de ajuste' : 'Verificar'}</span></span>` : ''; };
+  const ocorr = dias.filter(d => d.ocorrencia && !d.feriado && !d.afast && !d.pagamento && !d.descanso);
 
   let corpo;
   if (modoDias === 'cal') {
@@ -726,9 +828,12 @@ function renderDias(A) {
     for (let b = 0; b < ini; b++) cells.push('<div class="cell blank" aria-hidden="true"></div>');
     dias.forEach(d => {
       const t = tipoDia(d);
-      const sub = t.c === 'plantao' ? regCurto(d) : t.c === 'feriado' && d.credito ? 'crédito da CH diária' : t.c === 'afast' && d.escalada ? 'plantão creditado' : '';
-      cells.push(`<div class="cell ${t.c}">
-        <div class="c-top"><span class="c-dia n">${dd(d.dia)}<span class="c-dow">${DIAS_NOME[d.dow].slice(0, 3)}</span></span><span class="c-saldo n ${d.saldo != null ? cls(d.saldo) : ''}">${d.saldo != null ? sinal(d.saldo) : ''}</span></div>
+      const temReg = d.registros && (t.c === 'plantao' || t.c === 'pag' || t.c === 'quiet');
+      const solto = d.issues.some(i => i.tipo === 'fora-escala');
+      const sub = (d.turno && d.turno.length) ? turnoTxt(d) : solto ? regCurto(d) : t.c === 'feriado' && d.credito ? 'crédito da CH diária' : t.c === 'afast' && d.escalada ? 'plantão creditado' : t.c === 'pag' ? 'vai para pagamento' : '';
+      const nv = nivelDia(d);
+      cells.push(`<div class="cell ${t.c}${nv ? ' issue-' + nv : ''}${t.c === 'quiet' && (d.registros || nv) ? ' keep' : ''}">
+        <div class="c-top"><span class="c-dia n">${marcaDia(d)}${dd(d.dia)}<span class="c-dow">${DIAS_NOME[d.dow].slice(0, 3)}</span></span><span class="c-saldo n ${d.saldo != null ? cls(d.saldo) : ''}">${d.saldo != null ? sinal(d.saldo) : ''}</span></div>
         <div class="c-tipo">${esc(t.t)}</div>
         <div class="c-reg n">${esc(sub)}${ehManual(d) ? '<span class="m-tag" title="Acerto manual">M</span>' : ''}</div>
         <div class="c-hc n">${d.hc ? fmt(d.hc) : ''}</div>
@@ -738,9 +843,11 @@ function renderDias(A) {
     corpo = `
       <div class="legend">
         <span><i style="background:#fff;border:1.5px solid var(--navy)"></i>Plantão</span>
+        <span><i style="background:#fff;border:1.5px dashed var(--navy)"></i>Vai para pagamento</span>
         <span><i style="background:var(--green-bg);border:1px solid #9FD3AA"></i>Feriado</span>
         <span><i style="background:var(--yellow-bg);border:1px solid #F0D676"></i>Afastamento</span>
         <span><i style="background:var(--bg);border:1px solid var(--line2)"></i>Sem plantão</span>
+        <span><span class="w-ico aj">${ICON_W}</span>Precisa de ajuste</span>
         <span><span class="m-tag">M</span>Acerto manual</span>
       </div>
       <div class="cal">${DIAS_NOME.map(n => `<div class="dow">${n.slice(0, 3)}</div>`).join('')}${cells.join('')}</div>`;
@@ -752,15 +859,15 @@ function renderDias(A) {
         const t = tipoDia(d);
         const rowc = t.c === 'feriado' ? 'feriado' : t.c === 'afast' ? 'afast' : t.c === 'quiet' ? 'quiet' : '';
         const oc = [d.feriado || d.afast ? t.t : '', !d.feriado && !d.afast ? cap(d.ocorrencia) : '', d.obs].filter(Boolean).join(' — ');
-        return `<tr class="${rowc}">
-          <th scope="row" class="n">${DIAS_NOME[d.dow].slice(0, 3)}, ${dd(d.dia)}/${mm}</th>
+        return `<tr class="${rowc}${nivelDia(d) ? ' issue' : ''}">
+          <th scope="row" class="n">${marcaDia(d)}${DIAS_NOME[d.dow].slice(0, 3)}, ${dd(d.dia)}/${mm}</th>
           <td class="n">${esc(regCurto(d))}${ehManual(d) ? ' <span class="m-tag" title="Acerto manual">M</span>' : ''}</td>
           <td class="r n">${d.contratual ? fmt(d.contratual) : ''}</td>
           <td class="r n">${d.escalada ? fmt(d.escalada) : ''}</td>
-          <td class="r n">${d.hc ? fmt(d.hc) : ''}${d.credito ? ' <span class="chip sm info" style="min-height:18px;padding:0 6px;font-size:11px">crédito</span>' : ''}</td>
+          <td class="r n">${d.hc ? fmt(d.hc) : ''}${d.credito ? ' <span class="chip sm info tiny">crédito</span>' : ''}</td>
           <td class="r n ${d.saldo != null ? cls(d.saldo) : ''}">${d.saldo != null ? sinal(d.saldo) : ''}</td>
-          <td>${esc(oc)}</td></tr>`;
-      }).join('') + `<tr class="sub"><td>Semana ${w.n}</td><td></td><td class="r n">${fmt(w.contratual)}</td><td class="r n">${fmt(w.escalada)}${w.credito ? ` <span class="chip sm info" style="min-height:18px;padding:0 6px;font-size:11px">+${fmt(w.credito)}</span>` : ''}</td><td class="r n">${fmt(w.hc)}</td><td class="r n ${cls(w.saldoDiario)}">${sinal(w.saldoDiario) || '00:00'}</td><td class="n">Saldo da semana: <span class="${cls(w.saldo)}">${sinal(w.saldo) || '00:00'}</span></td></tr>`).join('')}</tbody>
+          <td>${esc(oc)}${d.pagamento ? ' <span class="chip sm neutral tiny">pagamento</span>' : ''}</td></tr>`;
+      }).join('') + `<tr class="sub"><td>Semana ${w.n}</td><td></td><td class="r n">${fmt(w.contratual)}</td><td class="r n">${fmt(w.escalada)}${w.credito ? ` <span class="chip sm info tiny">+${fmt(w.credito)}</span>` : ''}</td><td class="r n">${fmt(w.hc)}</td><td class="r n ${cls(w.saldoDiario)}">${sinal(w.saldoDiario) || '00:00'}</td><td class="n">Saldo da semana: <span class="${cls(w.saldo)}">${sinal(w.saldo) || '00:00'}</span></td></tr>`).join('')}</tbody>
     </table></div>`;
   }
 
@@ -787,14 +894,13 @@ function ativarTabs() {
   obs = new IntersectionObserver(ents => {
     ents.forEach(e => { if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id)); });
   }, { rootMargin: '-80px 0px -60% 0px' });
-  ['resumo', 'semanas', 'dias', 'conferencia'].forEach(id => obs.observe($(id)));
+  ['resumo', 'atencao', 'semanas', 'dias', 'conferencia'].forEach(id => obs.observe($(id)));
 }
 
 // ---------- resumo para o empregado ----------
 function resumoTexto() {
-  const { A } = atual; const { emp, M, grupos, semanas } = A;
-  const trab = grupos.find(g => g.nome === 'Trabalho efetivo');
-  const afs = grupos.filter(g => g.nome !== 'Trabalho efetivo' && (g.contratual || g.hc));
+  const { A } = atual; const { emp, M, semanas, issues } = A;
+  const narr = narrativa(A);
   const L = [];
   L.push(`Análise de saldo – ${cap(MESES[emp.mes])}/${emp.ano}`);
   L.push(`${titulo(emp.nome)} – matrícula ${emp.matricula}`);
@@ -802,16 +908,15 @@ function resumoTexto() {
   L.push(`Saldo do mês: ${sinal(M.saldo) || '00:00'} (${fmt(M.hc)} horas consideradas − ${fmt(M.contratual)} de CH contratual).`);
   L.push(`Soma da coluna Saldo Diário: ${sinal(M.saldoDiario) || '00:00'}.`);
   L.push('');
-  L.push('Por que o saldo não é a soma do Saldo Diário:');
-  L.push('• O Saldo Diário compara o ponto com o plantão de cada dia; o saldo do mês compara as horas consideradas com a CH contratual.');
-  if (M.difEscala) L.push(`• A escala do mês somou ${fmt(M.escalada)}, ${fmt(Math.abs(M.difEscala))} ${M.difEscala < 0 ? 'abaixo' : 'acima'} da CH contratual (${fmt(M.contratual)}).`);
-  if (M.creditoFeriado) L.push(`• Feriado sem plantão creditado com ${fmt(M.creditoFeriado)}.`);
-  if (M.creditoOutros) L.push(`• Outros créditos em dias sem escala: ${fmt(M.creditoOutros)}.`);
-  if (M.saldoDiario === M.saldo && (M.difEscala || M.credito)) L.push('• Neste mês os dois valores coincidiram por acaso, porque os ajustes se compensaram.');
-  if (afs.length && trab) {
+  L.push('De onde vem o saldo:');
+  narr.itens.forEach(t => L.push('• ' + semTags(t)));
+  if (narr.conclusao) L.push(semTags(narr.conclusao));
+  const pend = issues.filter(i => i.nivel !== 'info');
+  if (pend.length) {
     L.push('');
-    L.push(`Só os dias trabalhados: ${fmt(trab.hc)} consideradas × ${fmt(trab.contratual)} contratuais = ${sinal(trab.saldo) || '00:00'}.`);
-    afs.forEach(g => L.push(`${g.nome}: ${fmt(g.hc)} creditadas × ${fmt(g.contratual)} contratuais = ${sinal(g.saldo) || '00:00'} (efeito da escala no período, não de horas trabalhadas).`));
+    L.push('Pontos de atenção:');
+    pend.forEach(i => L.push(`• ${i.data} – ${i.titulo} (${i.nivel === 'ajustar' ? 'ajustar' : 'verificar'}): ${i.texto}`));
+    if (M.impactoInconsist) L.push(`Corrigidas as horas incompatíveis, o saldo ficaria em torno de ${sinal(M.saldoCorrigido) || '00:00'}.`);
   }
   L.push('');
   L.push('Semanas:');
