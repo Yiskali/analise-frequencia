@@ -6,152 +6,381 @@
 <title>Análise de Saldo de Frequência</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f6f2ea; --paper:#fffdf8; --ink:#1f1d1a; --muted:#6b655c; --line:#e3dccf; --line2:#efe9de;
-    --accent:#1e4d5c; --accent-soft:#e3eef0;
-    --neg:#a3342b; --neg-soft:#f6e3df; --pos:#2f6b3a; --pos-soft:#e2efe2; --neu:#6b655c; --neu-soft:#ece7dd;
-    --warn:#8a5a00; --warn-soft:#f7ecd4;
-    --serif:'Source Serif 4', Georgia, serif; --sans:'IBM Plex Sans', system-ui, sans-serif;
+    /* paleta institucional */
+    --navy:#213D87; --blue:#154899; --green:#32A347; --orange:#F7751C; --yellow:#FAC906; --red:#D5332C;
+    /* tons para texto (contraste AA) */
+    --green-t:#1E6B30; --orange-t:#A84A08; --yellow-t:#7A5A00; --red-t:#B3261E;
+    /* fundos de apoio */
+    --blue-bg:#E5ECF7; --green-bg:#E6F4E9; --orange-bg:#FDEBDD; --yellow-bg:#FEF4CC; --red-bg:#FBE4E3;
+    /* neutros */
+    --bg:#F4F6FA; --surface:#FFFFFF; --line:#DCE2EC; --line2:#E7ECF3; --soft:#EEF2F8;
+    --text:#172340; --muted:#4F5B75; --neutral-t:#3D4A66; --bar-contr:#B9C4D6;
+    --r-card:12px; --r-ctl:8px;
+    --font:'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
-  .num{font-variant-numeric:tabular-nums;white-space:nowrap}
-  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 64px}
-  header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:28px}
-  h1{font-family:var(--serif);font-weight:700;font-size:30px;line-height:1.15;margin:0}
-  .kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-  h2{font-family:var(--serif);font-weight:600;font-size:21px;margin:0 0 4px}
-  h3{font-family:var(--serif);font-weight:600;font-size:17px;margin:0}
-  p{margin:0 0 10px}
-  .sub{color:var(--muted);margin:0 0 16px;font-size:14px}
-  section{margin:0 0 34px}
-  .card{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:20px}
-  button{font-family:var(--sans);font-size:14px;cursor:pointer;border-radius:4px;border:1px solid var(--ink);background:var(--paper);color:var(--ink);padding:8px 14px}
-  button.primary{background:var(--ink);color:var(--paper)}
-  button:hover{opacity:.88}
-  button:focus-visible,.drop:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-
-  /* importação */
-  .drop{border:1.5px dashed #b9ae9b;border-radius:8px;background:var(--paper);padding:44px 20px;text-align:center;cursor:pointer;transition:background .15s,border-color .15s}
-  .drop.over{background:var(--accent-soft);border-color:var(--accent)}
-  .drop .big{font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:4px}
-  .drop small{color:var(--muted)}
-  .msg{margin-top:12px;padding:10px 14px;border-radius:4px;font-size:14px}
-  .msg.err{background:var(--neg-soft);color:var(--neg)}
-  .msg.info{background:var(--accent-soft);color:var(--accent)}
+  html{scroll-behavior:smooth;scroll-padding-top:72px}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.5}
+  .n{font-variant-numeric:tabular-nums;white-space:nowrap}
   .hidden{display:none !important}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  a{color:var(--blue)} a:hover{color:var(--navy)}
+  h1,h2,h3{margin:0;line-height:1.25}
+  p{margin:0}
+  .wrap{max-width:1200px;margin:0 auto;padding-left:32px;padding-right:32px}
+  .muted{color:var(--muted)}
+  .pos{color:var(--blue)} .neg{color:var(--orange-t)} .zero{color:var(--neutral-t)}
 
-  /* empregado */
-  .emp-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
-  .emp-name{font-family:var(--serif);font-size:24px;font-weight:700;line-height:1.2}
-  .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:6px 24px;margin-top:12px;font-size:13.5px}
-  .meta div span{color:var(--muted);display:block;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase}
-  .picker{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
-  select{font-family:var(--sans);font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:4px;background:var(--paper);max-width:100%}
-  .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+  /* botões */
+  .btn{font-family:inherit;font-size:14px;font-weight:600;min-height:44px;padding:0 18px;border-radius:var(--r-ctl);border:1px solid #C5CFDF;background:var(--surface);color:var(--navy);display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none}
+  .btn:hover{background:var(--soft)}
+  .btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+  .btn.primary:hover{background:#1a3170}
+  .btn.icon{width:44px;padding:0}
+  .btn svg{flex:none}
+  :focus-visible{outline:3px solid #8EA3C8;outline-offset:2px}
 
-  /* números-chave */
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:16px 18px;border-top:4px solid var(--neu)}
-  .kpi.main{border-top-color:var(--ink)}
-  .kpi .lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-  .kpi .val{font-family:var(--serif);font-size:32px;font-weight:700;line-height:1.15;margin:4px 0}
-  .kpi .note{font-size:13px;color:var(--muted)}
-  .neg{color:var(--neg)} .pos{color:var(--pos)}
+  /* barra superior */
+  .topbar{background:var(--surface);border-bottom:1px solid var(--line)}
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:12px;padding-bottom:12px}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:17px;color:var(--navy)}
+  .brand .mark{width:36px;height:36px;border-radius:var(--r-ctl);background:var(--navy);display:flex;align-items:center;justify-content:center}
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
 
-  /* ponte */
-  .bridge{width:100%;border-collapse:collapse;font-size:14.5px}
-  .bridge td{padding:10px 8px;border-bottom:1px solid var(--line2);vertical-align:top}
-  .bridge td.v{text-align:right;font-weight:600;width:130px}
-  .bridge tr.total td{border-top:2px solid var(--ink);border-bottom:none;font-weight:700;font-size:16px}
-  .bridge .op{color:var(--muted);width:24px;text-align:center;font-weight:600}
-  .bridge small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
-  .explica{background:var(--accent-soft);border-left:3px solid var(--accent);padding:14px 16px;border-radius:0 4px 4px 0;margin-top:16px;font-size:14.5px}
-  .explica p:last-child{margin:0}
+  /* chips */
+  .chip{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
+  .chip.ok{background:var(--green-bg);color:var(--green-t)}
+  .chip.info{background:var(--blue-bg);color:var(--blue)}
+  .chip.warn{background:var(--orange-bg);color:var(--orange-t)}
+  .chip.neutral{background:var(--soft);color:var(--neutral-t)}
+  .chip.sm{min-height:24px;padding:0 10px;font-size:12px;font-weight:700}
 
-  /* grupos */
-  .grupos{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
-  .grupo table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
-  .grupo td{padding:5px 0;border-bottom:1px solid var(--line2)}
-  .grupo td:last-child{text-align:right}
-  .grupo tr:last-child td{border-bottom:none;font-weight:700}
-  .grupo .desc{font-size:13px;color:var(--muted);margin-top:10px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card)}
 
-  /* semanas */
-  .semana{margin-bottom:16px;padding:0;overflow:hidden}
-  .semana-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--line);background:#fbf8f1}
-  .badges{display:flex;gap:6px;flex-wrap:wrap}
-  .badge{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
-  .b-def{background:var(--neg-soft);color:var(--neg)} .b-sup{background:var(--pos-soft);color:var(--pos)} .b-ade{background:var(--neu-soft);color:var(--neu)} .b-afa{background:var(--warn-soft);color:var(--warn)}
-  .tscroll{overflow-x:auto}
-  table.dias{width:100%;border-collapse:collapse;font-size:13.5px;min-width:720px}
-  table.dias th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
-  table.dias td{padding:6px 10px;border-bottom:1px solid var(--line2)}
-  table.dias th.r, table.dias td.r{text-align:right}
-  table.dias tr.fds td{color:#a29a8d}
-  table.dias tr.afa td{background:#fdf8ec}
-  table.dias tr.fer td{background:#f1f5f6}
-  table.dias tfoot td{font-weight:700;border-top:1.5px solid var(--ink);border-bottom:none;background:#fbf8f1}
-  .obs{padding:9px 18px;font-size:13px;color:var(--muted);border-top:1px solid var(--line2)}
-  .tag{font-size:11px;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:3px;margin-left:4px;white-space:nowrap}
+  /* ---------- importação ---------- */
+  .import{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;padding-top:40px;padding-bottom:56px}
+  .import-main{flex:7 1 520px;min-width:0;display:flex;flex-direction:column;gap:20px}
+  .import-side{flex:4 1 300px;min-width:0;display:flex;flex-direction:column;gap:16px}
+  .import h1{font-size:28px;font-weight:800;color:var(--navy)}
+  .drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:240px;border:2px dashed #8EA3C8;border-radius:var(--r-card);background:var(--surface);padding:32px;text-align:center;cursor:pointer;transition:background .15s,border-color .15s}
+  .drop.over{background:var(--blue-bg);border-color:var(--blue)}
+  .drop .ico{width:56px;height:56px;border-radius:999px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center}
+  .drop strong{font-size:18px}
+  .drop .fake-btn{display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:var(--r-ctl);background:var(--navy);color:#fff;font-size:14px;font-weight:700}
+  .queue-head{padding:14px 20px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .queue{list-style:none;margin:0;padding:0}
+  .queue li{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+  .queue li:last-child{border-bottom:none}
+  .q-ico{width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none}
+  .q-body{flex:1 1 240px;min-width:0}
+  .q-name{font-weight:700;font-size:14px;overflow-wrap:anywhere}
+  .q-sub{font-size:13px;color:var(--muted)}
+  .q-sub.err{color:var(--red-t)}
+  .progress{height:6px;background:var(--soft);border-radius:999px;margin-top:8px;overflow:hidden}
+  .progress div{height:100%;background:var(--blue);border-radius:999px;transition:width .2s}
+  .sample{border:1px solid var(--line);border-radius:var(--r-ctl);padding:14px;background:#FAFBFD;display:flex;flex-direction:column;gap:7px}
+  .sample i{display:block;height:6px;border-radius:3px;background:var(--line)}
+  .sample .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;margin-top:6px}
+  .privacy{background:var(--blue-bg);border-radius:var(--r-card);padding:16px 18px;display:flex;gap:12px;align-items:flex-start;font-size:14px}
 
-  /* conferência */
-  .conf{width:100%;border-collapse:collapse;font-size:14px}
-  .conf th,.conf td{padding:7px 8px;border-bottom:1px solid var(--line2);text-align:right}
-  .conf th:first-child,.conf td:first-child{text-align:left}
-  .conf th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
-  .ok{color:var(--pos);font-weight:600} .nok{color:var(--neg);font-weight:600}
-  details{margin-top:14px;font-size:14px}
-  details summary{cursor:pointer;font-weight:600}
-  details ul{margin:8px 0 0;padding-left:20px;color:var(--muted)}
-  details li{margin-bottom:4px}
-  footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
-  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:4px;font-size:14px;z-index:10}
-  textarea.copybox{width:100%;height:220px;font-family:var(--sans);font-size:13px;margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:4px;background:#fff}
-  @media (max-width:600px){ h1{font-size:24px} .kpi .val{font-size:27px} .bridge td.v{width:96px} }
-  @media print{ body{background:#fff} .noprint{display:none !important} .card,.kpi{break-inside:avoid} .semana{break-inside:avoid} }
+  /* ---------- resultado ---------- */
+  .context{background:var(--surface);border-bottom:1px solid var(--line)}
+  .context .wrap{padding-top:20px}
+  .ctx-row{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+  .ctx-name{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .ctx-name h1{font-size:24px;font-weight:700}
+  .ctx-sub{margin-top:6px;font-size:14px;color:var(--muted)}
+  .ctx-right{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+  .field{display:flex;flex-direction:column;gap:2px;font-size:12px;font-weight:600;color:var(--muted)}
+  select{font-family:inherit;font-size:14px;font-weight:600;color:var(--text);min-height:44px;padding:0 12px;border:1px solid #C5CFDF;border-radius:var(--r-ctl);background:var(--surface);max-width:100%;width:100%}
+  select:disabled{opacity:1;color:var(--text);background:var(--bg)}
+  .ctx-details{margin-top:10px;font-size:13px}
+  .ctx-details summary{cursor:pointer;color:var(--blue);font-weight:600;display:inline-block;padding:4px 0}
+  .ctx-details dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 24px;margin:10px 0 4px}
+  .ctx-details dt{font-size:12px;color:var(--muted);font-weight:600}
+  .ctx-details dd{margin:0}
+  .tabs{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+  .tabs .wrap{display:flex;gap:4px;overflow-x:auto}
+  .tabs a{text-decoration:none;padding:12px 16px;font-size:14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
+  .tabs a.on{color:var(--navy);font-weight:700;border-bottom-color:var(--navy)}
+  .main{padding-top:28px;padding-bottom:48px;display:flex;flex-direction:column;gap:28px}
+  .main > section{min-width:0}
+  .sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .sec-head h2,.card h2{font-size:18px;font-weight:700}
+  .sec-head p{font-size:14px;color:var(--muted);margin-top:2px}
+
+  .resumo{display:flex;flex-wrap:wrap;gap:20px;align-items:stretch}
+  .hero{flex:5 1 340px;min-width:0;padding:24px;display:flex;flex-direction:column;gap:18px}
+  .hero .lbl{font-size:13px;font-weight:600;color:var(--muted)}
+  .hero .big{font-size:56px;font-weight:800;line-height:1.05;letter-spacing:-1px;margin-top:4px}
+  .hero .formula{font-size:14px;color:var(--muted);margin-top:6px}
+  .split{border-top:1px solid var(--line2);padding-top:16px;display:flex;flex-direction:column;gap:10px}
+  .split h3{font-size:13px;font-weight:700}
+  .split-row{display:grid;grid-template-columns:minmax(110px,150px) 1fr 70px;align-items:center;gap:10px;font-size:14px}
+  .track{height:12px;background:var(--soft);border-radius:999px;overflow:hidden}
+  .track div{height:100%;border-radius:999px}
+  .split-row .v{text-align:right;font-weight:700}
+  .split p{font-size:13px;color:var(--muted)}
+
+  .cascade{flex:7 1 480px;min-width:0;padding:24px;display:flex;flex-direction:column;gap:16px}
+  .cascade .intro{font-size:14px;color:var(--muted);margin-top:4px}
+  .chart{position:relative;height:230px;display:grid;gap:18px;padding:0 8px}
+  .chart .zero-line{position:absolute;left:0;right:0;border-top:1.5px solid #8A94A8}
+  .chart .col{position:relative;height:200px;margin-top:30px}
+  .chart .bar{position:absolute;left:14%;right:14%;border-radius:4px;min-height:2px}
+  .chart .val{position:absolute;left:0;right:0;text-align:center;font-size:15px;font-weight:800}
+  .chart-labels{display:grid;gap:18px;padding:0 8px;margin-top:-4px}
+  .chart-labels div{text-align:center;font-size:13px;line-height:1.35}
+  .chart-labels b{display:block;color:var(--text)}
+  .chart-labels span{color:var(--muted)}
+  .note{background:var(--bg);border-radius:var(--r-ctl);padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:flex-start}
+  .note svg{flex:none;margin-top:2px}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
+  .weeks{display:flex;flex-wrap:wrap;gap:14px;position:relative}
+  .week,.drop,.wbar{position:relative}
+  .week{flex:1 1 190px;min-width:0;padding:16px;display:flex;flex-direction:column;gap:12px}
+  .week.alert{border:1.5px solid var(--orange)}
+  .week-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .week-top h3{font-size:15px;font-weight:700}
+  .week-top span{font-size:12px;color:var(--muted)}
+  .wbars{display:flex;flex-direction:column;gap:6px}
+  .wbar{display:grid;grid-template-columns:1fr 48px;align-items:center;gap:8px}
+  .wbar .track{height:8px}
+  .wbar span{font-size:12px;text-align:right}
+  .week-foot{border-top:1px solid var(--line2);padding-top:10px;display:flex;justify-content:space-between;align-items:baseline}
+  .week-foot span:first-child{font-size:12px;color:var(--muted)}
+  .week-foot .n{font-size:17px;font-weight:800}
+  .week .obs{font-size:12px;color:var(--muted);line-height:1.4}
+
+  .dias{padding:24px;display:flex;flex-direction:column;gap:16px}
+  .seg{display:flex;border:1px solid #C5CFDF;border-radius:var(--r-ctl);overflow:hidden}
+  .seg button{font-family:inherit;font-size:13px;font-weight:600;min-height:40px;padding:0 16px;border:none;background:var(--surface);color:var(--navy);cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--navy);color:#fff;font-weight:700}
+  .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+  .cal .dow{font-size:12px;font-weight:700;color:var(--muted);padding:0 4px}
+  .cell{min-height:108px;border-radius:var(--r-ctl);padding:8px 10px;display:flex;flex-direction:column;gap:2px;border:1px solid var(--line2);background:var(--bg)}
+  .cell.blank{background:transparent;border:1px dashed var(--line2)}
+  .cell.plantao{background:var(--surface);border:1.5px solid var(--navy)}
+  .cell.feriado{background:var(--green-bg);border-color:#9FD3AA}
+  .cell.afast{background:var(--yellow-bg);border-color:#F0D676}
+  .cell .c-top{display:flex;justify-content:space-between;align-items:baseline;gap:4px}
+  .cell .c-dia{font-size:14px;font-weight:700}
+  .cell .c-dow{display:none}
+  .cell .c-saldo{font-size:12px;font-weight:700}
+  .cell .c-tipo{font-size:12px;font-weight:600;color:var(--muted)}
+  .cell.plantao .c-tipo{color:var(--navy)}
+  .cell.feriado .c-tipo{color:var(--green-t)}
+  .cell.afast .c-tipo{color:var(--yellow-t)}
+  .cell .c-reg{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+  .cell .c-hc{margin-top:auto;font-size:13px;font-weight:700}
+  .cell.quiet .c-dia{color:var(--muted)}
+  .m-tag{font-size:10px;font-weight:700;color:var(--orange-t);background:var(--orange-bg);border-radius:3px;padding:0 4px;line-height:16px}
+  .occ{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+  .occ li{display:flex;gap:8px;align-items:flex-start}
+
+  .tbox{overflow-x:auto;border:1px solid var(--line2);border-radius:var(--r-ctl)}
+  table.t{width:100%;border-collapse:collapse;font-size:13.5px;min-width:760px}
+  table.t caption{text-align:left;padding:0 0 8px;font-size:13px;color:var(--muted)}
+  table.t th{font-size:12px;font-weight:700;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:#FAFBFD}
+  table.t td{padding:8px 12px;border-bottom:1px solid var(--line2)}
+  table.t .r{text-align:right}
+  table.t th[scope=row]{font-weight:600;background:transparent;border-bottom:1px solid var(--line2);color:var(--text)}
+  table.t tr.quiet td,table.t tr.quiet th{color:var(--muted)}
+  table.t tr.feriado td,table.t tr.feriado th{background:#F3FAF4}
+  table.t tr.afast td,table.t tr.afast th{background:#FFFBEA}
+  table.t tr.sub td{font-weight:700;background:var(--bg);border-bottom:1px solid var(--line)}
+
+  .conf{padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+  .conf-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .conf-head .who{display:flex;align-items:center;gap:10px}
+  .conf-ico{width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none}
+  .conf-grid{display:flex;flex-wrap:wrap;gap:12px}
+  .conf-grid div{flex:1 1 200px;background:var(--bg);border-radius:var(--r-ctl);padding:12px 14px}
+  .conf-grid .k{font-size:12px;font-weight:600;color:var(--muted)}
+  .conf-grid .v{font-size:18px;font-weight:700;margin-top:2px}
+  .conf-grid .d{font-size:12px;font-weight:600;margin-top:2px}
+  .conf details{font-size:14px}
+  .conf summary{cursor:pointer;color:var(--blue);font-weight:600;padding:4px 0;display:inline-block}
+  .conf ul{margin:8px 0 0;padding-left:20px;color:var(--muted)}
+  .conf li{margin-bottom:4px}
+  footer.foot{font-size:13px;color:var(--muted);padding-bottom:40px}
+
+  /* painel de resumo */
+  .overlay{position:fixed;inset:0;background:rgba(23,35,64,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
+  .panel{background:var(--surface);border-radius:var(--r-card);width:min(680px,100%);max-height:calc(100vh - 40px);display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(23,35,64,.25)}
+  .panel-head{padding:18px 20px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .panel-head h2{font-size:18px;font-weight:700}
+  .panel-body{padding:16px 20px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+  .panel-body label{font-size:13px;font-weight:600;color:var(--muted)}
+  .panel textarea{width:100%;min-height:340px;font-family:inherit;font-size:14px;line-height:1.55;padding:12px;border:1px solid #C5CFDF;border-radius:var(--r-ctl);resize:vertical;color:var(--text)}
+  .panel-foot{padding:14px 20px;border-top:1px solid var(--line2);display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:12px 18px;border-radius:var(--r-ctl);font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+  .mobile-bar{display:none}
+
+  /* ---------- celular ---------- */
+  @media (max-width:720px){
+    .wrap{padding-left:16px;padding-right:16px}
+    .actions .btn .lbl{display:none}
+    .actions .btn{width:44px;padding:0}
+    #btnResumoTop{display:none}
+    .brand{font-size:15px}
+    .import{padding-top:24px}
+    .import h1{font-size:23px}
+    .ctx-name h1{font-size:19px}
+    .ctx-right{width:100%}
+    .ctx-right .field{flex:1 1 100%;min-width:0}
+    .main{gap:20px;padding-top:16px;padding-bottom:110px}
+    .hero,.cascade,.dias{padding:18px}
+    .hero .big{font-size:46px}
+    .chart{height:210px;gap:8px;padding:0}
+    .chart-labels{gap:8px;padding:0}
+    .chart-labels div{font-size:11.5px}
+    .chart .val{font-size:13px}
+    .weeks{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scroll-snap-type:x mandatory}
+    .week{flex:0 0 170px;scroll-snap-align:start}
+    .cal{display:flex;flex-direction:column;gap:6px}
+    .cal .dow,.cell.blank,.cell.quiet{display:none}
+    .cell{min-height:0;display:grid;grid-template-columns:72px 1fr auto;grid-template-areas:"dia tipo saldo" "dia reg hc";column-gap:10px;padding:10px 12px}
+    .cell .c-top{display:contents}
+    .cell .c-dia{grid-area:dia;align-self:center;line-height:1.2}
+    .cell .c-dow{display:block;font-size:11px;font-weight:600;color:var(--muted)}
+    .cell .c-saldo{grid-area:saldo;text-align:right}
+    .cell .c-tipo{grid-area:tipo}
+    .cell .c-reg{grid-area:reg}
+    .cell .c-hc{grid-area:hc;margin-top:0;text-align:right}
+    .mobile-bar{display:block;position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));z-index:10}
+    .mobile-bar .btn{width:100%;min-height:48px;font-size:15px}
+    .panel textarea{min-height:260px}
+  }
+  @media print{
+    .topbar .actions,.tabs,.mobile-bar,.seg,#secImport{display:none !important}
+    body{background:#fff}
+    .card{break-inside:avoid}
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div>
-      <div class="kicker">HU Brasil · Gestão da Frequência</div>
-      <h1>Análise de Saldo de Frequência</h1>
-    </div>
-    <div class="toolbar noprint hidden" id="toolbar">
-      <button id="btnCopiar" class="primary">Copiar resumo para o empregado</button>
-      <button id="btnNovo">Importar outro relatório</button>
-    </div>
-  </header>
 
-  <section id="secImport" class="noprint">
-    <p class="sub">Importe o <strong>Relatório de Frequência</strong> do MentorH em PDF. O sistema refaz a conferência semana a semana e mostra como o saldo do mês é formado, e por que ele não é a soma da coluna <em>Saldo Diário</em>.</p>
-    <label class="drop" id="drop" tabindex="0">
-      <div class="big">Arraste o PDF aqui ou clique para escolher</div>
-      <small>Aceita um ou vários relatórios (inclusive PDFs com mais de um empregado). O arquivo é lido no próprio navegador e não é enviado a lugar nenhum.</small>
-      <input type="file" id="file" accept="application/pdf,.pdf" multiple hidden>
-    </label>
-    <div id="msg" class="msg hidden"></div>
-  </section>
-
-  <div id="resultado" class="hidden">
-    <div class="picker noprint hidden" id="picker">
-      <label for="selEmp"><strong>Relatório:</strong></label>
-      <select id="selEmp"></select>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+      <span>Análise de Saldo de Frequência</span>
     </div>
-
-    <section class="card" id="secEmp"></section>
-    <section id="secKpi"></section>
-    <section id="secPonte"></section>
-    <section id="secGrupos"></section>
-    <section id="secSemanas"></section>
-    <section id="secConf"></section>
+    <div class="actions hidden" id="topActions">
+      <button class="btn" id="btnImportar" aria-label="Importar relatórios">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>
+        <span class="lbl">Importar relatórios</span>
+      </button>
+      <button class="btn primary" id="btnResumoTop">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>
+        <span class="lbl">Resumo para o empregado</span>
+      </button>
+    </div>
   </div>
+</header>
 
-  <footer>Os cálculos usam as regras do próprio relatório: CH contratual diária nos dias úteis da jornada (feriados não contam), semanas de domingo a sábado e Horas Consideradas (HC) como CH executada.</footer>
+<!-- IMPORTAÇÃO -->
+<section id="secImport">
+  <div class="wrap import">
+    <div class="import-main">
+      <div>
+        <h1>Importe o Relatório de Frequência</h1>
+        <p class="muted" style="margin-top:8px;max-width:620px">O sistema recalcula o mês semana a semana e mostra ao empregado por que o saldo não é a soma da coluna Saldo Diário.</p>
+      </div>
+      <label class="drop" id="drop" tabindex="0">
+        <span class="ico" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#154899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg></span>
+        <strong>Arraste os PDFs para esta área</strong>
+        <span class="muted" style="font-size:14px">ou</span>
+        <span class="fake-btn">Escolher arquivos</span>
+        <span class="muted" style="font-size:13px">PDF · um ou vários arquivos · aceita PDF com mais de um empregado</span>
+        <input type="file" id="file" accept="application/pdf,.pdf" multiple class="sr">
+      </label>
+      <div class="card hidden" id="queueCard">
+        <div class="queue-head">
+          <h2 style="font-size:16px">Arquivos</h2>
+          <span class="muted" style="font-size:13px" id="queueSummary"></span>
+        </div>
+        <ul class="queue" id="queue" aria-live="polite"></ul>
+      </div>
+    </div>
+    <aside class="import-side">
+      <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <h2 style="font-size:16px">Qual relatório usar</h2>
+        <div class="sample" aria-hidden="true">
+          <i style="width:62%;height:8px;background:#213D87"></i><i style="width:80%"></i><i style="width:70%"></i>
+          <div class="grid">
+            <i style="background:#B9C4D6"></i><i style="background:#B9C4D6"></i><i style="background:#B9C4D6"></i><i style="background:#B9C4D6"></i><i style="background:#B9C4D6"></i><i style="background:#B9C4D6"></i>
+            <i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i>
+            <i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i>
+          </div>
+          <i style="height:12px;background:#E5ECF7;margin-top:6px"></i>
+        </div>
+        <p class="muted" style="font-size:14px">MentorH › <strong style="color:var(--text)">Ponto Eletrônico – Relatório de Frequência</strong>, exportado em PDF, com o quadro de totais no fim da página.</p>
+      </div>
+      <div class="privacy">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#154899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;margin-top:2px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <p>O arquivo é lido no seu navegador. Nenhum dado é enviado ou guardado.</p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- RESULTADO -->
+<div id="secResult" class="hidden">
+  <section class="context">
+    <div class="wrap" id="ctx"></div>
+  </section>
+  <nav class="tabs" aria-label="Seções da análise">
+    <div class="wrap" id="tabs">
+      <a href="#resumo" class="on">Resumo</a>
+      <a href="#semanas">Semanas</a>
+      <a href="#dias">Dias do mês</a>
+      <a href="#conferencia">Conferência</a>
+    </div>
+  </nav>
+  <main class="wrap main">
+    <section id="resumo" class="resumo"></section>
+    <section id="semanas"></section>
+    <section id="dias" class="card dias"></section>
+    <section id="conferencia" class="card conf"></section>
+  </main>
+  <footer class="wrap foot">O PDF é lido no navegador e nenhum dado é enviado.</footer>
+  <div class="mobile-bar">
+    <button class="btn primary" id="btnResumoMob">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>
+      Resumo para o empregado
+    </button>
+  </div>
+</div>
+
+<!-- painel do resumo -->
+<div class="overlay hidden" id="overlay">
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+    <div class="panel-head">
+      <h2 id="panelTitle">Resumo para o empregado</h2>
+      <button class="btn icon" id="btnFechar" aria-label="Fechar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="panel-body">
+      <label for="resumoTxt">Revise ou ajuste o texto antes de copiar.</label>
+      <textarea id="resumoTxt"></textarea>
+    </div>
+    <div class="panel-foot">
+      <button class="btn" id="btnCancelar">Fechar</button>
+      <button class="btn primary" id="btnCopiar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>
+        Copiar texto
+      </button>
+    </div>
+  </div>
 </div>
 <div id="toast" class="toast hidden" role="status"></div>
 
@@ -160,270 +389,462 @@ import { parseReport, analisar, fmt, DIAS_NOME, MESES } from './parser.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const sgn = (m) => `<span class="num ${m < 0 ? 'neg' : m > 0 ? 'pos' : ''}">${fmt(m, true)}</span>`;
-const hh = m => `<span class="num">${fmt(m)}</span>`;
 const dd = n => String(n).padStart(2, '0');
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 const plural = (n, s, p) => n === 1 ? s : p;
+const sinal = m => m == null ? '' : (m > 0 ? '+' : m < 0 ? '−' : '') + fmt(Math.abs(m));
+const cls = m => m > 0 ? 'pos' : m < 0 ? 'neg' : 'zero';
+const ICON_OK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
 
+const CONECT = new Set(['de','da','do','das','dos','e','em','para','a','o']);
+function titulo(s) {
+  return String(s || '').toLowerCase().split(/(\s+)/).map((w, i) => (i > 0 && CONECT.has(w)) ? w : w.replace(/^\p{L}/u, c => c.toUpperCase())).join('');
+}
+
+// ---------- leitura do PDF ----------
 let pdfjs = null;
 async function loadPdfjs() {
   if (pdfjs) return pdfjs;
   pdfjs = await import('./pdf.min.js');
-  try { await import('./pdf.worker.min.js'); } catch (e) { pdfjs.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js'; }
-  if (!pdfjs.GlobalWorkerOptions.workerSrc) pdfjs.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
+  try { await import('./pdf.worker.min.js'); } catch (e) { /* usa worker separado */ }
+  pdfjs.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
   return pdfjs;
 }
-
-async function lerPdf(file) {
+async function lerPdf(file, onPage) {
   const lib = await loadPdfjs();
-  const data = new Uint8Array(await file.arrayBuffer());
-  const doc = await lib.getDocument({ data, isEvalSupported: false, verbosity: 0 }).promise;
+  const doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false, verbosity: 0 }).promise;
   const pages = [];
   for (let p = 1; p <= doc.numPages; p++) {
-    const pg = await doc.getPage(p);
-    const tc = await pg.getTextContent();
+    onPage && onPage(p, doc.numPages);
+    const tc = await (await doc.getPage(p)).getTextContent();
     pages.push(tc.items.map(i => ({ str: i.str, x: i.transform[4], y: i.transform[5] })));
   }
   return pages;
 }
 
-let relatorios = [];
+// ---------- fila de importação ----------
+let fila = [];        // {id, nome, estado: 'lendo'|'pronto'|'erro', msg, pag, total, rels:[]}
+let relatorios = [];  // {arquivo, emp}
+let atual = null;
 
-function msg(text, tipo = 'info') { const m = $('msg'); m.className = 'msg ' + tipo; m.innerHTML = text; m.classList.toggle('hidden', !text); }
-
-async function importar(files) {
-  files = [...files].filter(f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf');
-  if (!files.length) { msg('Escolha um arquivo PDF do Relatório de Frequência.', 'err'); return; }
-  msg('Lendo ' + files.length + ' ' + plural(files.length, 'arquivo', 'arquivos') + '…');
-  const novos = [], falhas = [];
-  for (const f of files) {
-    try {
-      const emps = parseReport(await lerPdf(f));
-      const validos = emps.filter(e => e.mes != null && e.ano && Object.keys(e.dias).length);
-      if (!validos.length) falhas.push(f.name);
-      validos.forEach(e => novos.push({ arquivo: f.name, emp: e }));
-    } catch (err) { console.error(err); falhas.push(f.name); }
-  }
-  if (!novos.length) { msg('Não encontrei um Relatório de Frequência do MentorH em: ' + falhas.map(esc).join(', ') + '. Confira se é o relatório “Ponto Eletrônico – Relatório de Frequência” exportado em PDF.', 'err'); return; }
-  relatorios = novos;
-  msg(falhas.length ? 'Alguns arquivos não foram reconhecidos: ' + falhas.map(esc).join(', ') : '', falhas.length ? 'err' : 'info');
-  const sel = $('selEmp');
-  sel.innerHTML = relatorios.map((r, i) => `<option value="${i}">${esc(r.emp.nome)} — ${cap(MESES[r.emp.mes])}/${r.emp.ano}</option>`).join('');
-  $('picker').classList.toggle('hidden', relatorios.length < 2);
-  $('secImport').classList.add('hidden');
-  $('resultado').classList.remove('hidden');
-  $('toolbar').classList.remove('hidden');
-  render(0);
+function renderFila() {
+  $('queueCard').classList.toggle('hidden', !fila.length);
+  const n = k => fila.filter(f => f.estado === k).length;
+  const partes = [];
+  if (n('pronto')) partes.push(n('pronto') + ' ' + plural(n('pronto'), 'pronto', 'prontos'));
+  if (n('lendo')) partes.push(n('lendo') + ' lendo');
+  if (n('erro')) partes.push(n('erro') + ' com problema');
+  $('queueSummary').textContent = partes.join(' · ');
+  $('queue').innerHTML = fila.map(f => {
+    if (f.estado === 'lendo') return `<li>
+      <span class="q-ico" style="background:var(--blue-bg)" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#154899" stroke-width="2" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/></svg></span>
+      <div class="q-body"><div class="q-name">${esc(f.nome)}</div><div class="q-sub">${f.total ? `Lendo página ${f.pag} de ${f.total}…` : 'Abrindo arquivo…'}</div>
+      <div class="progress"><div style="width:${f.total ? Math.round(f.pag / f.total * 100) : 5}%"></div></div></div></li>`;
+    if (f.estado === 'erro') return `<li>
+      <span class="q-ico" style="background:var(--red-bg)" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2.5" stroke-linecap="round"><path d="M12 7v6M12 17h.01"/></svg></span>
+      <div class="q-body"><div class="q-name">${esc(f.nome)}</div><div class="q-sub err">${esc(f.msg)}</div></div>
+      <button class="btn" data-remover="${f.id}">Remover</button></li>`;
+    const r = f.rels;
+    const desc = r.length === 1
+      ? `1 empregado · ${cap(MESES[r[0].emp.mes])}/${r[0].emp.ano}${r[0].ok ? ' · totais conferem' : ' · confira os totais'}`
+      : `${r.length} empregados`;
+    return `<li>
+      <span class="q-ico" style="background:var(--green-bg)" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E6B30" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
+      <div class="q-body"><div class="q-name">${esc(f.nome)}</div><div class="q-sub">${desc}</div></div>
+      <button class="btn" data-ver="${relatorios.indexOf(r[0])}">Ver análise</button></li>`;
+  }).join('');
 }
 
-let atual = null;
+let seq = 0;
+async function importar(files) {
+  files = [...files];
+  if (!files.length) return;
+  const itens = files.map(f => ({ id: ++seq, nome: f.name, estado: 'lendo', pag: 0, total: 0, rels: [], file: f }));
+  fila.push(...itens);
+  renderFila();
+  let primeiro = null;
+  for (const it of itens) {
+    const f = it.file;
+    if (!(/\.pdf$/i.test(f.name) || f.type === 'application/pdf')) {
+      it.estado = 'erro';
+      it.msg = /\.(xlsx?|xlsm|csv|ods)$/i.test(f.name)
+        ? 'Este arquivo é uma planilha. Envie o PDF do “Ponto Eletrônico – Relatório de Frequência”.'
+        : 'Formato não aceito. Envie o PDF do “Ponto Eletrônico – Relatório de Frequência”.';
+      renderFila(); continue;
+    }
+    try {
+      const pages = await lerPdf(f, (p, t) => { it.pag = p; it.total = t; renderFila(); });
+      const emps = parseReport(pages).filter(e => e.mes != null && e.ano && Object.keys(e.dias).length);
+      if (!emps.length) {
+        it.estado = 'erro';
+        it.msg = 'Não encontrei a tabela diária do Relatório de Frequência neste PDF. Confira se é o relatório “Ponto Eletrônico – Relatório de Frequência”.';
+      } else {
+        it.estado = 'pronto';
+        emps.forEach(e => {
+          const A = analisar(e);
+          const r = { arquivo: f.name, emp: e, ok: A.conf.length > 0 && A.conf.every(c => c.ok) };
+          relatorios.push(r); it.rels.push(r);
+        });
+        if (primeiro == null) primeiro = relatorios.indexOf(it.rels[0]);
+      }
+    } catch (err) {
+      console.error(err);
+      it.estado = 'erro';
+      it.msg = 'Não foi possível ler este PDF. Ele pode estar protegido ou corrompido.';
+    }
+    renderFila();
+  }
+  if (primeiro != null && fila.every(f => f.estado !== 'erro')) abrir(primeiro);
+}
+
+$('queue').addEventListener('click', e => {
+  const ver = e.target.closest('[data-ver]'); const rem = e.target.closest('[data-remover]');
+  if (ver) abrir(+ver.dataset.ver);
+  if (rem) { fila = fila.filter(f => f.id !== +rem.dataset.remover); renderFila(); }
+});
+
+function mostrarImport() {
+  $('secResult').classList.add('hidden'); $('secImport').classList.remove('hidden');
+  $('topActions').classList.toggle('hidden', !relatorios.length);
+  $('btnResumoTop').classList.add('hidden');
+  window.scrollTo(0, 0);
+}
+
+function abrir(i) {
+  $('secImport').classList.add('hidden'); $('secResult').classList.remove('hidden');
+  $('topActions').classList.remove('hidden'); $('btnResumoTop').classList.remove('hidden');
+  render(i); window.scrollTo(0, 0);
+}
+
+// ---------- resultado ----------
+let modoDias = 'cal';
+
 function render(i) {
   const A = analisar(relatorios[i].emp);
-  atual = A;
+  atual = { A, i };
   const { emp, M, semanas, grupos, conf } = A;
-  const mesNome = cap(MESES[emp.mes]);
   const mm = dd(emp.mes + 1);
+  const confOk = conf.length > 0 && conf.every(c => c.ok);
 
-  // ---- Empregado
-  $('secEmp').innerHTML = `
-    <div class="emp-head">
-      <div><div class="kicker">${mesNome} / ${emp.ano}</div><div class="emp-name">${esc(emp.nome)}</div></div>
-      <div class="num" style="color:var(--muted)">Matrícula <strong style="color:var(--ink)">${esc(emp.matricula)}</strong></div>
+  // contexto
+  const cargo = titulo((emp.cargo.split(' - ')[0] || '').trim());
+  const admissao = (emp.cargo.match(/Admiss[ãa]o:\s*([\d/]+)/) || [])[1] || '';
+  const lotacao = emp.lotacao.replace(/\s*\(\d+\)\s*$/, '');
+  const jornadas = Object.values(emp.jornadas);
+  const jorn = jornadas.length ? jornadas.map(j => `${(j.descricao.match(/\d{2}:\d{2}\s*[àa]s\s*\d{2}:\d{2}/i) || [j.descricao])[0].replace(/\s*[àa]s\s*/i, ' às ')} (código ${j.codigo})`).join(', ') : emp.jornadaPadrao;
+  const diasTxt = A.diasContrat.length >= 7 ? 'todos os dias' : `de ${DIAS_NOME[A.diasContrat[0]].toLowerCase()} a ${DIAS_NOME[A.diasContrat.at(-1)].toLowerCase()}`;
+  const hom = emp.homologada.match(/HOMOLOGADA:\s*(.*?)\s+em\s+([\d/]+)/i);
+  const opts = relatorios.map((r, k) => `<option value="${k}" ${k === i ? 'selected' : ''}>${relatorios.length > 1 ? esc(titulo(r.emp.nome)) + ' · ' : ''}${cap(MESES[r.emp.mes])}/${r.emp.ano}</option>`).join('');
+
+  $('ctx').innerHTML = `
+    <div class="ctx-row">
+      <div style="min-width:0">
+        <div class="ctx-name"><h1>${esc(titulo(emp.nome))}</h1><span class="chip neutral n">Mat. ${esc(emp.matricula)}</span></div>
+        <p class="ctx-sub">${esc(cargo)} · ${esc(lotacao)} · Jornada ${esc(jorn)} · ${fmt(A.semanal)} semanais, ${fmt(A.diaria)} por dia ${diasTxt}</p>
+      </div>
+      <div class="ctx-right">
+        <label class="field">${relatorios.length > 1 ? 'Relatório' : 'Competência'}
+          <select id="selRel" ${relatorios.length < 2 ? 'disabled' : ''}>${opts}</select>
+        </label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;padding-bottom:7px">
+          ${hom ? `<span class="chip ok">${ICON_OK}Homologada em ${esc(hom[2])}</span>` : `<span class="chip warn">Não homologada</span>`}
+          ${conf.length ? (confOk ? `<a href="#conferencia" class="chip info" style="text-decoration:none">${ICON_OK}Totais conferem com o relatório</a>` : `<a href="#conferencia" class="chip warn" style="text-decoration:none">Totais com diferença</a>`) : ''}
+        </div>
+      </div>
     </div>
-    <div class="meta">
-      <div><span>Cargo</span>${esc(emp.cargo)}</div>
-      <div><span>Lotação de exercício</span>${esc(emp.lotacao)}</div>
-      <div><span>Unidade</span>${esc(emp.unidade)}</div>
-      <div><span>Jornada padrão</span>${esc(emp.jornadaPadrao)}</div>
-      <div><span>CH contratual</span>${fmt(A.semanal)} semanais · ${fmt(A.diaria)} diárias (${A.diasContrat.map(d => DIAS_NOME[d].slice(0,3).toLowerCase()).join(', ')})</div>
-      ${emp.homologada ? `<div><span>Situação</span>${esc(emp.homologada.replace(/\.$/, ''))}</div>` : ''}
-    </div>`;
+    <details class="ctx-details">
+      <summary>Dados do cadastro</summary>
+      <dl>
+        <div><dt>Unidade</dt><dd>${esc(emp.unidade)}</dd></div>
+        <div><dt>Lotação de exercício</dt><dd>${esc(emp.lotacao)}</dd></div>
+        <div><dt>Cargo</dt><dd>${esc(emp.cargo.replace(/\s*-\s*Admiss[ãa]o:.*$/, ''))}</dd></div>
+        ${admissao ? `<div><dt>Admissão</dt><dd>${esc(admissao)}</dd></div>` : ''}
+        ${emp.vinculo ? `<div><dt>Vínculo</dt><dd>${esc(emp.vinculo)}</dd></div>` : ''}
+        ${hom ? `<div><dt>Homologação</dt><dd>${esc(titulo(hom[1]))} em ${esc(hom[2])}</dd></div>` : ''}
+      </dl>
+    </details>`;
+  const sel = $('selRel'); if (sel) sel.onchange = e => render(+e.target.value);
 
-  // ---- KPIs
+  // ---------- resumo ----------
   const trab = grupos.find(g => g.nome === 'Trabalho efetivo');
-  const afs = grupos.filter(g => g.nome !== 'Trabalho efetivo' && g.saldo !== 0);
-  $('secKpi').innerHTML = `
-    <h2>Resumo do mês</h2>
-    <p class="sub">O número que vale é o saldo do mês: CH executada menos CH contratual.</p>
-    <div class="kpis">
-      <div class="kpi main"><div class="lbl">Saldo do mês</div><div class="val">${sgn(M.saldo)}</div>
-        <div class="note">CH executada ${fmt(M.hc)} − CH contratual ${fmt(M.contratual)}</div></div>
-      <div class="kpi"><div class="lbl">Soma da coluna Saldo Diário</div><div class="val">${sgn(M.saldoDiario)}</div>
-        <div class="note">${M.saldoDiario === M.saldo ? 'Igual ao saldo do mês só por coincidência (veja abaixo)' : 'Não é o saldo do mês (veja abaixo)'}</div></div>
-      ${trab && afs.length ? `<div class="kpi"><div class="lbl">Saldo só dos dias trabalhados</div><div class="val">${sgn(trab.saldo)}</div>
-        <div class="note">Sem ${afs.map(g => g.nome.toLowerCase()).join(', ')}: ${fmt(trab.hc)} considerados × ${fmt(trab.contratual)} contratuais</div></div>` : ''}
-      ${afs.map(g => `<div class="kpi"><div class="lbl">Efeito de ${esc(g.nome.toLowerCase())}</div><div class="val">${sgn(g.saldo)}</div>
-        <div class="note">${fmt(g.hc)} creditados × ${fmt(g.contratual)} contratuais no período</div></div>`).join('')}
-    </div>`;
+  const afs = grupos.filter(g => g.nome !== 'Trabalho efetivo' && (g.contratual || g.hc));
+  const maxAbs = Math.max(1, ...grupos.map(g => Math.abs(g.saldo)));
+  const linhaGrupo = (nome, s) => `<div class="split-row"><span>${esc(nome)}</span>
+      <div class="track"><div style="width:${Math.max(2, Math.abs(s) / maxAbs * 100)}%;background:${s < 0 ? 'var(--orange)' : s > 0 ? 'var(--blue)' : 'var(--bar-contr)'}"></div></div>
+      <span class="v n ${cls(s)}">${sinal(s)}</span></div>`;
+  const expAfast = afs.map(g => {
+    const chJ = g.nEscala ? Math.round(g.escalada / g.nEscala) : 0;
+    return `Em ${g.nome.toLowerCase()}, o sistema credita a escala prevista (${g.nEscala} ${plural(g.nEscala, 'plantão', 'plantões')}${chJ ? ' × ' + fmt(chJ) : ''} = ${fmt(g.hc)}) contra ${fmt(g.contratual)} contratuais.`;
+  }).join(' ');
 
-  // ---- Ponte
-  const linhas = [];
-  linhas.push({ op: '', lbl: 'Soma da coluna Saldo Diário', d: 'Diferença, dia a dia, entre o que foi registrado e a jornada escalada daquele dia.', v: M.saldoDiario });
-  linhas.push({ op: M.difEscala < 0 ? '−' : '+', lbl: 'Diferença entre a escala e a CH contratual', d: `A escala do mês somou ${fmt(M.escalada)} e a CH contratual é ${fmt(M.contratual)}. Essa diferença não aparece no Saldo Diário, mas entra no saldo.`, v: M.difEscala });
-  if (M.creditoFeriado) linhas.push({ op: '+', lbl: 'Feriados creditados sem escala', d: `Feriado em dia sem plantão: o relatório credita a CH diária (${fmt(A.diaria)}) nas Horas Consideradas.`, v: M.creditoFeriado });
-  if (M.creditoOutros) linhas.push({ op: '+', lbl: 'Outros créditos em dias sem escala', d: 'Abonos ou ocorrências com horas consideradas em dias sem código de jornada.', v: M.creditoOutros });
-  if (M.outros) linhas.push({ op: M.outros < 0 ? '−' : '+', lbl: 'Outros ajustes do relatório', d: 'Diferença entre as Horas Consideradas e a soma de escala + saldo diário (ex.: dias escalados sem saldo diário lançado).', v: M.outros });
+  // cascata
+  const passos = [{ t: 'Soma do Saldo Diário', s: 'o que o empregado soma', v: M.saldoDiario, tipo: 'ini' }];
+  if (M.difEscala) passos.push({ t: M.difEscala < 0 ? 'Escala abaixo da contratual' : 'Escala acima da contratual', s: `${fmt(M.escalada)} escaladas × ${fmt(M.contratual)}`, v: M.difEscala });
+  if (M.creditoFeriado) {
+    const fer = A.dias.filter(d => d.feriado && d.credito).map(d => dd(d.dia) + '/' + mm).join(', ');
+    passos.push({ t: 'Feriado creditado', s: `${fer}, sem plantão`, v: M.creditoFeriado });
+  }
+  if (M.creditoOutros) passos.push({ t: 'Outros créditos', s: 'dias sem código de jornada', v: M.creditoOutros });
+  if (M.outros) passos.push({ t: 'Outros ajustes', s: 'diferenças do relatório', v: M.outros });
+  passos.push({ t: 'Saldo do mês', s: `${fmt(M.hc)} − ${fmt(M.contratual)}`, v: M.saldo, tipo: 'fim' });
+  let run = 0;
+  const barras = passos.map(p => {
+    let de, ate;
+    if (p.tipo === 'ini') { de = 0; ate = p.v; run = p.v; }
+    else if (p.tipo === 'fim') { de = 0; ate = p.v; }
+    else { de = run; ate = run + p.v; run = ate; }
+    return { ...p, de, ate };
+  });
+  const vals = barras.flatMap(b => [b.de, b.ate]).concat(0);
+  let hi = Math.max(...vals), lo = Math.min(...vals);
+  const pad = Math.max(30, (hi - lo) * 0.12); hi += pad; lo -= (lo < 0 ? pad : 0);
+  const H = 200, k = H / (hi - lo || 1), y = v => (hi - v) * k;
+  const cor = b => b.tipo === 'ini' ? ['#8A94A8', 'var(--muted)'] : b.tipo === 'fim' ? ['var(--navy)', 'var(--navy)'] : b.v < 0 ? ['var(--orange)', 'var(--orange-t)'] : ['var(--blue)', 'var(--blue)'];
+  const cols = `grid-template-columns:repeat(${barras.length},minmax(0,1fr))`;
+  const ariaCasc = barras.map(b => `${b.t} ${sinal(b.v).replace('−', 'menos ').replace('+', 'mais ')}`).join(', ');
 
-  const frases = [];
-  frases.push(`<p>Somando a coluna <strong>Saldo Diário</strong>, o resultado é <strong>${fmt(M.saldoDiario, true)}</strong>. Essa coluna só compara o ponto com a <strong>jornada escalada</strong> de cada dia. O saldo oficial compara outra coisa: tudo o que foi considerado no mês (<strong>${fmt(M.hc)}</strong>) com a <strong>CH contratual</strong> do mês (<strong>${fmt(M.contratual)}</strong>), e dá <strong>${fmt(M.saldo, true)}</strong>.</p>`);
-  if (M.difEscala) frases.push(`<p>A escala do mês ficou <strong>${fmt(Math.abs(M.difEscala))} ${M.difEscala < 0 ? 'abaixo' : 'acima'}</strong> da CH contratual. Mesmo sem nenhum atraso ou hora a mais, isso já ${M.difEscala < 0 ? 'tira' : 'acrescenta'} ${fmt(Math.abs(M.difEscala))} do saldo.</p>`);
-  if (M.creditoFeriado) frases.push(`<p>O feriado sem plantão foi creditado com <strong>${fmt(M.creditoFeriado)}</strong>, que soma ao saldo.</p>`);
-  if (M.saldoDiario === M.saldo && (M.difEscala || M.credito || M.outros)) frases.push(`<p><strong>Neste mês os dois valores coincidem por acaso:</strong> os ajustes acima se compensaram. Em outro mês, com outra escala, eles podem ser bem diferentes.</p>`);
+  const frase = (M.saldoDiario === M.saldo && passos.length > 2)
+    ? `Neste mês os dois valores coincidiram <strong>por acaso</strong>: os ajustes se compensaram. Em outro mês podem ser bem diferentes.`
+    : M.saldoDiario === M.saldo
+      ? `Neste mês não houve diferença entre a escala e a CH contratual, então a soma do Saldo Diário é igual ao saldo do mês.`
+      : `A diferença entre a soma do Saldo Diário (${sinal(M.saldoDiario)}) e o saldo do mês (${sinal(M.saldo)}) vem dos ajustes acima, que não aparecem na coluna Saldo Diário.`;
 
-  $('secPonte').innerHTML = `
-    <h2>Por que o saldo não é a soma do Saldo Diário</h2>
-    <p class="sub">Do valor que o empregado costuma somar até o saldo oficial do relatório.</p>
-    <div class="card">
-      <table class="bridge">
-        ${linhas.map(l => `<tr><td class="op">${l.op}</td><td>${l.lbl}<small>${l.d}</small></td><td class="v">${sgn(l.v)}</td></tr>`).join('')}
-        <tr class="total"><td class="op">=</td><td>Saldo do mês (CH executada − CH contratual)</td><td class="v">${sgn(M.saldo)}</td></tr>
-      </table>
-      <div class="explica">${frases.join('')}</div>
-    </div>`;
-
-  // ---- Grupos
-  if (grupos.length > 1) {
-    const periodo = g => { const ds = g.dias; return ds.length ? `${dd(Math.min(...ds))} a ${dd(Math.max(...ds))}/${mm}` : ''; };
-    $('secGrupos').innerHTML = `
-      <h2>Trabalho efetivo × afastamentos</h2>
-      <p class="sub">Separa o resultado do que foi trabalhado do efeito dos dias de afastamento, em que o sistema credita a escala prevista.</p>
-      <div class="grupos">
-        ${grupos.map(g => {
-          const ehTrab = g.nome === 'Trabalho efetivo';
-          const chJ = g.nEscala ? Math.round(g.escalada / g.nEscala) : 0;
-          const desc = ehTrab
-            ? `Dias com registro de ponto, folgas e feriados. É o saldo que reflete o que a pessoa efetivamente cumpriu.`
-            : `Período: ${periodo(g)}. Foram creditados ${g.nEscala} ${plural(g.nEscala, 'plantão escalado', 'plantões escalados')}${chJ ? ' de ' + fmt(chJ) : ''} (${fmt(g.hc)}), enquanto a CH contratual desses dias é ${g.nContrat} ${plural(g.nContrat, 'dia', 'dias')} × ${fmt(A.diaria)} = ${fmt(g.contratual)}. ${g.saldo ? `A diferença de ${fmt(g.saldo, true)} vem da escala, não de horas trabalhadas.` : ''}`;
-          return `<div class="card grupo">
-            <h3>${esc(g.nome)}</h3>
-            <table>
-              <tr><td>CH contratual</td><td>${hh(g.contratual)}</td></tr>
-              <tr><td>CH considerada</td><td>${hh(g.hc)}</td></tr>
-              <tr><td>Saldo</td><td>${sgn(g.saldo)}</td></tr>
-            </table>
-            <div class="desc">${desc}</div>
-          </div>`;
+  $('resumo').innerHTML = `
+    <div class="card hero">
+      <div>
+        <div class="lbl">Saldo do mês</div>
+        <div class="big n ${cls(M.saldo)}">${sinal(M.saldo) || '00:00'}</div>
+        <div class="formula n">${fmt(M.hc)} consideradas − ${fmt(M.contratual)} contratuais</div>
+      </div>
+      <div class="split">
+        <h3>De onde vem esse saldo</h3>
+        ${afs.length ? `${trab ? linhaGrupo('Dias trabalhados', trab.saldo) : ''}${afs.map(g => linhaGrupo(g.nome, g.saldo)).join('')}
+          <p>${esc(expAfast)} O resultado do trabalho em si foi ${sinal(trab ? trab.saldo : 0)}.</p>`
+        : `<p>Sem afastamentos no mês: o saldo reflete só os dias trabalhados.</p>`}
+      </div>
+    </div>
+    <div class="card cascade">
+      <div>
+        <h2>Por que o saldo não é a soma do Saldo Diário</h2>
+        <p class="intro">O Saldo Diário compara o ponto com o plantão do dia. O saldo do mês compara tudo o que foi considerado com a CH contratual.</p>
+      </div>
+      <div class="chart" style="${cols}" role="img" aria-label="Gráfico em cascata: ${esc(ariaCasc)}">
+        <div class="zero-line" aria-hidden="true" style="top:${y(0) + 30}px"></div>
+        ${barras.map(b => {
+          const top = y(Math.max(b.de, b.ate)), h = Math.max(2, y(Math.min(b.de, b.ate)) - top), c = cor(b);
+          return `<div class="col" aria-hidden="true"><div class="val n" style="top:${top - 24}px;color:${c[1]}">${sinal(b.v) || '00:00'}</div><div class="bar" style="top:${top}px;height:${h}px;background:${c[0]}"></div></div>`;
         }).join('')}
-        <div class="card grupo">
-          <h3>Mês completo</h3>
-          <table>
-            <tr><td>CH contratual</td><td>${hh(M.contratual)}</td></tr>
-            <tr><td>CH considerada</td><td>${hh(M.hc)}</td></tr>
-            <tr><td>Saldo</td><td>${sgn(M.saldo)}</td></tr>
-          </table>
-          <div class="desc">${grupos.map(g => `${g.nome} ${fmt(g.saldo, true)}`).join(' · ')} = ${fmt(M.saldo, true)}</div>
-        </div>
-      </div>`;
-  } else $('secGrupos').innerHTML = '';
-
-  // ---- Semanas
-  const badge = (s, pre) => `<span class="badge ${s === 'Deficitária' ? 'b-def' : s === 'Superavitária' ? 'b-sup' : 'b-ade'}">${pre}${s}</span>`;
-  $('secSemanas').innerHTML = `
-    <h2>Análise semanal</h2>
-    <p class="sub">Semanas de domingo a sábado. A escala é classificada comparando a CH escalada (mais créditos de feriado) com a CH contratual da semana.</p>
-    ${semanas.map(w => {
-      const obs = [];
-      if (w.difEscala) obs.push(`Escala ${fmt(Math.abs(w.difEscala))} ${w.difEscala < 0 ? 'abaixo' : 'acima'} da CH contratual da semana.`);
-      w.dias.filter(d => d.feriado).forEach(d => obs.push(`Feriado em ${dd(d.dia)}/${mm}: não conta na CH contratual${d.credito ? ` e foi creditado com ${fmt(d.credito)}` : ''}.`));
-      if (w.afast.length) obs.push(`Semana com ${w.afast.join(', ').toLowerCase()}.`);
-      return `<div class="card semana">
-        <div class="semana-h">
-          <h3>Semana ${w.n} <span style="font-family:var(--sans);font-weight:400;font-size:14px;color:var(--muted)">· ${w.periodo}/${mm}</span></h3>
-          <div class="badges">${badge(w.statusEscala, 'Escala ')}${w.afast.map(a => `<span class="badge b-afa">${esc(a)}</span>`).join('')}<span class="badge b-ade">Saldo da semana ${fmt(w.saldo, true)}</span></div>
-        </div>
-        <div class="tscroll"><table class="dias">
-          <thead><tr><th>Data</th><th>Dia</th><th class="r">CH contratual</th><th class="r">CH escalada</th><th>Registros</th><th class="r">CH considerada</th><th class="r">Saldo diário</th><th>Ocorrência</th></tr></thead>
-          <tbody>${w.dias.map(d => {
-            const cls = d.feriado ? 'fer' : d.afast ? 'afa' : (!d.codigo && !d.hc && !d.registros) ? 'fds' : '';
-            const oc = [/^ferias$/i.test(d.ocorrencia) ? 'Férias' : d.ocorrencia, d.obs].filter(Boolean).join(' — ');
-            return `<tr class="${cls}">
-              <td class="num">${dd(d.dia)}/${mm}</td>
-              <td>${DIAS_NOME[d.dow]}</td>
-              <td class="r num">${d.contratual ? fmt(d.contratual) : d.feriado ? 'feriado' : ''}</td>
-              <td class="r num">${d.escalada ? fmt(d.escalada) : ''}</td>
-              <td class="num">${esc(d.registros || (d.regTexto && !/^(s[áa]bado|domingo)$/i.test(d.regTexto) ? d.regTexto : ''))}</td>
-              <td class="r num">${d.hc ? fmt(d.hc) : ''}${d.credito ? '<span class="tag">crédito</span>' : ''}</td>
-              <td class="r">${d.saldo != null ? sgn(d.saldo) : ''}</td>
-              <td>${esc(cap(oc))}</td></tr>`;
-          }).join('')}</tbody>
-          <tfoot><tr><td colspan="2">CH semanal</td><td class="r num">${fmt(w.contratual)}</td><td class="r num">${fmt(w.escalada)}${w.credito ? ` <span class="tag">+${fmt(w.credito)}</span>` : ''}</td><td></td><td class="r num">${fmt(w.hc)}</td><td class="r">${sgn(w.saldoDiario)}</td><td>${sgn(w.saldo)} na semana</td></tr></tfoot>
-        </table></div>
-        ${obs.length ? `<div class="obs"><strong>Observação:</strong> ${obs.join(' ')}</div>` : ''}
-      </div>`;
-    }).join('')}`;
-
-  // ---- Conferência
-  const allOk = conf.length && conf.every(c => c.ok);
-  $('secConf').innerHTML = `
-    <h2>Conferência com o relatório</h2>
-    <p class="sub">${allOk ? 'Os totais recalculados batem com os totais impressos no relatório.' : conf.length ? 'Há diferença entre o recalculado e o relatório: confira as ocorrências do mês (pode haver regra específica, como ponto facultativo ou recesso).' : 'O relatório não trouxe o quadro de totais para comparar.'}</p>
-    <div class="card">
-      <table class="conf">
-        <thead><tr><th>Item</th><th>Recalculado</th><th>No relatório</th><th></th></tr></thead>
-        <tbody>${conf.map(c => `<tr><td>${c.item}</td><td class="num">${fmt(c.calc, c.item === 'Saldo do mês')}</td><td class="num">${fmt(c.rel, c.item === 'Saldo do mês')}</td><td class="${c.ok ? 'ok' : 'nok'}">${c.ok ? '✓ confere' : '✗ ' + fmt(c.calc - c.rel, true)}</td></tr>`).join('')}</tbody>
-      </table>
-      <details>
-        <summary>Como o cálculo é feito</summary>
-        <ul>
-          <li><strong>CH contratual diária</strong> = CH semanal ÷ dias da jornada (${fmt(A.semanal)} ÷ ${A.diasContrat.length} = ${fmt(A.diaria)}), lançada de ${DIAS_NOME[A.diasContrat[0]].toLowerCase()} a ${DIAS_NOME[A.diasContrat[A.diasContrat.length - 1]].toLowerCase()}. Feriados não entram.</li>
-          <li><strong>CH escalada</strong> = carga da jornada (${Object.values(emp.jornadas).map(j => j.codigo + ': ' + fmt(j.ch)).join(', ') || '—'}) em cada dia com código de jornada, inclusive nos afastamentos.</li>
-          <li><strong>CH considerada</strong> = coluna Horas Consideradas (HC) do relatório; a soma dela é a CH executada.</li>
-          <li><strong>Saldo do mês</strong> = CH executada − CH contratual do mês.</li>
-          <li><strong>Trabalho efetivo</strong> exclui os dias de afastamento (férias, licenças, atestados etc.), em que o sistema credita a escala prevista.</li>
-        </ul>
-      </details>
+      </div>
+      <div class="chart-labels" style="${cols}">${barras.map(b => `<div><b>${esc(b.t)}</b><span>${esc(b.s)}</span></div>`).join('')}</div>
+      <div class="note">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#154899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <span>${frase}</span>
+      </div>
     </div>`;
+
+  // ---------- semanas ----------
+  const maxW = Math.max(1, ...semanas.flatMap(w => [w.contratual, w.escalada + w.credito, w.hc]));
+  const chipEsc = s => s === 'Deficitária' ? 'warn' : s === 'Superavitária' ? 'info' : 'neutral';
+  const wbar = (v, c, nome) => `<div class="wbar"><div class="track" title="${nome}"><div style="width:${v / maxW * 100}%;background:${c}"></div></div><span class="n"><span class="sr">${nome} </span>${fmt(v)}</span></div>`;
+  $('semanas').innerHTML = `
+    <div class="sec-head">
+      <div><h2>Semanas</h2><p>Domingo a sábado. A escala é comparada com a CH contratual da semana.</p></div>
+      <div class="legend" aria-hidden="true">
+        <span><i style="background:var(--bar-contr)"></i>Contratual</span>
+        <span><i style="background:var(--navy)"></i>Escalada</span>
+        <span><i style="background:var(--green)"></i>Considerada</span>
+      </div>
+    </div>
+    <div class="weeks">${semanas.map(w => {
+      const obs = [];
+      if (w.difEscala) obs.push(`Escala ${fmt(Math.abs(w.difEscala))} ${w.difEscala < 0 ? 'abaixo' : 'acima'} da CH contratual.`);
+      w.dias.filter(d => d.feriado).forEach(d => obs.push(`Feriado em ${dd(d.dia)}/${mm}${d.credito ? ` creditado com ${fmt(d.credito)}` : ''}.`));
+      if (w.afast.length) obs.push(`${w.afast.join(', ')} na semana.`);
+      return `<article class="card week ${w.statusEscala === 'Deficitária' ? 'alert' : ''}">
+        <div class="week-top"><h3>Semana ${w.n}</h3><span class="n">${w.periodo}/${mm}</span></div>
+        <span class="chip sm ${chipEsc(w.statusEscala)}" style="align-self:flex-start">Escala ${w.statusEscala.toLowerCase()}</span>
+        <div class="wbars">${wbar(w.contratual, 'var(--bar-contr)', 'Contratual')}${wbar(w.escalada + w.credito, 'var(--navy)', 'Escalada')}${wbar(w.hc, 'var(--green)', 'Considerada')}</div>
+        <div class="week-foot"><span>Saldo da semana</span><span class="n ${cls(w.saldo)}">${sinal(w.saldo) || '00:00'}</span></div>
+        ${obs.length ? `<div class="obs">${esc(obs.join(' '))}</div>` : ''}
+      </article>`;
+    }).join('')}</div>`;
+
+  renderDias(A);
+
+  // ---------- conferência ----------
+  const nomes = { 'CH Contratual Mês': 'CH contratual', 'CH Escalada Mês': 'CH escalada', 'CH Executada': 'Horas consideradas', 'Saldo do mês': 'Saldo do mês' };
+  $('conferencia').innerHTML = `
+    <div class="conf-head">
+      <div class="who">
+        <span class="conf-ico" style="background:${confOk ? 'var(--green-bg)' : 'var(--orange-bg)'}" aria-hidden="true">${confOk
+          ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6B30" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>'
+          : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A84A08" stroke-width="2.5" stroke-linecap="round"><path d="M12 7v6M12 17h.01"/></svg>'}</span>
+        <div>
+          <h2 style="font-size:16px">Conferência com o relatório</h2>
+          <div class="muted" style="font-size:13px">${!conf.length ? 'O relatório não trouxe o quadro de totais para comparar.' : confOk ? `Os ${conf.length} totais recalculados são iguais aos impressos no PDF.` : 'Há diferença entre o recalculado e o relatório. Confira as ocorrências do mês (ponto facultativo, recesso ou outra regra específica).'}</div>
+        </div>
+      </div>
+    </div>
+    ${conf.length ? `<div class="conf-grid">${conf.map(c => `<div>
+      <div class="k">${nomes[c.item] || c.item}</div>
+      <div class="v n">${c.item === 'Saldo do mês' ? sinal(c.calc) : fmt(c.calc)}</div>
+      ${c.ok ? '' : `<div class="d neg n">Relatório: ${c.item === 'Saldo do mês' ? sinal(c.rel) : fmt(c.rel)}</div>`}
+    </div>`).join('')}</div>` : ''}
+    <details>
+      <summary>Como o cálculo é feito</summary>
+      <ul>
+        <li><strong>CH contratual:</strong> ${fmt(A.semanal)} semanais ÷ ${A.diasContrat.length} dias = ${fmt(A.diaria)} por dia, ${diasTxt}. Feriados não contam.</li>
+        <li><strong>CH escalada:</strong> carga da jornada (${jornadas.map(j => j.codigo + ': ' + fmt(j.ch)).join(', ') || '—'}) em cada dia com código de jornada, inclusive nos afastamentos.</li>
+        <li><strong>Horas consideradas:</strong> coluna HC do relatório. A soma é a CH executada.</li>
+        <li><strong>Saldo do mês:</strong> horas consideradas − CH contratual.</li>
+        <li><strong>Dias trabalhados:</strong> exclui os dias de afastamento (férias, licenças, atestados etc.), em que o sistema credita a escala prevista.</li>
+      </ul>
+    </details>`;
+
+  ativarTabs();
 }
 
+function renderDias(A) {
+  const { emp, dias, semanas } = A;
+  const mm = dd(emp.mes + 1);
+  const ehManual = d => /\d{2}:\d{2}\s*m/i.test(d.registros);
+  const regCurto = d => d.registros.replace(/\s*[rmc](?=\s|$|-)/gi, '').replace(/\s*-\s*/g, '–').trim();
+  const tipoDia = d => {
+    if (d.feriado) return { c: 'feriado', t: cap(d.regTexto || d.ocorrencia || 'Feriado').replace(/^Feriado nacional$/i, 'Feriado nacional') };
+    if (d.afast) return { c: 'afast', t: d.afast };
+    if (d.codigo && d.registros) return { c: 'plantao', t: 'Plantão' + (d.escalada ? ' ' + Math.round(d.escalada / 60) + 'h' : '') };
+    if (d.codigo) return { c: 'plantao', t: 'Plantão sem registro' };
+    if (d.registros) return { c: 'plantao', t: 'Registro fora da escala' };
+    if (!d.contratual) return { c: 'quiet', t: 'Descanso' };
+    return { c: 'quiet', t: 'Sem plantão' };
+  };
+  const ocorr = dias.filter(d => d.ocorrencia && !d.feriado && !d.afast);
+
+  let corpo;
+  if (modoDias === 'cal') {
+    const ini = dias[0].dow, cells = [];
+    for (let b = 0; b < ini; b++) cells.push('<div class="cell blank" aria-hidden="true"></div>');
+    dias.forEach(d => {
+      const t = tipoDia(d);
+      const sub = t.c === 'plantao' ? regCurto(d) : t.c === 'feriado' && d.credito ? 'crédito da CH diária' : t.c === 'afast' && d.escalada ? 'plantão creditado' : '';
+      cells.push(`<div class="cell ${t.c}">
+        <div class="c-top"><span class="c-dia n">${dd(d.dia)}<span class="c-dow">${DIAS_NOME[d.dow].slice(0, 3)}</span></span><span class="c-saldo n ${d.saldo != null ? cls(d.saldo) : ''}">${d.saldo != null ? sinal(d.saldo) : ''}</span></div>
+        <div class="c-tipo">${esc(t.t)}</div>
+        <div class="c-reg n">${esc(sub)}${ehManual(d) ? '<span class="m-tag" title="Acerto manual">M</span>' : ''}</div>
+        <div class="c-hc n">${d.hc ? fmt(d.hc) : ''}</div>
+      </div>`);
+    });
+    while (cells.length % 7) cells.push('<div class="cell blank" aria-hidden="true"></div>');
+    corpo = `
+      <div class="legend">
+        <span><i style="background:#fff;border:1.5px solid var(--navy)"></i>Plantão</span>
+        <span><i style="background:var(--green-bg);border:1px solid #9FD3AA"></i>Feriado</span>
+        <span><i style="background:var(--yellow-bg);border:1px solid #F0D676"></i>Afastamento</span>
+        <span><i style="background:var(--bg);border:1px solid var(--line2)"></i>Sem plantão</span>
+        <span><span class="m-tag">M</span>Acerto manual</span>
+      </div>
+      <div class="cal">${DIAS_NOME.map(n => `<div class="dow">${n.slice(0, 3)}</div>`).join('')}${cells.join('')}</div>`;
+  } else {
+    corpo = `<div class="tbox"><table class="t">
+      <caption>Dias de ${cap(MESES[emp.mes])}/${emp.ano}, agrupados por semana</caption>
+      <thead><tr><th scope="col">Data</th><th scope="col">Registros</th><th scope="col" class="r">Contratual</th><th scope="col" class="r">Escalada</th><th scope="col" class="r">Consideradas</th><th scope="col" class="r">Saldo diário</th><th scope="col">Ocorrência</th></tr></thead>
+      <tbody>${semanas.map(w => w.dias.map(d => {
+        const t = tipoDia(d);
+        const rowc = t.c === 'feriado' ? 'feriado' : t.c === 'afast' ? 'afast' : t.c === 'quiet' ? 'quiet' : '';
+        const oc = [d.feriado || d.afast ? t.t : '', !d.feriado && !d.afast ? cap(d.ocorrencia) : '', d.obs].filter(Boolean).join(' — ');
+        return `<tr class="${rowc}">
+          <th scope="row" class="n">${DIAS_NOME[d.dow].slice(0, 3)}, ${dd(d.dia)}/${mm}</th>
+          <td class="n">${esc(regCurto(d))}${ehManual(d) ? ' <span class="m-tag" title="Acerto manual">M</span>' : ''}</td>
+          <td class="r n">${d.contratual ? fmt(d.contratual) : ''}</td>
+          <td class="r n">${d.escalada ? fmt(d.escalada) : ''}</td>
+          <td class="r n">${d.hc ? fmt(d.hc) : ''}${d.credito ? ' <span class="chip sm info" style="min-height:18px;padding:0 6px;font-size:11px">crédito</span>' : ''}</td>
+          <td class="r n ${d.saldo != null ? cls(d.saldo) : ''}">${d.saldo != null ? sinal(d.saldo) : ''}</td>
+          <td>${esc(oc)}</td></tr>`;
+      }).join('') + `<tr class="sub"><td>Semana ${w.n}</td><td></td><td class="r n">${fmt(w.contratual)}</td><td class="r n">${fmt(w.escalada)}${w.credito ? ` <span class="chip sm info" style="min-height:18px;padding:0 6px;font-size:11px">+${fmt(w.credito)}</span>` : ''}</td><td class="r n">${fmt(w.hc)}</td><td class="r n ${cls(w.saldoDiario)}">${sinal(w.saldoDiario) || '00:00'}</td><td class="n">Saldo da semana: <span class="${cls(w.saldo)}">${sinal(w.saldo) || '00:00'}</span></td></tr>`).join('')}</tbody>
+    </table></div>`;
+  }
+
+  $('dias').innerHTML = `
+    <div class="sec-head" style="margin:0">
+      <div><h2>Dias do mês</h2><p>Registros, horas consideradas e saldo diário de cada plantão.</p></div>
+      <div class="seg" role="group" aria-label="Modo de exibição">
+        <button type="button" data-modo="cal" aria-pressed="${modoDias === 'cal'}">Calendário</button>
+        <button type="button" data-modo="tab" aria-pressed="${modoDias === 'tab'}">Tabela</button>
+      </div>
+    </div>
+    ${corpo}
+    ${ocorr.length ? `<ul class="occ">${ocorr.map(d => `<li>${ehManual(d) ? '<span class="m-tag">M</span>' : ''}<span><span class="n">${dd(d.dia)}/${mm}</span> — ${esc(cap(d.ocorrencia))}${ehManual(d) ? ' (registro incluído manualmente)' : ''}${d.obs ? ': ' + esc(d.obs) : ''}.</span></li>`).join('')}</ul>` : ''}`;
+  $('dias').querySelectorAll('[data-modo]').forEach(b => b.onclick = () => { modoDias = b.dataset.modo; renderDias(A); });
+}
+
+// abas: destaca a seção visível
+let obs = null;
+function ativarTabs() {
+  const links = [...document.querySelectorAll('#tabs a')];
+  links.forEach(a => a.onclick = () => { links.forEach(x => x.classList.toggle('on', x === a)); });
+  if (obs) obs.disconnect();
+  if (!('IntersectionObserver' in window)) return;
+  obs = new IntersectionObserver(ents => {
+    ents.forEach(e => { if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id)); });
+  }, { rootMargin: '-80px 0px -60% 0px' });
+  ['resumo', 'semanas', 'dias', 'conferencia'].forEach(id => obs.observe($(id)));
+}
+
+// ---------- resumo para o empregado ----------
 function resumoTexto() {
-  const A = atual; if (!A) return '';
-  const { emp, M, grupos, semanas } = A;
+  const { A } = atual; const { emp, M, grupos, semanas } = A;
   const trab = grupos.find(g => g.nome === 'Trabalho efetivo');
-  const afs = grupos.filter(g => g.nome !== 'Trabalho efetivo');
+  const afs = grupos.filter(g => g.nome !== 'Trabalho efetivo' && (g.contratual || g.hc));
   const L = [];
   L.push(`Análise de saldo – ${cap(MESES[emp.mes])}/${emp.ano}`);
-  L.push(`${emp.nome} – matrícula ${emp.matricula}`);
+  L.push(`${titulo(emp.nome)} – matrícula ${emp.matricula}`);
   L.push('');
-  L.push(`Saldo do mês: ${fmt(M.saldo, true)} (CH executada ${fmt(M.hc)} − CH contratual ${fmt(M.contratual)}).`);
-  L.push(`Soma da coluna Saldo Diário: ${fmt(M.saldoDiario, true)}.`);
+  L.push(`Saldo do mês: ${sinal(M.saldo) || '00:00'} (${fmt(M.hc)} horas consideradas − ${fmt(M.contratual)} de CH contratual).`);
+  L.push(`Soma da coluna Saldo Diário: ${sinal(M.saldoDiario) || '00:00'}.`);
   L.push('');
-  L.push('Por que são valores diferentes:');
-  L.push(`• O Saldo Diário compara o ponto com a jornada escalada de cada dia; o saldo do mês compara as horas consideradas com a CH contratual.`);
+  L.push('Por que o saldo não é a soma do Saldo Diário:');
+  L.push('• O Saldo Diário compara o ponto com o plantão de cada dia; o saldo do mês compara as horas consideradas com a CH contratual.');
   if (M.difEscala) L.push(`• A escala do mês somou ${fmt(M.escalada)}, ${fmt(Math.abs(M.difEscala))} ${M.difEscala < 0 ? 'abaixo' : 'acima'} da CH contratual (${fmt(M.contratual)}).`);
   if (M.creditoFeriado) L.push(`• Feriado sem plantão creditado com ${fmt(M.creditoFeriado)}.`);
-  if (M.saldoDiario === M.saldo && (M.difEscala || M.credito)) L.push(`• Neste mês os dois valores coincidem por acaso, porque os ajustes se compensaram.`);
+  if (M.creditoOutros) L.push(`• Outros créditos em dias sem escala: ${fmt(M.creditoOutros)}.`);
+  if (M.saldoDiario === M.saldo && (M.difEscala || M.credito)) L.push('• Neste mês os dois valores coincidiram por acaso, porque os ajustes se compensaram.');
   if (afs.length && trab) {
     L.push('');
-    L.push(`Considerando só os dias trabalhados: ${fmt(trab.hc)} considerados × ${fmt(trab.contratual)} contratuais = ${fmt(trab.saldo, true)}.`);
-    afs.forEach(g => L.push(`${g.nome}: ${fmt(g.hc)} creditados × ${fmt(g.contratual)} contratuais = ${fmt(g.saldo, true)} (efeito da escala no período, não de horas trabalhadas).`));
+    L.push(`Só os dias trabalhados: ${fmt(trab.hc)} consideradas × ${fmt(trab.contratual)} contratuais = ${sinal(trab.saldo) || '00:00'}.`);
+    afs.forEach(g => L.push(`${g.nome}: ${fmt(g.hc)} creditadas × ${fmt(g.contratual)} contratuais = ${sinal(g.saldo) || '00:00'} (efeito da escala no período, não de horas trabalhadas).`));
   }
   L.push('');
   L.push('Semanas:');
-  semanas.forEach(w => L.push(`• Semana ${w.n} (${w.periodo}): contratual ${fmt(w.contratual)}, escalada ${fmt(w.escalada + w.credito)}, considerada ${fmt(w.hc)} – escala ${w.statusEscala.toLowerCase()}, saldo ${fmt(w.saldo, true)}${w.afast.length ? ' – ' + w.afast.join(', ').toLowerCase() : ''}.`));
+  semanas.forEach(w => L.push(`• Semana ${w.n} (${w.periodo}): contratual ${fmt(w.contratual)}, escalada ${fmt(w.escalada + w.credito)}, consideradas ${fmt(w.hc)} – escala ${w.statusEscala.toLowerCase()}, saldo ${sinal(w.saldo) || '00:00'}${w.afast.length ? ' – ' + w.afast.join(', ').toLowerCase() : ''}.`));
   return L.join('\n');
 }
 
-function toast(t) { const el = $('toast'); el.textContent = t; el.classList.remove('hidden'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.add('hidden'), 2600); }
+let ultimoFoco = null;
+function abrirResumo() {
+  ultimoFoco = document.activeElement;
+  $('resumoTxt').value = resumoTexto();
+  $('overlay').classList.remove('hidden');
+  $('resumoTxt').focus(); $('resumoTxt').setSelectionRange(0, 0); $('resumoTxt').scrollTop = 0;
+}
+function fecharResumo() { $('overlay').classList.add('hidden'); ultimoFoco && ultimoFoco.focus(); }
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.remove('hidden'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.add('hidden'), 2800); }
 
-$('btnCopiar').addEventListener('click', async () => {
-  const txt = resumoTexto();
-  try { await navigator.clipboard.writeText(txt); toast('Resumo copiado. Cole no e-mail ou no SEI.'); }
-  catch {
-    let box = document.querySelector('.copybox');
-    if (!box) { box = document.createElement('textarea'); box.className = 'copybox'; $('secKpi').appendChild(box); }
-    box.value = txt; box.focus(); box.select(); toast('Selecione o texto abaixo dos números e copie (Ctrl+C).');
-  }
-});
-$('btnNovo').addEventListener('click', () => {
-  $('resultado').classList.add('hidden'); $('toolbar').classList.add('hidden');
-  $('secImport').classList.remove('hidden'); $('file').value = ''; msg('');
-  window.scrollTo(0, 0);
-});
-$('selEmp').addEventListener('change', e => render(+e.target.value));
+$('btnResumoTop').onclick = abrirResumo;
+$('btnResumoMob').onclick = abrirResumo;
+$('btnFechar').onclick = fecharResumo;
+$('btnCancelar').onclick = fecharResumo;
+$('overlay').addEventListener('click', e => { if (e.target === $('overlay')) fecharResumo(); });
+$('overlay').addEventListener('keydown', e => { if (e.key === 'Escape') fecharResumo(); });
+$('btnCopiar').onclick = async () => {
+  const txt = $('resumoTxt').value;
+  try { await navigator.clipboard.writeText(txt); toast('Texto copiado. Cole no e-mail ou no SEI.'); }
+  catch { $('resumoTxt').select(); toast('Texto selecionado: use Ctrl+C para copiar.'); }
+};
+$('btnImportar').onclick = mostrarImport;
 
+// ---------- arrastar e soltar ----------
 const drop = $('drop'), inp = $('file');
-inp.addEventListener('change', () => importar(inp.files));
+inp.addEventListener('change', () => { importar(inp.files); inp.value = ''; });
 drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inp.click(); } });
 ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
 ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
