@@ -5,18 +5,18 @@ Ferramenta em HTML para analisar o **Relatório de Frequência do MentorH** (PDF
 ## Como usar
 
 1. Abra a página (GitHub Pages) no navegador.
-2. Arraste o PDF do relatório (ou clique para escolher). Aceita vários arquivos e PDFs com mais de um empregado.
-3. Confira a análise e use **Copiar resumo para o empregado** para colar no e-mail ou no SEI.
+2. Arraste os PDFs do relatório (ou clique para escolher). Aceita vários arquivos e PDFs com mais de um empregado; cada arquivo aparece na lista com o andamento da leitura.
+3. Confira a análise e use **Resumo para o empregado** para revisar o texto e copiar para o e-mail ou o SEI.
 
 O PDF é lido no próprio navegador; nenhum dado é enviado.
 
 ## O que a análise mostra
 
-- **Resumo do mês:** saldo oficial (CH executada − CH contratual), soma do Saldo Diário, saldo só dos dias trabalhados e efeito de afastamentos (ex.: férias).
-- **Por que o saldo não é a soma do Saldo Diário:** ponte entre a soma do Saldo Diário e o saldo oficial (diferença entre escala e CH contratual, créditos de feriado e outros ajustes).
-- **Trabalho efetivo × afastamentos:** separa o resultado do que foi trabalhado do crédito de escala nos afastamentos.
-- **Análise semanal:** semanas de domingo a sábado, com classificação da escala (deficitária, adequada, superavitária) e observações.
-- **Conferência com o relatório:** compara os totais recalculados com os impressos no PDF.
+- **Resumo:** saldo do mês (horas consideradas − CH contratual), separado entre dias trabalhados e afastamentos (ex.: férias).
+- **Por que o saldo não é a soma do Saldo Diário:** gráfico em cascata da soma do Saldo Diário até o saldo do mês (diferença entre escala e CH contratual, créditos de feriado e outros ajustes).
+- **Semanas:** domingo a sábado, com CH contratual, escalada e considerada, classificação da escala (deficitária, adequada, superavitária) e saldo da semana.
+- **Dias do mês:** calendário ou tabela com registros, horas consideradas, saldo diário, feriados, afastamentos e acertos manuais.
+- **Conferência:** compara os totais recalculados com os impressos no PDF.
 
 ## Regras de cálculo
 
