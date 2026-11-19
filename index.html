@@ -9,415 +9,328 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    /* paleta institucional */
-    --navy:#213D87; --blue:#154899; --green:#32A347; --orange:#F7751C; --yellow:#FAC906; --red:#D5332C;
-    /* tons para texto (contraste AA) */
-    --green-t:#1E6B30; --orange-t:#A84A08; --yellow-t:#7A5A00; --red-t:#B3261E;
-    /* fundos de apoio */
-    --blue-bg:#E5ECF7; --green-bg:#E6F4E9; --orange-bg:#FDEBDD; --yellow-bg:#FEF4CC; --red-bg:#FBE4E3;
+    /* ação e navegação */
+    --acao:#213D87; --acao-esc:#192f6a; --acao-bg:#EDF0F8;
+    /* colunas de horas */
+    --contr:#8A94A8; --contr-bg:#F2F4F8; --contr-cel:#F8F9FB;
+    --esc:#213D87;   --esc-bg:#EDF0F8;   --esc-cel:#F6F8FC;
+    --cons:#32A347;  --cons-bg:#EAF6EC;  --cons-cel:#F5FAF6;
+    /* saldo */
+    --pos:#154899; --neg:#A84A08; --neg-bar:#F7751C;
+    /* estados */
+    --aj:#B3261E; --aj-bg:#FBE4E3; --aj-bd:#F2B8B5; --aj-row:#FFF7F6;
+    --ver:#7A5A00; --ver-bd:#E9C75A; --ver-bg:#FEF4CC;
+    --inf:#3D4A66; --inf-bg:#EEF2F8;
+    --ok:#1E6B30; --ok-bg:#EAF6EC;
+    --afa:#7A5A00; --afa-bg:#FEF4CC;
     /* neutros */
-    --bg:#F4F6FA; --surface:#FFFFFF; --line:#DCE2EC; --line2:#E7ECF3; --soft:#EEF2F8;
-    --text:#172340; --muted:#4F5B75; --neutral-t:#3D4A66; --bar-contr:#B9C4D6;
-    --r-card:12px; --r-ctl:8px;
+    --bg:#F4F6FA; --sup:#FFFFFF; --bd:#DCE2EC; --bd2:#E7ECF3; --bd-ctl:#C5CFDF;
+    --txt:#172340; --txt2:#4F5B75; --txt3:#3D4A66; --cab:#FAFBFD;
     --font:'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
   }
   *{box-sizing:border-box}
-  html{scroll-behavior:smooth;scroll-padding-top:72px}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.5}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--font);font-size:14px;line-height:1.5}
   .n{font-variant-numeric:tabular-nums;white-space:nowrap}
   .hidden{display:none !important}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  a{color:var(--blue)} a:hover{color:var(--navy)}
-  h1,h2,h3{margin:0;line-height:1.25}
-  p{margin:0}
+  a{color:var(--acao)} a:hover{color:var(--acao-esc)}
+  h1,h2,h3,p{margin:0}
   .wrap{max-width:1200px;margin:0 auto;padding-left:32px;padding-right:32px}
-  .muted{color:var(--muted)}
-  .pos{color:var(--blue)} .neg{color:var(--orange-t)} .zero{color:var(--neutral-t)}
-
-  /* botões */
-  .btn{font-family:inherit;font-size:14px;font-weight:600;min-height:44px;padding:0 18px;border-radius:var(--r-ctl);border:1px solid #C5CFDF;background:var(--surface);color:var(--navy);display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none}
-  .btn:hover{background:var(--soft)}
-  .btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
-  .btn.primary:hover{background:#1a3170}
-  .btn.icon{width:44px;padding:0}
-  .btn svg{flex:none}
+  .muted{color:var(--txt2)}
+  .pos{color:var(--pos)} .neg{color:var(--neg)} .zero{color:var(--txt2)}
   :focus-visible{outline:3px solid #8EA3C8;outline-offset:2px}
 
-  /* barra superior */
-  .topbar{background:var(--surface);border-bottom:1px solid var(--line)}
-  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:12px;padding-bottom:12px}
-  .brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:17px;color:var(--navy)}
-  .brand .mark{width:36px;height:36px;border-radius:var(--r-ctl);background:var(--navy);display:flex;align-items:center;justify-content:center}
-  .actions{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{font-family:inherit;font-size:14px;font-weight:600;min-height:44px;padding:0 16px;border-radius:8px;border:1px solid var(--bd-ctl);background:var(--sup);color:var(--acao);display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+  .btn:hover{background:var(--acao-bg)}
+  .btn.pri{background:var(--acao);border-color:var(--acao);color:#fff}
+  .btn.pri:hover{background:var(--acao-esc)}
+  .btn.sm{min-height:36px;padding:0 12px;font-size:13px}
+  .lnk{background:none;border:none;padding:0;font:inherit;font-weight:700;font-size:13px;color:var(--acao);cursor:pointer;text-decoration:underline}
 
-  /* chips */
-  .chip{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
-  .chip.ok{background:var(--green-bg);color:var(--green-t)}
-  .chip.info{background:var(--blue-bg);color:var(--blue)}
-  .chip.warn{background:var(--orange-bg);color:var(--orange-t)}
-  .chip.neutral{background:var(--soft);color:var(--neutral-t)}
-  .chip.sm{min-height:24px;padding:0 10px;font-size:12px;font-weight:700}
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid transparent;line-height:1.5}
+  .c-aj{background:var(--aj-bg);color:var(--aj);border-color:var(--aj-bd)}
+  .c-ver{background:#fff;color:var(--ver);border-color:var(--ver-bd)}
+  .c-inf{background:var(--inf-bg);color:var(--inf);border-color:var(--bd)}
+  .c-ok{background:var(--inf-bg);color:var(--txt3)}
+  .c-afa{background:var(--afa-bg);color:var(--afa)}
+  .c-pag{background:#fff;color:var(--txt3);border:1px dashed var(--contr)}
+  .c-pla{background:#fff;color:var(--txt);border-color:var(--bd-ctl)}
+  .c-des{background:var(--bg);color:var(--txt2)}
+  .badge{font-size:11px;font-weight:700;border-radius:999px;padding:0 7px;line-height:18px}
+  .b-aj{background:var(--aj);color:#fff}
+  .b-ver{background:var(--ver-bg);color:var(--ver);border:1px solid var(--ver-bd);line-height:16px}
 
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card)}
+  .panel{background:var(--sup);border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+  .panel-h{padding:16px 20px 8px;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .panel-h h2{font-size:16px;font-weight:700}
+  .panel-f{padding:12px 20px;font-size:13px;color:var(--txt2);border-top:1px solid var(--bd2);background:var(--cab)}
 
-  /* ---------- importação ---------- */
-  .import{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;padding-top:40px;padding-bottom:56px}
-  .import-main{flex:7 1 520px;min-width:0;display:flex;flex-direction:column;gap:20px}
-  .import-side{flex:4 1 300px;min-width:0;display:flex;flex-direction:column;gap:16px}
-  .import h1{font-size:28px;font-weight:800;color:var(--navy)}
-  .drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:240px;border:2px dashed #8EA3C8;border-radius:var(--r-card);background:var(--surface);padding:32px;text-align:center;cursor:pointer;transition:background .15s,border-color .15s}
-  .drop.over{background:var(--blue-bg);border-color:var(--blue)}
-  .drop .ico{width:56px;height:56px;border-radius:999px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center}
-  .drop strong{font-size:18px}
-  .drop .fake-btn{display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:var(--r-ctl);background:var(--navy);color:#fff;font-size:14px;font-weight:700}
-  .queue-head{padding:14px 20px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-  .queue{list-style:none;margin:0;padding:0}
-  .queue li{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
-  .queue li:last-child{border-bottom:none}
-  .q-ico{width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none}
-  .q-body{flex:1 1 240px;min-width:0}
-  .q-name{font-weight:700;font-size:14px;overflow-wrap:anywhere}
-  .q-sub{font-size:13px;color:var(--muted)}
-  .q-sub.err{color:var(--red-t)}
-  .progress{height:6px;background:var(--soft);border-radius:999px;margin-top:8px;overflow:hidden}
-  .progress div{height:100%;background:var(--blue);border-radius:999px;transition:width .2s}
-  .sample{border:1px solid var(--line);border-radius:var(--r-ctl);padding:14px;background:#FAFBFD;display:flex;flex-direction:column;gap:7px}
-  .sample i{display:block;height:6px;border-radius:3px;background:var(--line)}
-  .sample .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;margin-top:6px}
-  .privacy{background:var(--blue-bg);border-radius:var(--r-card);padding:16px 18px;display:flex;gap:12px;align-items:flex-start;font-size:14px}
+  /* topo */
+  .top{background:var(--sup);border-bottom:1px solid var(--bd)}
+  .top-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:12px;padding-bottom:12px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;color:var(--acao)}
+  .brand .mark{width:32px;height:32px;border-radius:8px;background:var(--acao);display:inline-flex;align-items:center;justify-content:center}
+  .acts{display:flex;gap:8px}
+  .ctx{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-top:4px}
+  .ctx-l{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;min-width:0}
+  .ctx h1{font-size:20px;font-weight:700;line-height:1.3}
+  .ctx-meta{font-size:13px;color:var(--txt2);font-variant-numeric:tabular-nums}
+  .ctx-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .ctx-r .comp{font-size:14px;font-weight:700}
+  .tabs{display:flex;gap:4px;overflow-x:auto;margin-top:6px}
+  .tab{font-family:inherit;background:none;border:none;border-bottom:3px solid transparent;padding:12px 16px;font-size:14px;font-weight:600;color:var(--txt2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  .tab[aria-selected="true"]{color:var(--acao);font-weight:700;border-bottom-color:var(--acao)}
+  .tab .curto,.brand .curto{display:none}
+  .page{padding-top:24px;padding-bottom:48px;display:flex;flex-direction:column;gap:20px}
 
-  /* ---------- resultado ---------- */
-  .context{background:var(--surface);border-bottom:1px solid var(--line)}
-  .context .wrap{padding-top:20px}
-  .ctx-row{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
-  .ctx-name{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .ctx-name h1{font-size:24px;font-weight:700}
-  .ctx-sub{margin-top:6px;font-size:14px;color:var(--muted)}
-  .ctx-right{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
-  .field{display:flex;flex-direction:column;gap:2px;font-size:12px;font-weight:600;color:var(--muted)}
-  select{font-family:inherit;font-size:14px;font-weight:600;color:var(--text);min-height:44px;padding:0 12px;border:1px solid #C5CFDF;border-radius:var(--r-ctl);background:var(--surface);max-width:100%;width:100%}
-  select:disabled{opacity:1;color:var(--text);background:var(--bg)}
-  .ctx-details{margin-top:10px;font-size:13px}
-  .ctx-details summary{cursor:pointer;color:var(--blue);font-weight:600;display:inline-block;padding:4px 0}
-  .ctx-details dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 24px;margin:10px 0 4px}
-  .ctx-details dt{font-size:12px;color:var(--muted);font-weight:600}
-  .ctx-details dd{margin:0}
-  .tabs{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
-  .tabs .wrap{display:flex;gap:4px;overflow-x:auto}
-  .tabs a{text-decoration:none;padding:12px 16px;font-size:14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
-  .tabs a.on{color:var(--navy);font-weight:700;border-bottom-color:var(--navy)}
-  .main{padding-top:28px;padding-bottom:48px;display:flex;flex-direction:column;gap:28px}
-  .main > section{min-width:0}
-  .sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-  .sec-head h2,.card h2{font-size:18px;font-weight:700}
-  .sec-head p{font-size:14px;color:var(--muted);margin-top:2px}
-
-  .resumo{display:flex;flex-wrap:wrap;gap:20px;align-items:stretch}
-  .hero{flex:5 1 340px;min-width:0;padding:24px;display:flex;flex-direction:column;gap:18px}
-  .hero .lbl{font-size:13px;font-weight:600;color:var(--muted)}
-  .hero .big{font-size:56px;font-weight:800;line-height:1.05;letter-spacing:-1px;margin-top:4px}
-  .hero .formula{font-size:14px;color:var(--muted);margin-top:6px}
-  .split{border-top:1px solid var(--line2);padding-top:16px;display:flex;flex-direction:column;gap:10px}
-  .split h3{font-size:13px;font-weight:700}
-  .split-row{display:grid;grid-template-columns:minmax(110px,150px) 1fr 70px;align-items:center;gap:10px;font-size:14px}
-  .track{height:12px;background:var(--soft);border-radius:999px;overflow:hidden}
-  .track div{height:100%;border-radius:999px}
-  .split-row .v{text-align:right;font-weight:700}
-  .split p{font-size:13px;color:var(--muted)}
-
-  .cascade{flex:7 1 480px;min-width:0;padding:24px;display:flex;flex-direction:column;gap:16px}
-  .cascade .intro{font-size:14px;color:var(--muted);margin-top:4px}
-  .chart{position:relative;height:230px;display:grid;gap:18px;padding:0 8px}
-  .chart .zero-line{position:absolute;left:0;right:0;border-top:1.5px solid #8A94A8}
-  .chart .col{position:relative;height:200px;margin-top:30px}
-  .chart .bar{position:absolute;left:14%;right:14%;border-radius:4px;min-height:2px}
-  .chart .val{position:absolute;left:0;right:0;text-align:center;font-size:15px;font-weight:800}
-  .chart-labels{display:grid;gap:18px;padding:0 8px;margin-top:-4px}
-  .chart-labels div{text-align:center;font-size:13px;line-height:1.35}
-  .chart-labels b{display:block;color:var(--text)}
-  .chart-labels span{color:var(--muted)}
-  .note{background:var(--bg);border-radius:var(--r-ctl);padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:flex-start}
-  .note svg{flex:none;margin-top:2px}
-
-  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
-  .legend span{display:inline-flex;align-items:center;gap:6px}
-  .legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
-  .weeks{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;position:relative}
-  .week,.drop,.wbar{position:relative}
-  .week{flex:1 1 190px;min-width:0;padding:16px;display:flex;flex-direction:column;gap:12px}
-  .week.alert{border:1.5px solid var(--orange)}
-  .week-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-  .week-top h3{font-size:15px;font-weight:700}
-  .week-top span{font-size:12px;color:var(--muted)}
-  .wbars{display:flex;flex-direction:column;gap:6px}
-  .wbar{display:grid;grid-template-columns:1fr 48px;align-items:center;gap:8px}
-  .wbar .track{height:8px}
-  .wbar span{font-size:12px;text-align:right}
-  .week-foot{border-top:1px solid var(--line2);padding-top:10px;display:flex;justify-content:space-between;align-items:baseline}
-  .week-foot span:first-child{font-size:12px;color:var(--muted)}
-  .week-foot .n{font-size:17px;font-weight:800}
-  .week .obs{font-size:12px;color:var(--muted);line-height:1.4}
-
-  .dias{padding:24px;display:flex;flex-direction:column;gap:16px}
-  .seg{display:flex;border:1px solid #C5CFDF;border-radius:var(--r-ctl);overflow:hidden}
-  .seg button{font-family:inherit;font-size:13px;font-weight:600;min-height:40px;padding:0 16px;border:none;background:var(--surface);color:var(--navy);cursor:pointer}
-  .seg button[aria-pressed="true"]{background:var(--navy);color:#fff;font-weight:700}
-  .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
-  .cal .dow{font-size:12px;font-weight:700;color:var(--muted);padding:0 4px}
-  .cell{min-height:108px;border-radius:var(--r-ctl);padding:8px 10px;display:flex;flex-direction:column;gap:2px;border:1px solid var(--line2);background:var(--bg)}
-  .cell.blank{background:transparent;border:1px dashed var(--line2)}
-  .cell.plantao{background:var(--surface);border:1.5px solid var(--navy)}
-  .cell.feriado{background:var(--green-bg);border-color:#9FD3AA}
-  .cell.afast{background:var(--yellow-bg);border-color:#F0D676}
-  .cell .c-top{display:flex;justify-content:space-between;align-items:baseline;gap:4px}
-  .cell .c-dia{font-size:14px;font-weight:700}
-  .cell .c-dow{display:none}
-  .cell .c-saldo{font-size:12px;font-weight:700}
-  .cell .c-tipo{font-size:12px;font-weight:600;color:var(--muted)}
-  .cell.plantao .c-tipo{color:var(--navy)}
-  .cell.feriado .c-tipo{color:var(--green-t)}
-  .cell.afast .c-tipo{color:var(--yellow-t)}
-  .cell .c-reg{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-  .cell .c-hc{margin-top:auto;font-size:13px;font-weight:700}
-  .cell.quiet .c-dia{color:var(--muted)}
-  .m-tag{font-size:10px;font-weight:700;color:var(--orange-t);background:var(--orange-bg);border-radius:3px;padding:0 4px;line-height:16px}
-  .occ{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
-  .occ li{display:flex;gap:8px;align-items:flex-start}
-
-  .tbox{overflow-x:auto;border:1px solid var(--line2);border-radius:var(--r-ctl)}
-  table.t{width:100%;border-collapse:collapse;font-size:13.5px;min-width:760px}
-  table.t caption{text-align:left;padding:0 0 8px;font-size:13px;color:var(--muted)}
-  table.t th{font-size:12px;font-weight:700;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:#FAFBFD}
-  table.t td{padding:8px 12px;border-bottom:1px solid var(--line2)}
+  /* tabelas */
+  .tbox{overflow-x:auto}
+  table.t{width:100%;border-collapse:collapse}
+  table.t th,table.t td{padding:10px 12px;border-bottom:1px solid var(--bd2);font-size:14px;text-align:left;vertical-align:top}
+  table.t thead th{font-size:12px;font-weight:700;color:var(--txt2);background:var(--cab);border-bottom:1px solid var(--bd);white-space:nowrap;vertical-align:bottom}
   table.t .r{text-align:right}
-  table.t th[scope=row]{font-weight:600;background:transparent;border-bottom:1px solid var(--line2);color:var(--text)}
-  table.t tr.quiet td,table.t tr.quiet th{color:var(--muted)}
-  table.t tr.feriado td,table.t tr.feriado th{background:#F3FAF4}
-  table.t tr.afast td,table.t tr.afast th{background:#FFFBEA}
-  table.t tr.sub td{font-weight:700;background:var(--bg);border-bottom:1px solid var(--line)}
+  th.h-contr{border-top:3px solid var(--contr);background:var(--contr-bg) !important}
+  th.h-esc{border-top:3px solid var(--esc);background:var(--esc-bg) !important}
+  th.h-cons{border-top:3px solid var(--cons);background:var(--cons-bg) !important}
+  th.h-sal{border-top:3px solid var(--txt)}
+  td.v-contr{background:var(--contr-cel)} td.v-esc{background:var(--esc-cel)} td.v-cons{background:var(--cons-cel)}
+  td.v-sal{font-weight:700}
+  table.t tfoot td{font-weight:700;border-top:1.5px solid var(--txt);border-bottom:none}
+  table.t tfoot td.v-contr{background:var(--contr-bg)} table.t tfoot td.v-esc{background:var(--esc-bg)} table.t tfoot td.v-cons{background:var(--cons-bg)}
+  table.t tr.sub td{font-weight:700;background:var(--bg);border-bottom:1px solid var(--bd)}
+  table.t tr.r-aj{background:var(--aj-row)}
+  table.t tr.r-desc th,table.t tr.r-desc td{color:var(--txt2)}
+  table.t tr.flash{animation:flash 2s ease}
+  @keyframes flash{0%,40%{background:#FFF2B8}100%{background:inherit}}
+  table.t tbody th{font-weight:600;white-space:nowrap}
+  .clk{cursor:pointer} .clk:hover td,.clk:hover th{background-color:#F7F9FD}
 
-  .conf{padding:20px 24px;display:flex;flex-direction:column;gap:14px}
-  .conf-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-  .conf-head .who{display:flex;align-items:center;gap:10px}
-  .conf-ico{width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none}
-  .conf-grid{display:flex;flex-wrap:wrap;gap:12px}
-  .conf-grid div{flex:1 1 200px;background:var(--bg);border-radius:var(--r-ctl);padding:12px 14px}
-  .conf-grid .k{font-size:12px;font-weight:600;color:var(--muted)}
-  .conf-grid .v{font-size:18px;font-weight:700;margin-top:2px}
-  .conf-grid .d{font-size:12px;font-weight:600;margin-top:2px}
-  .conf details{font-size:14px}
-  .conf summary{cursor:pointer;color:var(--blue);font-weight:600;padding:4px 0;display:inline-block}
-  .conf ul{margin:8px 0 0;padding-left:20px;color:var(--muted)}
-  .conf li{margin-bottom:4px}
-  footer.foot{font-size:13px;color:var(--muted);padding-bottom:40px}
+  /* importação */
+  .drop{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:20px 24px;border:2px dashed #8EA3C8;border-radius:8px;background:var(--sup);cursor:pointer;position:relative;transition:background .15s}
+  .drop.over{background:var(--acao-bg);border-color:var(--acao)}
+  .drop .ico{width:48px;height:48px;border-radius:999px;background:var(--acao-bg);display:flex;align-items:center;justify-content:center;flex:none}
+  .drop .txt{flex:1;min-width:240px;display:flex;flex-direction:column;gap:2px}
+  .drop strong{font-size:16px}
+  .prog{flex:1;max-width:320px;height:6px;background:var(--inf-bg);border-radius:999px;overflow:hidden}
+  .prog div{height:100%;background:var(--acao);transition:width .2s}
+  input[type=search]{font-family:inherit;font-size:14px;min-height:40px;padding:0 12px;border:1px solid var(--bd-ctl);border-radius:8px;width:220px;max-width:100%}
 
+  /* resumo */
+  .alert{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:8px;background:var(--aj-bg);color:var(--aj);font-size:14px;flex-wrap:wrap}
+  .alert svg{flex:none}
+  .alert span{flex:1;min-width:220px}
+  .tot{display:flex;flex-wrap:wrap}
+  .tot > div{flex:1 1 210px;padding:18px 20px;border-right:1px solid var(--bd2)}
+  .tot > div:last-child{border-right:none}
+  .tot .k{font-size:12px;font-weight:600;color:var(--txt2);display:flex;align-items:center;gap:6px}
+  .tot .k i{width:10px;height:10px;border-radius:2px;display:inline-block}
+  .tot .v{font-size:24px;font-weight:700;line-height:1.3}
+  .tot .v.big{font-size:36px;font-weight:800;line-height:1.1}
+  .tot .s{font-size:12px;color:var(--txt2)}
+  .conta-saldo{list-style:none;margin:0;padding:4px 20px}
+  .conta-saldo li{display:grid;grid-template-columns:96px 1fr;gap:16px;padding:12px 0;border-bottom:1px solid var(--bd2);align-items:baseline}
+  .conta-saldo li:last-child{border-bottom:none}
+  .conta-saldo .val{font-size:18px;font-weight:800;text-align:right}
+  .conta-saldo .warn{margin-top:6px;display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--aj);background:var(--aj-bg);border-radius:6px;padding:3px 8px}
+  .conta-tot{display:grid;grid-template-columns:96px 1fr;gap:16px;padding:14px 20px;border-top:2px solid var(--txt);background:var(--cab);align-items:baseline}
+  .conta-tot .val{font-size:22px;font-weight:800;text-align:right}
 
-  /* resumo narrativo, alertas e pontos de atenção */
-  .alerta{display:flex;gap:10px;align-items:flex-start;background:var(--red-bg);color:var(--red-t);border-radius:var(--r-ctl);padding:12px 14px;font-size:14px;text-decoration:none}
-  .alerta:hover{color:var(--red-t);filter:brightness(.98)}
-  .alerta svg{flex:none;margin-top:2px}
-  .narr{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px}
-  .concl{font-size:14px;font-weight:600;background:var(--bg);border-radius:var(--r-ctl);padding:10px 12px}
-  .casc-list{display:none;list-style:none;margin:0;padding:0}
-  .casc-list li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line2);font-size:14px}
-  .casc-list li.fim{border-top:1.5px solid var(--text);border-bottom:none;font-weight:700}
-  .casc-list li div b{display:block;font-weight:600}
-  .casc-list li div span{font-size:12px;color:var(--muted)}
-  .casc-list li > .n{font-weight:800}
-  .atencao{padding:24px;display:flex;flex-direction:column;gap:16px}
-  .issues{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-  .issues li{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border:1px solid var(--line2);border-radius:var(--r-ctl)}
-  .lvl{flex:none;min-width:84px;text-align:center;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px}
-  .lvl.aj{background:var(--red-bg);color:var(--red-t)} .lvl.ver{background:var(--yellow-bg);color:var(--yellow-t)} .lvl.inf{background:var(--soft);color:var(--neutral-t)}
-  .i-body{min-width:0;flex:1}
-  .i-title{font-weight:700;font-size:14px}
-  .i-body p{font-size:14px;color:var(--muted);margin-top:2px}
-  .i-imp{color:var(--red-t) !important}
-  .prov{margin-top:8px;font-size:13px}
-  .prov summary{cursor:pointer;color:var(--blue);font-weight:600;display:inline-block;padding:2px 0}
-  .prov p{font-size:13px;color:var(--text);margin-top:4px}
-  .prov .func{color:var(--muted)}
-  .w-ico{display:inline-flex;align-items:center;margin-right:4px;vertical-align:-1px}
-  .w-ico.aj{color:var(--red-t)} .w-ico.ver{color:var(--yellow-t)}
-  .cell.pag{background:var(--surface);border:1.5px dashed var(--navy)}
-  .cell.pag .c-tipo{color:var(--navy)}
-  .cell.issue-aj{border:2px solid var(--red)}
-  .cell.issue-ver{box-shadow:inset 0 0 0 2px var(--yellow)}
-  table.t tr.issue th{color:var(--red-t)}
-  .chip.tiny{min-height:18px;padding:0 6px;font-size:11px}
-  .chip.danger{background:var(--red-bg);color:var(--red-t)}
+  /* semanas */
+  .wsel{display:flex;gap:6px;flex-wrap:wrap}
+  .wsel button{font-family:inherit;cursor:pointer;min-height:52px;padding:6px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--sup);text-align:left;display:flex;flex-direction:column;gap:1px}
+  .wsel button[aria-pressed="true"]{border:2px solid var(--acao);background:var(--acao-bg)}
+  .wsel .nm{font-size:13px;font-weight:700;color:var(--txt)}
+  .wsel .sv{font-size:12px;font-weight:700}
+  .seg{display:flex;border:1px solid var(--bd-ctl);border-radius:8px;overflow:hidden}
+  .seg button{font-family:inherit;font-size:13px;font-weight:600;min-height:40px;padding:0 14px;border:none;background:var(--sup);color:var(--acao);cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--acao);color:#fff;font-weight:700}
+  .wk-h{padding:14px 20px;display:flex;align-items:center;gap:10px 20px;flex-wrap:wrap;border-bottom:1px solid var(--bd2)}
+  .wk-h h2{font-size:16px;font-weight:700}
+  .obs-cell{font-size:13px;color:var(--txt3);display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
+  .m-tag{font-size:10px;font-weight:700;color:var(--neg);background:#FDEBDD;border-radius:3px;padding:0 4px;line-height:16px}
+  .dlist{display:none;list-style:none;margin:0;padding:0}
+  .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;padding:16px 20px}
+  .cal .dow{font-size:12px;font-weight:700;color:var(--txt2)}
+  .cell{min-height:104px;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;border:1px solid var(--bd2);background:var(--bg);font-size:12px}
+  .cell.blank{background:transparent;border:1px dashed var(--bd2)}
+  .cell.plantao{background:#fff;border:1.5px solid var(--bd-ctl)}
+  .cell.pag{background:#fff;border:1.5px dashed var(--contr)}
+  .cell.afast,.cell.feriado{background:var(--afa-bg);border-color:#F0D676}
+  .cell.aj{border:2px solid var(--aj)}
+  .cell .ct{display:flex;justify-content:space-between;gap:4px;font-weight:700}
+  .cell .cd{font-size:14px}
+  .cell .cy{font-weight:600;color:var(--txt3)}
+  .cell .ch{margin-top:auto;display:flex;gap:6px;font-size:12px}
 
-  /* painel de resumo */
+  /* pontos */
+  .filt{display:flex;gap:8px;flex-wrap:wrap}
+  .filt button{font-family:inherit;cursor:pointer;min-height:40px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:700;border:1px solid var(--bd);background:#fff;color:var(--txt3)}
+  .filt button[data-f="ajustar"]{border-color:var(--aj-bd);background:var(--aj-bg);color:var(--aj)}
+  .filt button[data-f="verificar"]{border-color:var(--ver-bd);color:var(--ver)}
+  .filt button[aria-pressed="true"]{outline:2px solid var(--acao);outline-offset:1px}
+  .grp-t{font-size:12px;font-weight:700;color:var(--txt2);letter-spacing:.04em;margin-top:4px}
+  .pc{background:#fff;border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+  .pc.aj{border-color:var(--aj-bd)}
+  .pc-h{padding:14px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--bd2)}
+  .pc.aj .pc-h{background:var(--aj-row);border-bottom-color:#F6D4D2}
+  .pc-h .dt{font-size:13px;font-weight:700;color:var(--txt2)}
+  .pc-h h3{font-size:17px;font-weight:700;flex:1;min-width:260px}
+  .pc-b{display:flex;flex-wrap:wrap}
+  .pc-b > div{flex:1 1 260px;padding:16px 20px;border-right:1px solid var(--bd2)}
+  .pc-b > div:nth-child(2){flex:1.4 1 340px}
+  .pc-b > div:last-child{border-right:none}
+  .pc-l{font-size:12px;font-weight:700;color:var(--acao);margin-bottom:8px;letter-spacing:.03em}
+  .pc-ref{margin-top:8px;font-size:12px;color:var(--txt2)}
+  .pc-f{padding:10px 20px;font-size:13px;background:var(--cab);border-top:1px solid var(--bd2)}
+  .bat{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+  .bat li{padding:5px 10px;border-radius:6px;font-size:13px}
+  .bat .ok{background:var(--cons-bg)} .bat .erro{background:var(--aj-bg);color:var(--aj)} .bat .neutro{background:var(--inf-bg);color:var(--txt3)}
+  .cta{width:100%;border-collapse:collapse;font-size:14px}
+  .cta td{padding:3px 0}
+  .cta td:last-child{text-align:right}
+  .cta .t-norm td:first-child{color:var(--txt2)}
+  .cta .t-sub td{border-top:1px solid var(--bd);font-weight:700;padding-top:6px}
+  .cta .t-total td{border-top:2px solid var(--txt);font-weight:800;padding-top:6px}
+  .cta .t-erro td:last-child{color:var(--aj);font-weight:700}
+  .fx{display:flex;height:32px;border-radius:6px;overflow:hidden;font-size:11px;font-weight:700}
+  .fx div{display:flex;align-items:center;justify-content:center;border-right:2px solid #fff;white-space:nowrap;overflow:hidden;padding:0 4px;min-width:0}
+  .fx .plantao{background:var(--acao);color:#fff} .fx .descanso{background:var(--aj-bg);color:var(--aj)}
+  .fx .janela{background:var(--acao-bg);color:var(--acao)} .fx .fora{background:#D5332C;color:#fff}
+  .fx-n{margin-top:8px;font-size:13px}
+  .pl-top{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--txt2)}
+  .pl-top strong{color:var(--txt)}
+  .pl-bar{height:10px;border-radius:999px;background:var(--cons);margin:6px 0 4px}
+  .cmp{margin-top:14px;display:grid;grid-template-columns:110px 1fr 56px;gap:6px 10px;align-items:center;font-size:13px}
+  .cmp .tr{height:12px;background:var(--inf-bg);border-radius:3px;overflow:hidden}
+  .cmp .tr div{height:100%;border-radius:3px}
+  .info-row{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:12px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .info-row .tx{flex:1;min-width:240px}
+
+  /* conferência */
+  .conf-wrap{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+  .conf-wrap > .panel:first-child{flex:3 1 520px}
+  .conf-wrap > .panel:last-child{flex:2 1 320px;padding:16px 20px}
+  .regras{margin:0;display:grid;grid-template-columns:120px 1fr;gap:8px 12px;font-size:13px}
+  .regras dt{font-weight:700} .regras dd{margin:0;color:var(--txt3)}
+
+  /* painel do resumo */
   .overlay{position:fixed;inset:0;background:rgba(23,35,64,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
-  .panel{background:var(--surface);border-radius:var(--r-card);width:min(680px,100%);max-height:calc(100vh - 40px);display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(23,35,64,.25)}
-  .panel-head{padding:18px 20px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center;gap:12px}
-  .panel-head h2{font-size:18px;font-weight:700}
-  .panel-body{padding:16px 20px;overflow:auto;display:flex;flex-direction:column;gap:8px}
-  .panel-body label{font-size:13px;font-weight:600;color:var(--muted)}
-  .panel textarea{width:100%;min-height:340px;font-family:inherit;font-size:14px;line-height:1.55;padding:12px;border:1px solid #C5CFDF;border-radius:var(--r-ctl);resize:vertical;color:var(--text)}
-  .panel-foot{padding:14px 20px;border-top:1px solid var(--line2);display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:12px 18px;border-radius:var(--r-ctl);font-size:14px;z-index:30;max-width:calc(100% - 32px)}
-  .mobile-bar{display:none}
+  .modal{background:#fff;border-radius:12px;width:min(680px,100%);max-height:calc(100vh - 40px);display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(23,35,64,.25)}
+  .modal-h{padding:16px 20px;border-bottom:1px solid var(--bd2);display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .modal-h h2{font-size:18px;font-weight:700}
+  .modal-b{padding:16px 20px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+  .modal textarea{width:100%;min-height:340px;font-family:inherit;font-size:14px;line-height:1.55;padding:12px;border:1px solid var(--bd-ctl);border-radius:8px;resize:vertical;color:var(--txt)}
+  .modal-f{padding:14px 20px;border-top:1px solid var(--bd2);display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--txt);color:#fff;padding:12px 18px;border-radius:8px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
 
-  /* ---------- celular ---------- */
+  /* celular */
   @media (max-width:720px){
     .wrap{padding-left:16px;padding-right:16px}
-    .actions .btn .lbl{display:none}
-    .actions .btn{width:44px;padding:0}
-    #btnResumoTop{display:none}
+    .acts .btn .lbl{display:none}
+    .acts .btn{width:44px;padding:0}
     .brand{font-size:15px}
-    .import{padding-top:24px}
-    .import h1{font-size:23px}
-    .ctx-name h1{font-size:19px}
-    .ctx-right{width:100%}
-    .ctx-right .field{flex:1 1 100%;min-width:0}
-    .main{gap:20px;padding-top:16px;padding-bottom:110px}
-    .hero,.cascade,.dias{padding:18px}
-    .hero .big{font-size:46px}
-    .chart,.chart-labels{display:none !important}
-    .casc-list{display:block}
-    .atencao{padding:18px}
-    .issues li{flex-direction:column;gap:8px}
-    .cell.quiet.keep{display:grid}
-    .weeks{display:flex;flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scroll-snap-type:x mandatory}
-    .week{flex:0 0 170px;scroll-snap-align:start}
-    .cal{display:flex;flex-direction:column;gap:6px}
-    .cal .dow,.cell.blank,.cell.quiet{display:none}
-    .cell{min-height:0;display:grid;grid-template-columns:72px 1fr auto;grid-template-areas:"dia tipo saldo" "dia reg hc";column-gap:10px;padding:10px 12px}
-    .cell .c-top{display:contents}
-    .cell .c-dia{grid-area:dia;align-self:center;line-height:1.2}
-    .cell .c-dow{display:block;font-size:11px;font-weight:600;color:var(--muted)}
-    .cell .c-saldo{grid-area:saldo;text-align:right}
-    .cell .c-tipo{grid-area:tipo}
-    .cell .c-reg{grid-area:reg}
-    .cell .c-hc{grid-area:hc;margin-top:0;text-align:right}
-    .mobile-bar{display:block;position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));z-index:10}
-    .mobile-bar .btn{width:100%;min-height:48px;font-size:15px}
-    .panel textarea{min-height:260px}
+    .ctx h1{font-size:17px}
+    .ctx-meta{font-size:12px}
+    .tabs{gap:0}
+    .tab{flex:1;justify-content:center;padding:12px 4px;font-size:13px}
+    .tab .longo,.brand .longo{display:none} .tab .curto,.brand .curto{display:inline}
+    .page{padding-top:16px;gap:16px}
+    .tot > div{flex:1 1 45%;padding:14px 16px;border-right:none;border-bottom:1px solid var(--bd2)}
+    .tot .v.big{font-size:28px}
+    .conta-saldo{padding:4px 14px}
+    .conta-saldo li,.conta-tot{grid-template-columns:72px 1fr;gap:10px}
+    .conta-saldo .val{font-size:15px}
+    .conta-tot{padding:12px 14px}
+    .wsel{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 4px}
+    .wsel button{flex:none}
+    .tbl-dias{display:none}
+    .dlist{display:block}
+    .dlist li{padding:10px 14px;border-bottom:1px solid var(--bd2);display:flex;flex-direction:column;gap:4px}
+    .dlist li.r-aj{background:var(--aj-row)}
+    .dl-h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+    .dl-v{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;font-size:13px}
+    .dl-v span{border-radius:4px;padding:2px 6px}
+    .dl-cab{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:8px 14px;background:var(--cab);border-bottom:1px solid var(--bd2);font-size:11px;font-weight:700;color:var(--txt2)}
+    .dl-cab span{padding-top:3px}
+    .cal{display:none}
+    .pc-b > div{border-right:none;border-bottom:1px solid var(--bd2)}
+    .pc-h h3{font-size:15px;min-width:0;flex-basis:100%;order:3}
+    .wk-h{padding:12px 14px}
   }
-  @media print{
-    .topbar .actions,.tabs,.mobile-bar,.seg,#secImport{display:none !important}
-    body{background:#fff}
-    .card{break-inside:avoid}
-  }
+  @media print{.acts,.tabs,.seg,.filt,#vImport{display:none !important} body{background:#fff}}
 </style>
 </head>
 <body>
 
-<header class="topbar">
-  <div class="wrap">
+<header class="top">
+  <div class="wrap top-bar">
     <div class="brand">
-      <span class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-      <span>Análise de Saldo de Frequência</span>
+      <span class="mark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+      <span class="longo">Análise de Saldo de Frequência</span><span class="curto">Análise de Saldo</span>
     </div>
-    <div class="actions hidden" id="topActions">
-      <button class="btn" id="btnImportar" aria-label="Importar relatórios">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>
-        <span class="lbl">Importar relatórios</span>
+    <div class="acts hidden" id="acts">
+      <button class="btn" id="btnRel" aria-label="Relatórios">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        <span class="lbl">Relatórios</span>
       </button>
-      <button class="btn primary" id="btnResumoTop">
+      <button class="btn pri" id="btnResumo" aria-label="Resumo para o empregado">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>
         <span class="lbl">Resumo para o empregado</span>
       </button>
     </div>
   </div>
+  <div class="wrap hidden" id="ctxWrap">
+    <div class="ctx" id="ctx"></div>
+    <div class="tabs" role="tablist" aria-label="Abas da análise" id="tabs"></div>
+  </div>
 </header>
 
-<!-- IMPORTAÇÃO -->
-<section id="secImport">
-  <div class="wrap import">
-    <div class="import-main">
-      <div>
-        <h1>Importe o Relatório de Frequência</h1>
-        <p class="muted" style="margin-top:8px;max-width:620px">O sistema recalcula o mês semana a semana e mostra ao empregado por que o saldo não é a soma da coluna Saldo Diário.</p>
-      </div>
-      <label class="drop" id="drop" tabindex="0">
-        <span class="ico" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#154899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg></span>
-        <strong>Arraste os PDFs para esta área</strong>
-        <span class="muted" style="font-size:14px">ou</span>
-        <span class="fake-btn">Escolher arquivos</span>
-        <span class="muted" style="font-size:13px">PDF · um ou vários arquivos · aceita PDF com mais de um empregado</span>
-        <input type="file" id="file" accept="application/pdf,.pdf" multiple class="sr">
-      </label>
-      <div class="card hidden" id="queueCard">
-        <div class="queue-head">
-          <h2 style="font-size:16px">Arquivos</h2>
-          <span class="muted" style="font-size:13px" id="queueSummary"></span>
-        </div>
-        <ul class="queue" id="queue" aria-live="polite"></ul>
-      </div>
-    </div>
-    <aside class="import-side">
-      <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px">
-        <h2 style="font-size:16px">Qual relatório usar</h2>
-        <div class="sample" aria-hidden="true">
-          <i style="width:62%;height:8px;background:#213D87"></i><i style="width:80%"></i><i style="width:70%"></i>
-          <div class="grid">
-            <i style="background:#B9C4D6"></i><i style="background:#B9C4D6"></i><i style="background:#B9C4D6"></i><i style="background:#B9C4D6"></i><i style="background:#B9C4D6"></i><i style="background:#B9C4D6"></i>
-            <i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i>
-            <i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i><i style="background:#E7ECF3"></i>
-          </div>
-          <i style="height:12px;background:#E5ECF7;margin-top:6px"></i>
-        </div>
-        <p class="muted" style="font-size:14px">MentorH › <strong style="color:var(--text)">Ponto Eletrônico – Relatório de Frequência</strong>, exportado em PDF, com o quadro de totais no fim da página.</p>
-      </div>
-      <div class="privacy">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#154899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;margin-top:2px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-        <p>O arquivo é lido no seu navegador. Nenhum dado é enviado ou guardado.</p>
-      </div>
-    </aside>
+<!-- RELATÓRIOS / IMPORTAÇÃO -->
+<main id="vImport" class="wrap page">
+  <div>
+    <h1 style="font-size:24px;font-weight:800;color:var(--acao)">Relatórios</h1>
+    <p class="muted" style="margin-top:4px">Importe o Relatório de Frequência em PDF para ver o saldo explicado.</p>
   </div>
-</section>
-
-<!-- RESULTADO -->
-<div id="secResult" class="hidden">
-  <section class="context">
-    <div class="wrap" id="ctx"></div>
+  <label class="drop" id="drop" tabindex="0">
+    <span class="ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#213D87" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg></span>
+    <span class="txt">
+      <strong>Arraste os PDFs ou escolha os arquivos</strong>
+      <span class="muted" style="font-size:13px">MentorH › Ponto Eletrônico – Relatório de Frequência. Aceita vários arquivos. Nada é enviado: o PDF é lido no navegador.</span>
+    </span>
+    <span class="btn pri" aria-hidden="true">Escolher arquivos</span>
+    <input type="file" id="file" accept="application/pdf,.pdf" multiple class="sr">
+  </label>
+  <section class="panel hidden" id="impPanel">
+    <div class="panel-h" style="padding-bottom:12px;border-bottom:1px solid var(--bd2)">
+      <h2>Importados <span class="n muted" style="font-weight:500" id="impResumo"></span></h2>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--txt2)">Buscar <input type="search" id="busca" placeholder="Nome ou matrícula"></label>
+    </div>
+    <div class="tbox">
+      <table class="t" style="min-width:880px">
+        <caption class="sr">Relatórios importados</caption>
+        <thead><tr><th scope="col">Empregado</th><th scope="col">Competência</th><th scope="col" class="r h-sal">Saldo</th><th scope="col">Pontos de atenção</th><th scope="col">Arquivo</th><th scope="col"><span class="sr">Ação</span></th></tr></thead>
+        <tbody id="impBody"></tbody>
+      </table>
+    </div>
   </section>
-  <nav class="tabs" aria-label="Seções da análise">
-    <div class="wrap" id="tabs">
-      <a href="#resumo" class="on">Resumo</a>
-      <a href="#atencao">Pontos de atenção</a>
-      <a href="#semanas">Semanas</a>
-      <a href="#dias">Dias do mês</a>
-      <a href="#conferencia">Conferência</a>
-    </div>
-  </nav>
-  <main class="wrap main">
-    <section id="resumo" class="resumo"></section>
-    <section id="atencao" class="card atencao"></section>
-    <section id="semanas"></section>
-    <section id="dias" class="card dias"></section>
-    <section id="conferencia" class="card conf"></section>
-  </main>
-  <footer class="wrap foot">O PDF é lido no navegador e nenhum dado é enviado.</footer>
-  <div class="mobile-bar">
-    <button class="btn primary" id="btnResumoMob">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>
-      Resumo para o empregado
-    </button>
-  </div>
-</div>
+</main>
 
-<!-- painel do resumo -->
+<!-- ANÁLISE -->
+<main id="vRes" class="wrap page hidden"></main>
+
 <div class="overlay hidden" id="overlay">
-  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
-    <div class="panel-head">
-      <h2 id="panelTitle">Resumo para o empregado</h2>
-      <button class="btn icon" id="btnFechar" aria-label="Fechar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="modal-h">
+      <h2 id="mTitle">Resumo para o empregado</h2>
+      <button class="btn sm" id="btnFechar" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
-    <div class="panel-body">
-      <label for="resumoTxt">Revise ou ajuste o texto antes de copiar.</label>
+    <div class="modal-b">
+      <label for="resumoTxt" class="muted" style="font-size:13px;font-weight:600">Revise ou ajuste o texto antes de copiar.</label>
       <textarea id="resumoTxt"></textarea>
     </div>
-    <div class="panel-foot">
+    <div class="modal-f">
       <button class="btn" id="btnCancelar">Fechar</button>
-      <button class="btn primary" id="btnCopiar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>
-        Copiar texto
-      </button>
+      <button class="btn pri" id="btnCopiar">Copiar texto</button>
     </div>
   </div>
 </div>
@@ -433,12 +346,11 @@ const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 const plural = (n, s, p) => n === 1 ? s : p;
 const sinal = m => m == null ? '' : (m > 0 ? '+' : m < 0 ? '−' : '') + fmt(Math.abs(m));
 const cls = m => m > 0 ? 'pos' : m < 0 ? 'neg' : 'zero';
-const ICON_OK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
-
+const ICO_W = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17h.01"/></svg>';
+const DOWC = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const CONECT = new Set(['de','da','do','das','dos','e','em','para','a','o']);
-function titulo(s) {
-  return String(s || '').toLowerCase().split(/(\s+)/).map((w, i) => (i > 0 && CONECT.has(w)) ? w : w.replace(/^\p{L}/u, c => c.toUpperCase())).join('');
-}
+const titulo = s => String(s || '').toLowerCase().split(/(\s+)/).map((w, i) => (i > 0 && CONECT.has(w)) ? w : w.replace(/^\p{L}/u, c => c.toUpperCase())).join('');
+const NIVEL = { ajustar: ['c-aj', 'Ajustar'], verificar: ['c-ver', 'Verificar'], info: ['c-inf', 'Informação'] };
 
 // ---------- leitura do PDF ----------
 let pdfjs = null;
@@ -461,453 +373,361 @@ async function lerPdf(file, onPage) {
   return pages;
 }
 
-// ---------- fila de importação ----------
-let fila = [];        // {id, nome, estado: 'lendo'|'pronto'|'erro', msg, pag, total, rels:[]}
-let relatorios = [];  // {arquivo, emp}
-let atual = null;
+// ---------- estado ----------
+let fila = [], relatorios = [], seq = 0;
+let A = null, idxAtual = -1, aba = 'resumo', semSel = 0, modoDias = 'tab', filtro = 'todos';
 
-function renderFila() {
-  $('queueCard').classList.toggle('hidden', !fila.length);
-  const n = k => fila.filter(f => f.estado === k).length;
-  const partes = [];
-  if (n('pronto')) partes.push(n('pronto') + ' ' + plural(n('pronto'), 'pronto', 'prontos'));
-  if (n('lendo')) partes.push(n('lendo') + ' lendo');
-  if (n('erro')) partes.push(n('erro') + ' com problema');
-  $('queueSummary').textContent = partes.join(' · ');
-  $('queue').innerHTML = fila.map(f => {
-    if (f.estado === 'lendo') return `<li>
-      <span class="q-ico" style="background:var(--blue-bg)" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#154899" stroke-width="2" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/></svg></span>
-      <div class="q-body"><div class="q-name">${esc(f.nome)}</div><div class="q-sub">${f.total ? `Lendo página ${f.pag} de ${f.total}…` : 'Abrindo arquivo…'}</div>
-      <div class="progress"><div style="width:${f.total ? Math.round(f.pag / f.total * 100) : 5}%"></div></div></div></li>`;
-    if (f.estado === 'erro') return `<li>
-      <span class="q-ico" style="background:var(--red-bg)" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B3261E" stroke-width="2.5" stroke-linecap="round"><path d="M12 7v6M12 17h.01"/></svg></span>
-      <div class="q-body"><div class="q-name">${esc(f.nome)}</div><div class="q-sub err">${esc(f.msg)}</div></div>
-      <button class="btn" data-remover="${f.id}">Remover</button></li>`;
-    const r = f.rels;
-    const desc = r.length === 1
-      ? `1 empregado · ${cap(MESES[r[0].emp.mes])}/${r[0].emp.ano}${r[0].ok ? ' · totais conferem' : ' · confira os totais'}`
-      : `${r.length} empregados`;
-    return `<li>
-      <span class="q-ico" style="background:var(--green-bg)" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E6B30" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
-      <div class="q-body"><div class="q-name">${esc(f.nome)}</div><div class="q-sub">${desc}</div></div>
-      <button class="btn" data-ver="${relatorios.indexOf(r[0])}">Ver análise</button></li>`;
-  }).join('');
+// ---------- importação ----------
+function contagem(issues) {
+  const aj = issues.filter(i => i.nivel === 'ajustar').length, ver = issues.filter(i => i.nivel === 'verificar').length;
+  return { aj, ver };
 }
+function renderImport() {
+  $('impPanel').classList.toggle('hidden', !fila.length);
+  const n = k => fila.filter(f => f.estado === k).length;
+  const prontos = relatorios.length;
+  $('impResumo').textContent = '· ' + [prontos ? `${prontos} ${plural(prontos, 'pronto', 'prontos')}` : '', n('lendo') ? `${n('lendo')} lendo` : '', n('erro') ? `${n('erro')} com problema` : ''].filter(Boolean).join(' · ');
+  const q = ($('busca').value || '').toLowerCase().trim();
+  const linhas = [];
+  fila.forEach(f => {
+    if (f.estado === 'lendo') linhas.push(`<tr><td colspan="4"><div style="display:flex;align-items:center;gap:12px"><span class="muted" style="font-size:13px;white-space:nowrap">${f.total ? `Lendo página ${f.pag} de ${f.total}` : 'Abrindo arquivo…'}</span><div class="prog"><div style="width:${f.total ? Math.round(f.pag / f.total * 100) : 5}%"></div></div></div></td><td class="muted" style="font-size:13px">${esc(f.nome)}</td><td></td></tr>`);
+    else if (f.estado === 'erro') linhas.push(`<tr style="background:var(--aj-row)"><td colspan="4" style="font-size:13px;color:var(--aj)"><span style="display:inline-flex;gap:8px;align-items:center">${ICO_W}${esc(f.msg)}</span></td><td class="muted" style="font-size:13px">${esc(f.nome)}</td><td class="r"><button class="btn sm" data-rem="${f.id}">Remover</button></td></tr>`);
+    else f.rels.forEach(r => {
+      if (q && !(r.emp.nome.toLowerCase().includes(q) || r.emp.matricula.includes(q))) return;
+      const c = contagem(r.A.issues), k = relatorios.indexOf(r);
+      const pts = [c.aj ? `<span class="n" style="font-size:12px;font-weight:700;color:var(--aj)">${c.aj} ajustar</span>` : '', c.ver ? `<span class="n" style="font-size:12px;font-weight:700;color:var(--ver)">${c.ver} verificar</span>` : ''].filter(Boolean).join(' · ') || '<span class="muted" style="font-size:12px">nenhum</span>';
+      linhas.push(`<tr><td><div style="font-weight:700">${esc(titulo(r.emp.nome))}</div><div class="n muted" style="font-size:12px">Mat. ${esc(r.emp.matricula)} · ${esc(titulo((r.emp.cargo.split(' - ')[0] || '').trim()))}</div></td>
+        <td>${cap(MESES[r.emp.mes])}/${r.emp.ano}</td><td class="r n v-sal ${cls(r.A.M.saldo)}">${sinal(r.A.M.saldo) || '00:00'}</td><td>${pts}</td>
+        <td class="muted" style="font-size:13px">${esc(r.arquivo)}</td><td class="r"><button class="btn sm" data-abrir="${k}">Abrir</button></td></tr>`);
+    });
+  });
+  $('impBody').innerHTML = linhas.join('') || '<tr><td colspan="6" class="muted">Nenhum relatório encontrado.</td></tr>';
+}
+$('impBody').addEventListener('click', e => {
+  const ab = e.target.closest('[data-abrir]'), rm = e.target.closest('[data-rem]');
+  if (ab) abrir(+ab.dataset.abrir);
+  if (rm) { fila = fila.filter(f => f.id !== +rm.dataset.rem); renderImport(); }
+});
+$('busca').addEventListener('input', renderImport);
 
-let seq = 0;
 async function importar(files) {
   files = [...files];
   if (!files.length) return;
   const itens = files.map(f => ({ id: ++seq, nome: f.name, estado: 'lendo', pag: 0, total: 0, rels: [], file: f }));
-  fila.push(...itens);
-  renderFila();
-  let primeiro = null;
+  fila.push(...itens); renderImport();
   for (const it of itens) {
     const f = it.file;
     if (!(/\.pdf$/i.test(f.name) || f.type === 'application/pdf')) {
       it.estado = 'erro';
-      it.msg = /\.(xlsx?|xlsm|csv|ods)$/i.test(f.name)
-        ? 'Este arquivo é uma planilha. Envie o PDF do “Ponto Eletrônico – Relatório de Frequência”.'
-        : 'Formato não aceito. Envie o PDF do “Ponto Eletrônico – Relatório de Frequência”.';
-      renderFila(); continue;
+      it.msg = /\.(xlsx?|xlsm|csv|ods)$/i.test(f.name) ? 'É uma planilha. Envie o PDF do Relatório de Frequência.' : 'Formato não aceito. Envie o PDF do Relatório de Frequência.';
+      renderImport(); continue;
     }
     try {
-      const pages = await lerPdf(f, (p, t) => { it.pag = p; it.total = t; renderFila(); });
+      const pages = await lerPdf(f, (p, t) => { it.pag = p; it.total = t; renderImport(); });
       const emps = parseReport(pages).filter(e => e.mes != null && e.ano && Object.keys(e.dias).length);
-      if (!emps.length) {
-        it.estado = 'erro';
-        it.msg = 'Não encontrei a tabela diária do Relatório de Frequência neste PDF. Confira se é o relatório “Ponto Eletrônico – Relatório de Frequência”.';
-      } else {
-        it.estado = 'pronto';
-        emps.forEach(e => {
-          const A = analisar(e);
-          const r = { arquivo: f.name, emp: e, ok: A.conf.length > 0 && A.conf.every(c => c.ok) };
-          relatorios.push(r); it.rels.push(r);
-        });
-        if (primeiro == null) primeiro = relatorios.indexOf(it.rels[0]);
-      }
-    } catch (err) {
-      console.error(err);
-      it.estado = 'erro';
-      it.msg = 'Não foi possível ler este PDF. Ele pode estar protegido ou corrompido.';
-    }
-    renderFila();
+      if (!emps.length) { it.estado = 'erro'; it.msg = 'Não encontrei a tabela diária do Relatório de Frequência neste PDF.'; }
+      else { it.estado = 'pronto'; emps.forEach(e => { const r = { arquivo: f.name, emp: e, A: analisar(e) }; relatorios.push(r); it.rels.push(r); }); }
+    } catch (err) { console.error(err); it.estado = 'erro'; it.msg = 'Não foi possível ler este PDF. Ele pode estar protegido ou corrompido.'; }
+    renderImport();
   }
-  if (primeiro != null && fila.every(f => f.estado !== 'erro')) abrir(primeiro);
+  const prontos = itens.filter(i => i.estado === 'pronto');
+  if (prontos.length === 1 && prontos[0].rels.length === 1 && itens.every(i => i.estado !== 'erro') && relatorios.length === 1) abrir(relatorios.indexOf(prontos[0].rels[0]));
 }
-
-$('queue').addEventListener('click', e => {
-  const ver = e.target.closest('[data-ver]'); const rem = e.target.closest('[data-remover]');
-  if (ver) abrir(+ver.dataset.ver);
-  if (rem) { fila = fila.filter(f => f.id !== +rem.dataset.remover); renderFila(); }
-});
 
 function mostrarImport() {
-  $('secResult').classList.add('hidden'); $('secImport').classList.remove('hidden');
-  $('topActions').classList.toggle('hidden', !relatorios.length);
-  $('btnResumoTop').classList.add('hidden');
-  window.scrollTo(0, 0);
+  $('vRes').classList.add('hidden'); $('ctxWrap').classList.add('hidden'); $('vImport').classList.remove('hidden');
+  $('acts').classList.add('hidden'); renderImport(); window.scrollTo(0, 0);
 }
-
 function abrir(i) {
-  $('secImport').classList.add('hidden'); $('secResult').classList.remove('hidden');
-  $('topActions').classList.remove('hidden'); $('btnResumoTop').classList.remove('hidden');
-  render(i); window.scrollTo(0, 0);
+  idxAtual = i; A = relatorios[i].A; aba = 'resumo'; semSel = 0; filtro = 'todos'; modoDias = 'tab';
+  const comIssue = A.semanas.findIndex(w => w.issues); semSel = comIssue >= 0 ? comIssue : 0;
+  $('vImport').classList.add('hidden'); $('vRes').classList.remove('hidden'); $('ctxWrap').classList.remove('hidden'); $('acts').classList.remove('hidden');
+  renderCtx(); renderAba(); window.scrollTo(0, 0);
 }
 
-// ---------- resultado ----------
-let modoDias = 'cal';
-
-function render(i) {
-  const A = analisar(relatorios[i].emp);
-  atual = { A, i };
-  const { emp, M, semanas, conf, issues } = A;
-  const mm = dd(emp.mes + 1);
-  const confOk = conf.length > 0 && conf.filter(c => c.essencial).every(c => c.ok);
-  const nAjCtx = issues.filter(x => x.nivel === 'ajustar').length, nVerCtx = issues.filter(x => x.nivel === 'verificar').length;
-
-  // contexto
+// ---------- cabeçalho e abas ----------
+function renderCtx() {
+  const { emp, issues } = A;
   const cargo = titulo((emp.cargo.split(' - ')[0] || '').trim());
-  const admissao = (emp.cargo.match(/Admiss[ãa]o:\s*([\d/]+)/) || [])[1] || '';
-  const lotacao = emp.lotacao.replace(/\s*\(\d+\)\s*$/, '');
-  const jornadas = Object.values(emp.jornadas);
-  const codPadrao = (emp.jornadaPadrao.match(/\(CH:\s*(\d+)\)/) || [])[1];
-  const jPrinc = jornadas.filter(j => j.codigo === codPadrao);
-  const descJ = j => `${(j.descricao.match(/\d{2}:\d{2}\s*[àa]s\s*\d{2}:\d{2}/i) || [j.descricao])[0].replace(/\s*[àa]s\s*/i, ' às ')} (código ${j.codigo})`;
-  const jorn = jPrinc.length ? jPrinc.map(descJ).join(', ') + (jornadas.length > 1 ? ` e mais ${jornadas.length - 1} no mês` : '') : jornadas.length ? jornadas.map(j => `${(j.descricao.match(/\d{2}:\d{2}\s*[àa]s\s*\d{2}:\d{2}/i) || [j.descricao])[0].replace(/\s*[àa]s\s*/i, ' às ')} (código ${j.codigo})`).join(', ') : emp.jornadaPadrao;
-  const diasTxt = A.diasContrat.length >= 7 ? 'todos os dias' : `de ${DIAS_NOME[A.diasContrat[0]].toLowerCase()} a ${DIAS_NOME[A.diasContrat.at(-1)].toLowerCase()}`;
+  const lot = titulo(emp.lotacao.replace(/\s*\(\d+\)\s*$/, ''));
   const hom = emp.homologada.match(/HOMOLOGADA:\s*(.*?)\s+em\s+([\d/]+)/i);
-  const opts = relatorios.map((r, k) => `<option value="${k}" ${k === i ? 'selected' : ''}>${relatorios.length > 1 ? esc(titulo(r.emp.nome)) + ' · ' : ''}${cap(MESES[r.emp.mes])}/${r.emp.ano}</option>`).join('');
-
   $('ctx').innerHTML = `
-    <div class="ctx-row">
-      <div style="min-width:0">
-        <div class="ctx-name"><h1>${esc(titulo(emp.nome))}</h1><span class="chip neutral n">Mat. ${esc(emp.matricula)}</span></div>
-        <p class="ctx-sub">${esc(cargo)} · ${esc(lotacao)} · Jornada ${esc(jorn)} · ${fmt(A.semanal)} semanais, ${fmt(A.diaria)} por dia ${diasTxt}</p>
-      </div>
-      <div class="ctx-right">
-        <label class="field">${relatorios.length > 1 ? 'Relatório' : 'Competência'}
-          <select id="selRel" ${relatorios.length < 2 ? 'disabled' : ''}>${opts}</select>
-        </label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;padding-bottom:7px">
-          ${hom ? `<span class="chip ok">${ICON_OK}Homologada em ${esc(hom[2])}</span>` : `<span class="chip warn">Não homologada</span>`}
-          ${nAjCtx ? `<a href="#atencao" class="chip danger" style="text-decoration:none">${nAjCtx} ${plural(nAjCtx, 'ponto', 'pontos')} para ajustar</a>` : nVerCtx ? `<a href="#atencao" class="chip warn" style="text-decoration:none">${nVerCtx} para verificar</a>` : ''}
-          ${conf.length ? (confOk ? `<a href="#conferencia" class="chip info" style="text-decoration:none">${ICON_OK}Totais conferem com o relatório</a>` : `<a href="#conferencia" class="chip warn" style="text-decoration:none">Totais com diferença</a>`) : ''}
-        </div>
-      </div>
-    </div>
-    <details class="ctx-details">
-      <summary>Dados do cadastro</summary>
-      <dl>
-        <div><dt>Unidade</dt><dd>${esc(emp.unidade)}</dd></div>
-        <div><dt>Lotação de exercício</dt><dd>${esc(emp.lotacao)}</dd></div>
-        <div><dt>Cargo</dt><dd>${esc(emp.cargo.replace(/\s*-\s*Admiss[ãa]o:.*$/, ''))}</dd></div>
-        ${admissao ? `<div><dt>Admissão</dt><dd>${esc(admissao)}</dd></div>` : ''}
-        ${jornadas.length > 1 ? `<div><dt>Jornadas do mês</dt><dd>${jornadas.map(j => esc(j.sobreaviso ? j.descricao + ' (código ' + j.codigo + ')' : descJ(j))).join('<br>')}</dd></div>` : ''}
-        ${emp.vinculo ? `<div><dt>Vínculo</dt><dd>${esc(emp.vinculo)}</dd></div>` : ''}
-        ${hom ? `<div><dt>Homologação</dt><dd>${esc(titulo(hom[1]))} em ${esc(hom[2])}</dd></div>` : ''}
-      </dl>
-    </details>`;
-  const sel = $('selRel'); if (sel) sel.onchange = e => render(+e.target.value);
-
-  // ---------- resumo ----------
-  const narr = narrativa(A);
-  const passos = A.partes.filter(p => p.v || p.id === 'ponto').map(p => ({ ...p, t: tituloParte(p) }));
-  passos.push({ t: 'Saldo do mês', sub: `${fmt(M.hc)} − ${fmt(M.contratual)}`, v: M.saldo, tipo: 'fim' });
-  let run = 0;
-  const barras = passos.map((p, k) => {
-    let de, ate;
-    if (k === 0) { de = 0; ate = p.v; run = p.v; }
-    else if (p.tipo === 'fim') { de = 0; ate = p.v; }
-    else { de = run; ate = run + p.v; run = ate; }
-    return { ...p, de, ate, ini: k === 0 };
-  });
-  const vals = barras.flatMap(b => [b.de, b.ate]).concat(0);
-  let hi = Math.max(...vals), lo = Math.min(...vals);
-  const pad = Math.max(30, (hi - lo) * 0.12); hi += pad; lo -= (lo < 0 ? pad : 0);
-  const H = 200, k = H / (hi - lo || 1), y = v => (hi - v) * k;
-  const cor = b => b.ini ? ['#8A94A8', 'var(--muted)'] : b.tipo === 'fim' ? ['var(--navy)', 'var(--navy)'] : b.v < 0 ? ['var(--orange)', 'var(--orange-t)'] : ['var(--blue)', 'var(--blue)'];
-  const cols = `grid-template-columns:repeat(${barras.length},minmax(0,1fr))`;
-  const ariaCasc = barras.map(b => `${b.t} ${sinal(b.v).replace('−', 'menos ').replace('+', 'mais ')}`).join(', ');
-  const nAj = issues.filter(i => i.nivel === 'ajustar').length;
-
-  $('resumo').innerHTML = `
-    <div class="card hero">
-      <div>
-        <div class="lbl">Saldo do mês</div>
-        <div class="big n ${cls(M.saldo)}">${sinal(M.saldo) || '00:00'}</div>
-        <div class="formula n">${fmt(M.hc)} consideradas − ${fmt(M.contratual)} contratuais</div>
-      </div>
-      ${M.impactoInconsist ? `<a href="#atencao" class="alerta">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17h.01"/></svg>
-        <span>O saldo inclui <strong class="n">${sinal(M.impactoInconsist)}</strong> de horas incompatíveis com os registros. Corrigido, ficaria em torno de <strong class="n">${sinal(M.saldoCorrigido) || '00:00'}</strong>.</span></a>`
-        : nAj ? `<a href="#atencao" class="alerta"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17h.01"/></svg><span>${nAj} ${plural(nAj, 'ponto precisa', 'pontos precisam')} de ajuste antes de fechar o saldo.</span></a>` : ''}
-      <div class="split">
-        <h3>Em resumo</h3>
-        <ul class="narr">${narr.itens.map(t => `<li>${t}</li>`).join('')}</ul>
-        ${narr.conclusao ? `<p class="concl">${narr.conclusao}</p>` : ''}
-      </div>
-    </div>
-    <div class="card cascade">
-      <div>
-        <h2>De onde vem o saldo</h2>
-        <p class="intro">A coluna Saldo Diário só compara o ponto com o plantão do dia. O saldo do mês também soma a diferença entre a escala e a CH contratual, os feriados, os afastamentos e os dias que vão para pagamento.</p>
-      </div>
-      <div class="chart" style="${cols}" role="img" aria-label="Gráfico em cascata: ${esc(ariaCasc)}">
-        <div class="zero-line" aria-hidden="true" style="top:${y(0) + 30}px"></div>
-        ${barras.map(b => {
-          const top = y(Math.max(b.de, b.ate)), h = Math.max(2, y(Math.min(b.de, b.ate)) - top), c = cor(b);
-          return `<div class="col" aria-hidden="true"><div class="val n" style="top:${top - 24}px;color:${c[1]}">${sinal(b.v) || '00:00'}</div><div class="bar" style="top:${top}px;height:${h}px;background:${c[0]}"></div></div>`;
-        }).join('')}
-      </div>
-      <div class="chart-labels" style="${cols}" aria-hidden="true">${barras.map(b => `<div><b>${esc(b.t)}</b><span>${esc(b.sub)}</span></div>`).join('')}</div>
-      <ol class="casc-list">${barras.map(b => `<li class="${b.tipo === 'fim' ? 'fim' : ''}"><div><b>${esc(b.t)}</b><span>${esc(b.sub)}</span></div><span class="n ${b.tipo === 'fim' ? '' : cls(b.v)}">${sinal(b.v) || '00:00'}</span></li>`).join('')}</ol>
-    </div>`;
-
-  // ---------- pontos de atenção ----------
-  const nVer = issues.filter(i => i.nivel === 'verificar').length;
-  const pags = A.grupos.filter(g => g.tipo === 'pag');
-  const nivelChip = { ajustar: ['aj', 'Ajustar'], verificar: ['ver', 'Verificar'], info: ['inf', 'Informação'] };
-  $('atencao').innerHTML = `
-    <div class="sec-head" style="margin:0">
-      <div><h2>Pontos de atenção</h2><p>${issues.length ? [nAj ? `${nAj} para ajustar` : '', nVer ? `${nVer} para verificar` : ''].filter(Boolean).join(' · ') || 'Só informações' : 'Nenhuma inconsistência encontrada nos registros e na escala.'}</p></div>
-    </div>
-    ${issues.length ? `<ul class="issues">${issues.map(i => `<li>
-      <span class="lvl ${nivelChip[i.nivel][0]}">${nivelChip[i.nivel][1]}</span>
-      <div class="i-body">
-        <div class="i-title"><span class="n">${esc(i.data)}</span> · ${esc(i.titulo)}</div>
-        <p>${esc(i.texto)}</p>
-        ${i.impacto && i.tipo === 'hc-divergente' ? `<p class="i-imp">Impacto no saldo do mês: <strong class="n">${sinal(i.impacto)}</strong></p>` : ''}
-        ${i.providencia ? `<details class="prov"><summary>Providência${i.ref ? ` · Checklist ${esc(i.ref)}` : ''}</summary><p>${esc(i.providencia)}</p>${i.funcionalidade && i.funcionalidade !== 'Não se aplica' ? `<p class="func">Mentorh: ${esc(i.funcionalidade)}</p>` : ''}</details>` : ''}
-      </div></li>`).join('')}</ul>` : ''}
-    ${pags.length ? `<div class="note">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#154899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
-      <span>Não são inconsistências: ${pags.map(g => `<strong>${esc(g.nome.toLowerCase())}</strong> (${esc(g.lista)})`).join(', ')}. ${pags.some(g => g.modo === 'excedente') ? 'Na extensão de jornada remunerada, o saldo do dia é desconsiderado e vai para pagamento. ' : ''}${pags.some(g => g.modo === 'total') ? 'No plantão de sobreaviso e na jornada extraordinária remunerada, todo o tempo trabalhado no dia vai para pagamento.' : ''}</span>
-    </div>` : ''}`;
-
-  // ---------- semanas ----------
-  const maxW = Math.max(1, ...semanas.flatMap(w => [w.contratual, w.escalada + w.credito, w.hc]));
-  const chipEsc = s => s === 'Deficitária' ? 'warn' : s === 'Superavitária' ? 'info' : 'neutral';
-  const wbar = (v, c, nome) => `<div class="wbar"><div class="track" title="${nome}"><div style="width:${v / maxW * 100}%;background:${c}"></div></div><span class="n"><span class="sr">${nome} </span>${fmt(v)}</span></div>`;
-  $('semanas').innerHTML = `
-    <div class="sec-head">
-      <div><h2>Semanas</h2><p>Domingo a sábado. A escala é comparada com a CH contratual da semana.</p></div>
-      <div class="legend" aria-hidden="true">
-        <span><i style="background:var(--bar-contr)"></i>Contratual</span>
-        <span><i style="background:var(--navy)"></i>Escalada</span>
-        <span><i style="background:var(--green)"></i>Considerada</span>
-      </div>
-    </div>
-    <div class="weeks">${semanas.map(w => {
-      const obs = [];
-      if (w.difEscala) obs.push(`Escala ${fmt(Math.abs(w.difEscala))} ${w.difEscala < 0 ? 'abaixo' : 'acima'} da CH contratual.`);
-      w.dias.filter(d => d.feriado).forEach(d => obs.push(`Feriado em ${dd(d.dia)}/${mm}${d.credito ? ` creditado com ${fmt(d.credito)}` : ''}.`));
-      if (w.afast.length) obs.push(`${w.afast.join(', ')} na semana.`);
-      if (w.pagamentos.length) obs.push(`${w.pagamentos.join(', ')} (vai para pagamento).`);
-      return `<article class="card week ${w.statusEscala === 'Deficitária' ? 'alert' : ''}">
-        <div class="week-top"><h3>Semana ${w.n}</h3><span class="n">${w.periodo}/${mm}</span></div>
-        <span class="chip sm ${chipEsc(w.statusEscala)}" style="align-self:flex-start">Escala ${w.statusEscala.toLowerCase()}</span>
-        <div class="wbars">${wbar(w.contratual, 'var(--bar-contr)', 'Contratual')}${wbar(w.escalada + w.credito, 'var(--navy)', 'Escalada')}${wbar(w.hc, 'var(--green)', 'Considerada')}</div>
-        <div class="week-foot"><span>Saldo da semana</span><span class="n ${cls(w.saldo)}">${sinal(w.saldo) || '00:00'}</span></div>
-        ${obs.length ? `<div class="obs">${esc(obs.join(' '))}</div>` : ''}
-        ${w.issues ? `<a href="#atencao" class="chip sm ${w.dias.some(d => d.issues.some(i => i.nivel === 'ajustar')) ? 'danger' : 'warn'}" style="align-self:flex-start;text-decoration:none">${w.issues} ${plural(w.issues, 'ponto', 'pontos')} de atenção</a>` : ''}
-      </article>`;
-    }).join('')}</div>`;
-
-  renderDias(A);
-
-  // ---------- conferência ----------
-  const nomes = { 'CH Contratual Mês': 'CH contratual', 'CH Escalada Mês': 'CH escalada', 'CH Executada': 'Horas consideradas', 'Saldo do mês': 'Saldo do mês' };
-  $('conferencia').innerHTML = `
-    <div class="conf-head">
-      <div class="who">
-        <span class="conf-ico" style="background:${confOk ? 'var(--green-bg)' : 'var(--orange-bg)'}" aria-hidden="true">${confOk
-          ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6B30" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>'
-          : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A84A08" stroke-width="2.5" stroke-linecap="round"><path d="M12 7v6M12 17h.01"/></svg>'}</span>
-        <div>
-          <h2 style="font-size:16px">Conferência com o relatório</h2>
-          <div class="muted" style="font-size:13px">${!conf.length ? 'O relatório não trouxe o quadro de totais para comparar.' : confOk ? (conf.every(c => c.ok) ? `Os ${conf.length} totais recalculados são iguais aos impressos no PDF.` : 'CH contratual, horas consideradas e saldo conferem com o PDF. A CH escalada do relatório difere da soma dos códigos de jornada da tabela diária, o que não altera o saldo.') : 'Há diferença entre o recalculado e o relatório. Confira as ocorrências do mês (ponto facultativo, recesso ou outra regra específica).'}</div>
-        </div>
-      </div>
-    </div>
-    ${conf.length ? `<div class="conf-grid">${conf.map(c => `<div>
-      <div class="k">${nomes[c.item] || c.item}</div>
-      <div class="v n">${c.item === 'Saldo do mês' ? sinal(c.calc) : fmt(c.calc)}</div>
-      ${c.ok ? '' : `<div class="d n ${c.essencial ? 'neg' : 'muted'}">Relatório: ${c.item === 'Saldo do mês' ? sinal(c.rel) : fmt(c.rel)}</div>`}
-    </div>`).join('')}</div>` : ''}
-    <details>
-      <summary>Como o cálculo é feito</summary>
-      <ul>
-        <li><strong>CH contratual:</strong> ${fmt(A.semanal)} semanais ÷ ${A.diasContrat.length} dias = ${fmt(A.diaria)} por dia, ${diasTxt}. Feriados não contam.</li>
-        <li><strong>CH escalada:</strong> carga da jornada (${jornadas.map(j => j.codigo + ': ' + fmt(j.ch)).join(', ') || '—'}) em cada dia com código de jornada, inclusive nos afastamentos.</li>
-        <li><strong>Horas consideradas:</strong> coluna HC do relatório. A soma é a CH executada.</li>
-        <li><strong>Saldo do mês:</strong> horas consideradas − CH contratual.</li>
-        <li><strong>Pontos de atenção:</strong> seguem o Checklist de Triagem e Tratamento do POP.DGP.127 (Anexo III). Só são considerados os registros até 3h antes do início e 3h depois do término da jornada; marcações com menos de 15 min entre si são tratadas como possível duplicidade.</li>
-        <li><strong>Hora ficta:</strong> 7min30s a cada hora noturna (52min30s) trabalhada entre 22h e 5h.</li>
-        <li><strong>Dias trabalhados:</strong> exclui os dias de afastamento (férias, licenças, atestados etc.), em que o sistema credita a escala prevista.</li>
-      </ul>
-    </details>`;
-
-  ativarTabs();
+    <div class="ctx-l"><h1>${esc(titulo(emp.nome))}</h1><span class="ctx-meta">Mat. ${esc(emp.matricula)} · ${esc(cargo)} · ${esc(lot)} · ${Math.round(A.semanal / 60)}h semanais</span></div>
+    <div class="ctx-r"><span class="comp">${cap(MESES[emp.mes])}/${emp.ano}</span>${hom ? `<span class="chip c-ok" title="Homologada por ${esc(titulo(hom[1]))}">Homologada em ${esc(hom[2].slice(0, 5))}</span>` : '<span class="chip c-ver">Não homologada</span>'}</div>`;
+  const c = contagem(issues);
+  const T = [['resumo', 'Resumo', 'Resumo'], ['semanas', 'Semanas', 'Semanas'], ['pontos', 'Pontos de atenção', 'Pontos'], ['conf', 'Conferência', 'Conferência']];
+  $('tabs').innerHTML = T.map(([id, longo, curto]) => `<button class="tab" role="tab" data-aba="${id}" aria-selected="${aba === id}"><span class="longo">${longo}</span><span class="curto">${curto}</span>${id === 'pontos' ? `${c.aj ? `<span class="badge b-aj n" aria-label="${c.aj} para ajustar">${c.aj}</span>` : ''}${c.ver ? `<span class="badge b-ver n" aria-label="${c.ver} para verificar">${c.ver}</span>` : ''}` : ''}</button>`).join('');
+}
+$('tabs').addEventListener('click', e => { const b = e.target.closest('[data-aba]'); if (b) { aba = b.dataset.aba; renderAba(); } });
+function irPara(novaAba, extra) { aba = novaAba; Object.assign(window, {}); if (extra) extra(); renderAba(); window.scrollTo(0, 0); }
+function renderAba() {
+  $('tabs').querySelectorAll('[data-aba]').forEach(b => b.setAttribute('aria-selected', b.dataset.aba === aba));
+  ({ resumo: renderResumo, semanas: renderSemanas, pontos: renderPontos, conf: renderConf })[aba]();
 }
 
-// ---------- textos de "de onde vem o saldo" ----------
-function tituloParte(p) {
-  if (p.id === 'ponto') return 'Saldo Diário';
-  if (p.id === 'escala') return p.titulo;
-  if (p.tipo === 'feriado') return 'Feriado creditado';
-  return p.titulo;
-}
-function nomeCobertura(g) {
-  if (g.tipo === 'feriado') return g.dias.length > 1 ? 'os feriados' : 'o feriado';
-  if (/^f[ée]rias$/i.test(g.nome)) return 'as férias';
-  return 'o afastamento (' + g.nome.toLowerCase() + ')';
-}
-function narrativa(A) {
-  const { M, trabalho: T, grupos, partes } = A;
-  const itens = [];
-  const dEsc = T.esc - T.con;
-  const pT = [];
-  if (T.sd) pT.push(`o ponto ficou <strong class="n">${fmt(Math.abs(T.sd))}</strong> ${T.sd > 0 ? 'acima' : 'abaixo'} da escala (soma do Saldo Diário)`);
-  if (dEsc) pT.push(`a escala somou ${fmt(T.esc)}, <strong class="n">${fmt(Math.abs(dEsc))}</strong> ${dEsc < 0 ? 'abaixo' : 'acima'} da CH contratual desses dias (${fmt(T.con)})`);
-  itens.push(pT.length
-    ? `Nos dias trabalhados, ${pT.join(' e ')}. Resultado: <strong class="n ${cls(T.v)}">${sinal(T.v) || '00:00'}</strong>${T.v < 0 ? ', ou seja, trabalhou menos que o devido' : T.v > 0 ? ', ou seja, trabalhou mais que o devido' : ''}.`
-    : `Nos dias trabalhados, o tempo cumprido foi igual à CH contratual.`);
-  grupos.forEach(g => {
-    const v = `<strong class="n ${cls(g.v)}">${sinal(g.v) || '00:00'}</strong>`;
-    if (g.tipo === 'feriado' && g.v) itens.push(`${cap(nomeCobertura(g))} (${esc(g.lista)}) ${g.dias.length > 1 ? 'somaram' : 'somou'} ${v}: crédito da CH diária em dia sem plantão.`);
-    else if (g.tipo === 'afast' && g.v) {
-      const pl = /^f[ée]rias$/i.test(g.nome);
-      itens.push(`${cap(nomeCobertura(g))} ${pl ? (g.v > 0 ? 'somaram' : 'tiraram') : (g.v > 0 ? 'somou' : 'tirou')} ${v}: a escala registrada no período (${fmt(g.hc)}) ficou ${g.v > 0 ? 'acima' : 'abaixo'} da CH contratual desses dias (${fmt(g.contratual)}).`);
-    } else if (g.tipo === 'pag') {
-      if (g.modo === 'excedente') itens.push(`${esc(g.nome)} (${esc(g.lista)}): ${v}. O tempo além da escala foi para pagamento; o dia conta só a CH da escala.`);
-      else itens.push(`${esc(g.nome)} (${esc(g.lista)}): ${v}. O tempo trabalhado foi para pagamento e não conta no saldo${g.v < 0 ? '; a CH contratual desses dias ficou descoberta' : ''}.`);
+// ---------- textos de "por que o saldo deu" ----------
+const listaDias = ds => ds.map(dd).join(', ').replace(/, ([^,]*)$/, ' e $1') + '/' + dd(A.emp.mes + 1);
+const periodo = ds => ds.length > 2 && ds[ds.length - 1] - ds[0] === ds.length - 1 ? `${dd(ds[0])} a ${dd(ds[ds.length - 1])}/${dd(A.emp.mes + 1)}` : listaDias(ds);
+function linhasSaldo() {
+  const { M, partes } = A;
+  const erros = A.issues.filter(i => i.tipo === 'hc-divergente');
+  const out = [];
+  partes.forEach(p => {
+    const g = p.g;
+    if (p.id === 'ponto') out.push({ v: p.v, t: p.v > 0 ? 'Ficou além do horário nos plantões.' : p.v < 0 ? 'Ficou abaixo do horário nos plantões.' : 'O ponto bateu com a escala nos plantões.', d: 'É a soma da coluna Saldo Diário.',
+      alerta: erros.length ? `${sinal(erros.reduce((a, i) => a + (i.impacto || 0), 0))} disso é de erro em ${erros.map(i => i.data.replace(/^\w+, /, '')).join(', ')}.` : '' });
+    else if (p.id === 'escala') { if (p.v) out.push({ v: p.v, t: `A escala teve ${p.v > 0 ? 'mais' : 'menos'} horas que o contrato nos dias trabalhados.`, d: `${fmt(p.esc)} escaladas × ${fmt(p.con)} do contrato.` }); }
+    else if (p.id === 'outros-trab') out.push({ v: p.v, t: 'Outros créditos em dias sem código de jornada.', d: '' });
+    else if (p.id === 'resid') out.push({ v: p.v, t: 'Outros ajustes do relatório.', d: '' });
+    else if (p.tipo === 'feriado') out.push({ v: p.v, t: `${g.dias.length > 1 ? 'Feriados' : 'Feriado'} (${listaDias(g.dias)}) sem plantão.`, d: 'O dia é abonado no contrato e ainda recebe crédito da CH diária.' });
+    else if (p.tipo === 'afast') {
+      const nome = /^f[ée]rias$/i.test(g.nome) ? 'Férias' : g.nome;
+      out.push({ v: p.v, t: `${nome} (${periodo(g.dias)}).`, d: p.v === 0 ? 'O crédito foi igual ao contrato. Não muda o saldo.' : `A escala registrada no período (${fmt(g.hc)}) ficou ${p.v > 0 ? 'acima' : 'abaixo'} do contrato desses dias (${fmt(g.contratual)}).` });
+    } else if (p.tipo === 'pag') {
+      if (g.modo === 'excedente') out.push({ v: p.v, t: `Extensão de jornada (${listaDias(g.dias)}).`, d: 'O dia conta o plantão da escala; o tempo além dele foi pago.' });
+      else out.push({ v: p.v, t: `${g.nome.replace('Plantão de sobreaviso', 'Sobreaviso')} (${listaDias(g.dias)}).`, d: p.v < 0 ? 'O tempo foi pago e não entra no saldo. As horas do contrato desses dias ficaram faltando.' : 'O tempo foi pago e não entra no saldo.' });
     }
   });
-  const resid = partes.find(p => p.id === 'resid' || p.id === 'outros-trab');
-  if (resid) itens.push(`Outros ajustes do relatório: <strong class="n">${sinal(resid.v)}</strong>.`);
-  let conclusao = '';
-  const cobre = grupos.filter(g => (g.tipo === 'feriado' || g.tipo === 'afast') && g.v > 0);
-  const tira = grupos.filter(g => g.v < 0);
-  const junta = arr => arr.join(', ').replace(/, ([^,]*)$/, ' e $1');
+  let concl = '';
+  const T = A.trabalho, cobre = A.grupos.filter(g => (g.tipo === 'feriado' || g.tipo === 'afast') && g.v > 0);
   if (T.v < 0 && M.saldo >= 0 && cobre.length) {
-    const nomes = cobre.map(nomeCobertura);
-    const plural = cobre.length > 1 || /^(os|as) /.test(nomes[0]);
-    conclusao = `O saldo só ficou ${M.saldo > 0 ? 'positivo' : 'zerado'} porque ${junta(nomes)} ${plural ? 'cobriram' : 'cobriu'} a diferença.`;
-  } else if (T.v < 0 && M.saldo < 0 && cobre.length) {
-    conclusao = `${cap(junta(cobre.map(nomeCobertura)))} cobriram parte da diferença, mas o saldo continuou negativo.`;
-  } else if (T.v > 0 && M.saldo < 0 && tira.length) {
-    conclusao = `Os dias trabalhados ficaram positivos, mas ${junta(tira.map(g => g.tipo === 'pag' ? g.nome.toLowerCase() : nomeCobertura(g)))} deixaram o saldo negativo.`;
+    const nomes = cobre.map(g => g.tipo === 'feriado' ? (g.dias.length > 1 ? 'os feriados' : 'o feriado') : /^f[ée]rias$/i.test(g.nome) ? 'as férias' : 'o afastamento');
+    concl = `O saldo só ficou ${M.saldo > 0 ? 'positivo' : 'zerado'} porque ${nomes.join(' e ')} ${nomes.length > 1 || /^(os|as) /.test(nomes[0]) ? 'cobriram' : 'cobriu'} a diferença dos dias trabalhados.`;
   }
-  if (M.saldoDiario === M.saldo && M.saldo !== 0 && partes.filter(p => p.v && p.id !== 'ponto').length) {
-    conclusao += (conclusao ? ' ' : '') + 'A soma do Saldo Diário coincidiu com o saldo do mês por acaso: os ajustes se compensaram.';
-  }
-  return { itens, conclusao };
+  return { linhas: out, concl };
 }
-const semTags = h => h.replace(/<[^>]+>/g, '');
 
-function renderDias(A) {
-  const { emp, dias, semanas } = A;
-  const mm = dd(emp.mes + 1);
-  const ehManual = d => /\d{2}:\d{2}\s*m/i.test(d.registros);
-  const regCurto = d => d.registros.replace(/\s*\d{2}:\d{2}\s*c(?=\s|$|-)\s*-?/gi, '').replace(/\s*[rm](?=\s|$|-)/gi, '').replace(/\s*-\s*/g, ' · ').replace(/ · $/, '').trim();
-  const turnoTxt = d => { const t = d.turno || []; const out = []; for (let k = 0; k < t.length; k += 2) out.push(t[k] + ' → ' + (t[k + 1] || '?')); return out.join(', '); };
-  const PAG_CURTO = { 'Extensão de jornada remunerada': 'Ext. de jornada remunerada', 'Jornada extraordinária remunerada': 'Jornada extra remunerada', 'Plantão de sobreaviso': 'Sobreaviso' };
-  const tipoDia = d => {
-    if (d.feriado && !d.registros) return { c: 'feriado', t: cap(d.regTexto || d.ocorrencia || 'Feriado') };
-    if (d.afast) return { c: 'afast', t: d.afast };
-    if (d.pagamento) return { c: 'pag', t: PAG_CURTO[d.pagamento] || d.pagamento };
-    if (d.codigo && d.registros) return { c: 'plantao', t: 'Plantão' + (d.escalada ? ' ' + Math.round(d.escalada / 60) + 'h' : '') };
-    if (d.codigo) return { c: 'plantao', t: 'Plantão sem registro' };
-    if (d.descanso) return { c: 'quiet', t: 'Sem jornada' };
-    if (d.registros) return { c: 'quiet', t: 'Sem plantão' };
-    if (!d.contratual) return { c: 'quiet', t: 'Descanso' };
-    return { c: 'quiet', t: 'Sem plantão' };
-  };
-  const nivelDia = d => d.issues.some(i => i.nivel === 'ajustar') ? 'aj' : d.issues.some(i => i.nivel === 'verificar') ? 'ver' : '';
-  const ICON_W = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17h.01"/></svg>';
-  const marcaDia = d => { const n = nivelDia(d); return n ? `<span class="w-ico ${n}" title="${esc(d.issues.map(i => i.titulo).join('; '))}">${ICON_W}<span class="sr">${n === 'aj' ? 'Precisa de ajuste' : 'Verificar'}</span></span>` : ''; };
-  const ocorr = dias.filter(d => d.ocorrencia && !d.feriado && !d.afast && !d.pagamento && !d.descanso);
+// ---------- aba Resumo ----------
+function renderResumo() {
+  const { M, semanas, issues } = A;
+  const c = contagem(issues);
+  const erros = issues.filter(i => i.tipo === 'hc-divergente');
+  const { linhas, concl } = linhasSaldo();
+  const nUteis = A.dias.filter(d => d.contratual).length;
+  const alerta = erros.length
+    ? `<strong>${erros.map(i => i.data.replace(/^\w+, /, '')).join(', ')}:</strong> horas consideradas incompatíveis com os registros (<span class="n">${sinal(M.impactoInconsist)}</span> no saldo).`
+    : c.aj ? `${c.aj} ${plural(c.aj, 'ponto precisa', 'pontos precisam')} de ajuste antes de fechar o saldo.` : '';
+  $('vRes').innerHTML = `
+    ${alerta ? `<div class="alert">${ICO_W}<span>${alerta}</span><button class="lnk" style="color:var(--aj)" data-ir="pontos">Ver pontos de atenção</button></div>` : ''}
+    <section class="panel tot" aria-label="Totais do mês">
+      <div><div class="k">Saldo do mês</div><div class="v big n ${cls(M.saldo)}">${sinal(M.saldo) || '00:00'}</div><div class="s">${erros.length ? 'como está no relatório' : 'consideradas − contratual'}</div></div>
+      ${erros.length ? `<div style="background:#FBFCFE"><div class="k">Saldo após ajuste</div><div class="v big n ${cls(M.saldoCorrigido)}">≈ ${sinal(M.saldoCorrigido) || '00:00'}</div><div class="s">sem o erro de ${erros.map(i => i.data.replace(/^\w+, /, '')).join(', ')}</div></div>` : ''}
+      <div><div class="k"><i style="background:var(--contr)"></i>CH contratual</div><div class="v n">${fmt(M.contratual)}</div><div class="s n">${nUteis} dias × ${fmt(A.diaria)}</div></div>
+      <div><div class="k"><i style="background:var(--cons)"></i>Horas consideradas</div><div class="v n">${fmt(M.hc)}</div><div class="s">soma da coluna HC</div></div>
+    </section>
+    <section class="panel">
+      <div class="panel-h" style="padding-bottom:4px;flex-direction:column;align-items:flex-start;gap:2px"><h2>Por que o saldo deu ${sinal(M.saldo) || '00:00'}</h2><p class="muted" style="font-size:13px">Leia de cima para baixo, como uma conta.</p></div>
+      <ol class="conta-saldo">${linhas.map(l => `<li><span class="val n ${cls(l.v)}">${sinal(l.v) || '00:00'}</span><div><strong>${esc(l.t)}</strong> ${esc(l.d)}${l.alerta ? `<div class="warn">${ICO_W}<span>${esc(l.alerta)}</span></div>` : ''}</div></li>`).join('')}</ol>
+      <div class="conta-tot"><span class="val n ${cls(M.saldo)}">${sinal(M.saldo) || '00:00'}</span><div><strong>Saldo do mês.</strong> <span class="muted">${erros.length ? `Sem o erro, seria cerca de <strong class="n ${cls(M.saldoCorrigido)}">${sinal(M.saldoCorrigido)}</strong>.` : ''} ${esc(concl)}</span></div></div>
+    </section>
+    <section class="panel">
+      <div class="panel-h"><h2>Semanas</h2><button class="lnk" data-ir="semanas">Ver dias da semana</button></div>
+      <div class="tbox"><table class="t" style="min-width:780px">
+        <caption class="sr">Totais por semana</caption>
+        <thead><tr><th scope="col">Semana</th><th scope="col" class="r h-contr">Contratual</th><th scope="col" class="r h-esc">Escalada</th><th scope="col" class="r h-cons">Consideradas</th><th scope="col" class="r h-sal">Saldo</th><th scope="col">Escala</th><th scope="col">Pontos</th></tr></thead>
+        <tbody>${semanas.map((w, k) => {
+          const ci = contagem(w.dias.flatMap(d => d.issues));
+          return `<tr class="clk" data-sem="${k}"><th scope="row"><button class="lnk" style="text-decoration:none;font-size:14px" data-sem="${k}">Semana ${w.n}</button> <span class="n muted" style="font-size:12px;font-weight:500">${w.periodo}/${dd(A.emp.mes + 1)}</span></th>
+            <td class="r n v-contr">${fmt(w.contratual)}</td><td class="r n v-esc">${fmt(w.escalada + w.credito)}</td><td class="r n v-cons">${fmt(w.hc)}</td>
+            <td class="r n v-sal ${cls(w.saldo)}">${sinal(w.saldo) || '00:00'}</td>
+            <td><span style="font-size:12px;font-weight:600;color:${w.statusEscala === 'Deficitária' ? 'var(--neg)' : w.statusEscala === 'Superavitária' ? 'var(--pos)' : 'var(--txt3)'}">${w.statusEscala}</span></td>
+            <td class="n" style="font-size:12px;font-weight:700">${ci.aj ? `<span style="color:var(--aj)">${ci.aj} ajustar</span>` : ''}${ci.aj && ci.ver ? ' · ' : ''}${ci.ver ? `<span style="color:var(--ver)">${ci.ver} verificar</span>` : ''}</td></tr>`;
+        }).join('')}</tbody>
+        <tfoot><tr><td>Mês</td><td class="r n v-contr">${fmt(M.contratual)}</td><td class="r n v-esc">${fmt(M.escalada + M.credito)}</td><td class="r n v-cons">${fmt(M.hc)}</td><td class="r n ${cls(M.saldo)}">${sinal(M.saldo) || '00:00'}</td><td></td><td></td></tr></tfoot>
+      </table></div>
+    </section>`;
+}
+$('vRes').addEventListener('click', e => {
+  const ir = e.target.closest('[data-ir]'), sem = e.target.closest('[data-sem]'), dia = e.target.closest('[data-dia]'), f = e.target.closest('[data-f]'), wk = e.target.closest('[data-wk]'), md = e.target.closest('[data-modo]');
+  if (dia) { verDia(+dia.dataset.dia); return; }
+  if (ir) { aba = ir.dataset.ir; renderAba(); window.scrollTo(0, 0); return; }
+  if (sem) { semSel = +sem.dataset.sem; aba = 'semanas'; renderAba(); window.scrollTo(0, 0); return; }
+  if (wk) { semSel = wk.dataset.wk === 'mes' ? 'mes' : +wk.dataset.wk; renderSemanas(); return; }
+  if (md) { modoDias = md.dataset.modo; renderSemanas(); return; }
+  if (f) { filtro = f.dataset.f; renderPontos(); }
+});
+function verDia(dia) {
+  semSel = A.semanas.findIndex(w => w.dias.some(d => d.dia === dia)); modoDias = 'tab'; aba = 'semanas'; renderAba();
+  const row = document.querySelector(`[data-row="${dia}"]`);
+  if (row) { row.scrollIntoView({ block: 'center' }); row.classList.add('flash'); }
+}
 
-  let corpo;
-  if (modoDias === 'cal') {
-    const ini = dias[0].dow, cells = [];
-    for (let b = 0; b < ini; b++) cells.push('<div class="cell blank" aria-hidden="true"></div>');
-    dias.forEach(d => {
-      const t = tipoDia(d);
-      const temReg = d.registros && (t.c === 'plantao' || t.c === 'pag' || t.c === 'quiet');
-      const solto = d.issues.some(i => i.tipo === 'fora-escala');
-      const sub = (d.turno && d.turno.length) ? turnoTxt(d) : solto ? regCurto(d) : t.c === 'feriado' && d.credito ? 'crédito da CH diária' : t.c === 'afast' && d.escalada ? 'plantão creditado' : t.c === 'pag' ? 'vai para pagamento' : '';
-      const nv = nivelDia(d);
-      cells.push(`<div class="cell ${t.c}${nv ? ' issue-' + nv : ''}${t.c === 'quiet' && (d.registros || nv) ? ' keep' : ''}">
-        <div class="c-top"><span class="c-dia n">${marcaDia(d)}${dd(d.dia)}<span class="c-dow">${DIAS_NOME[d.dow].slice(0, 3)}</span></span><span class="c-saldo n ${d.saldo != null ? cls(d.saldo) : ''}">${d.saldo != null ? sinal(d.saldo) : ''}</span></div>
-        <div class="c-tipo">${esc(t.t)}</div>
-        <div class="c-reg n">${esc(sub)}${ehManual(d) ? '<span class="m-tag" title="Acerto manual">M</span>' : ''}</div>
-        <div class="c-hc n">${d.hc ? fmt(d.hc) : ''}</div>
-      </div>`);
-    });
-    while (cells.length % 7) cells.push('<div class="cell blank" aria-hidden="true"></div>');
-    corpo = `
-      <div class="legend">
-        <span><i style="background:#fff;border:1.5px solid var(--navy)"></i>Plantão</span>
-        <span><i style="background:#fff;border:1.5px dashed var(--navy)"></i>Vai para pagamento</span>
-        <span><i style="background:var(--green-bg);border:1px solid #9FD3AA"></i>Feriado</span>
-        <span><i style="background:var(--yellow-bg);border:1px solid #F0D676"></i>Afastamento</span>
-        <span><i style="background:var(--bg);border:1px solid var(--line2)"></i>Sem plantão</span>
-        <span><span class="w-ico aj">${ICON_W}</span>Precisa de ajuste</span>
-        <span><span class="m-tag">M</span>Acerto manual</span>
-      </div>
-      <div class="cal">${DIAS_NOME.map(n => `<div class="dow">${n.slice(0, 3)}</div>`).join('')}${cells.join('')}</div>`;
+// ---------- aba Semanas ----------
+const PAG_CURTO = { 'Extensão de jornada remunerada': 'Extensão de jornada', 'Jornada extraordinária remunerada': 'Jornada extraordinária', 'Plantão de sobreaviso': 'Sobreaviso' };
+function tipoDia(d) {
+  if (d.feriado && !d.registros) return ['c-afa', cap(d.regTexto || 'Feriado').replace(/ Nacional$/i, ' nacional')];
+  if (d.afast) return ['c-afa', d.afast];
+  if (d.pagamento) return ['c-pag', PAG_CURTO[d.pagamento] || d.pagamento];
+  if (d.codigo) { const J = A.emp.jornadas[d.codigo]; const not = J && J.inicio != null && (J.inicio >= 17 * 60 || (J.inicio + J.duracao) > 1440); return ['c-pla', 'Plantão' + (not ? ' noturno' : '') + (d.escalada && !not ? ' ' + Math.round(d.escalada / 60) + 'h' : '')]; }
+  if (d.descanso) return ['c-des', 'Sem jornada'];
+  if (d.registros) return ['c-des', 'Sem plantão'];
+  return ['c-des', d.contratual ? 'Sem plantão' : 'Descanso'];
+}
+const regTxt = d => {
+  if (d.turno && d.turno.length) { const t = d.turno, o = []; for (let k = 0; k < t.length; k += 2) o.push(t[k] + ' → ' + (t[k + 1] || '?')); return o.join(', '); }
+  if (d.issues.some(i => i.tipo === 'fora-escala')) return d.registros.replace(/\s*\d{2}:\d{2}\s*c(?=\s|$|-)\s*-?/gi, '').replace(/\s*[rm](?=\s|$|-)/gi, '').replace(/\s*-\s*/g, ' · ');
+  return '';
+};
+const nivelDia = d => d.issues.some(i => i.nivel === 'ajustar') ? 'ajustar' : d.issues.some(i => i.nivel === 'verificar') ? 'verificar' : '';
+function obsDia(d) {
+  const p = [];
+  const top = d.issues.filter(i => i.nivel !== 'info');
+  if (top.length) { const nv = nivelDia(d); p.push(`<span class="chip ${NIVEL[nv][0]}">${NIVEL[nv][1]}</span>`); p.push(`<button class="lnk" style="font-weight:600;text-decoration:none;color:var(--txt3);text-align:left" data-ir="pontos">${esc(top.map(i => i.titulo).join(' · '))}</button>`); }
+  if (d.pagamento) p.push('<span>Vai para pagamento</span>');
+  if (/\d{2}:\d{2}\s*m/i.test(d.registros)) p.push('<span class="m-tag" title="Acerto manual">M</span><span>Registro incluído manualmente</span>');
+  if (!top.length && !d.pagamento && d.ocorrencia && !d.afast && !d.feriado && !d.descanso) p.push(`<span>${esc(cap(d.ocorrencia))}</span>`);
+  return `<div class="obs-cell">${p.join('')}</div>`;
+}
+function linhaDia(d) {
+  const mm = dd(A.emp.mes + 1), [tc, tt] = tipoDia(d), nv = nivelDia(d), desc = tc === 'c-des';
+  return `<tr data-row="${d.dia}" class="${nv === 'ajustar' ? 'r-aj' : ''} ${desc ? 'r-desc' : ''}">
+    <th scope="row" class="n">${nv === 'ajustar' ? `<span style="color:var(--aj)" title="Precisa de ajuste">${ICO_W}</span> ` : ''}${DOWC[d.dow]} ${dd(d.dia)}</th>
+    <td><span class="chip ${tc}">${esc(tt)}</span></td>
+    <td class="n" style="color:var(--txt3)">${esc(regTxt(d)) || '—'}</td>
+    <td class="r n v-contr">${d.contratual ? fmt(d.contratual) : '—'}</td>
+    <td class="r n v-esc">${d.escalada ? fmt(d.escalada) : '—'}</td>
+    <td class="r n v-cons" style="${nv === 'ajustar' && d.issues.some(i => i.tipo === 'hc-divergente') ? 'color:var(--aj);font-weight:700' : ''}">${d.hc ? fmt(d.hc) : '—'}${d.credito ? ' <span class="chip c-inf" style="font-size:10px;padding:0 5px">crédito</span>' : ''}</td>
+    <td class="r n v-sal ${d.saldo != null ? cls(d.saldo) : 'zero'}">${d.saldo != null ? sinal(d.saldo) || '00:00' : '—'}</td>
+    <td style="min-width:220px">${obsDia(d)}</td></tr>`;
+}
+function itemDia(d) {
+  const [tc, tt] = tipoDia(d), nv = nivelDia(d);
+  return `<li class="${nv === 'ajustar' ? 'r-aj' : ''}">
+    <div class="dl-h"><span><strong class="n">${DOWC[d.dow]} ${dd(d.dia)}</strong> <span class="muted">· ${esc(tt)}</span></span>${nv ? `<span class="chip ${NIVEL[nv][0]}">${NIVEL[nv][1]}</span>` : ''}</div>
+    ${regTxt(d) ? `<div class="n muted" style="font-size:12px">${esc(regTxt(d))}</div>` : ''}
+    <div class="dl-v"><span class="n" style="background:var(--contr-bg)">${d.contratual ? fmt(d.contratual) : '—'}</span><span class="n" style="background:var(--esc-bg)">${d.escalada ? fmt(d.escalada) : '—'}</span><span class="n" style="background:var(--cons-bg)">${d.hc ? fmt(d.hc) : '—'}</span><span class="n ${d.saldo != null ? cls(d.saldo) : 'zero'}" style="text-align:right;font-weight:700">${d.saldo != null ? sinal(d.saldo) || '00:00' : '—'}</span></div></li>`;
+}
+function rodapeTotais(w, label) {
+  return `<td colspan="3">${label}</td><td class="r n v-contr">${fmt(w.contratual)}</td><td class="r n v-esc">${fmt(w.escalada)}${w.credito ? ` <span class="chip c-inf" style="font-size:10px;padding:0 5px">+${fmt(w.credito)}</span>` : ''}</td><td class="r n v-cons">${fmt(w.hc)}</td><td class="r n ${cls(w.saldoDiario)}">${sinal(w.saldoDiario) || '00:00'}</td>`;
+}
+function renderSemanas() {
+  const { semanas, M } = A, mm = dd(A.emp.mes + 1), mes = semSel === 'mes';
+  const w = mes ? null : semanas[semSel];
+  const sel = semanas.map((x, k) => `<button aria-pressed="${semSel === k}" data-wk="${k}"><span class="nm">Sem ${x.n}</span><span class="sv n ${cls(x.saldo)}">${sinal(x.saldo) || '00:00'}</span></button>`).join('') +
+    `<button aria-pressed="${mes}" data-wk="mes"><span class="nm">Mês inteiro</span><span class="sv n ${cls(M.saldo)}">${sinal(M.saldo) || '00:00'}</span></button>`;
+  let cab, corpo, lista;
+  const thead = `<thead><tr><th scope="col" style="width:96px">Dia</th><th scope="col">Tipo</th><th scope="col">Registros</th><th scope="col" class="r h-contr">Contratual</th><th scope="col" class="r h-esc">Escalada</th><th scope="col" class="r h-cons">Consideradas</th><th scope="col" class="r h-sal">Saldo diário</th><th scope="col">Observação</th></tr></thead>`;
+  if (!mes) {
+    const sobre = w.dias.filter(d => d.sobreaviso).reduce((a, d) => a + d.escalada, 0);
+    const ci = contagem(w.dias.flatMap(d => d.issues));
+    cab = `<div class="wk-h"><h2>Semana ${w.n} <span class="n muted" style="font-weight:500">· ${w.periodo}/${mm}</span></h2>
+      <span style="font-size:13px;font-weight:600;color:${w.difEscala < 0 ? 'var(--neg)' : w.difEscala > 0 ? 'var(--pos)' : 'var(--txt3)'}">Escala ${w.statusEscala.toLowerCase()}${w.difEscala ? `: <span class="n">${sinal(w.difEscala)}</span>` : ''}${sobre && w.difEscala ? ` <span class="muted" style="font-weight:500">(inclui ${fmt(sobre)} de sobreaviso)</span>` : ''}</span>
+      ${ci.aj || ci.ver ? `<button class="lnk" style="text-decoration:none;color:${ci.aj ? 'var(--aj)' : 'var(--ver)'}" data-ir="pontos">${[ci.aj ? `${ci.aj} ajustar` : '', ci.ver ? `${ci.ver} verificar` : ''].filter(Boolean).join(' · ')}</button>` : ''}</div>`;
+    corpo = `<tbody>${w.dias.map(linhaDia).join('')}</tbody><tfoot><tr>${rodapeTotais(w, 'Total da semana')}<td><span class="muted" style="font-size:12px;font-weight:600">Saldo da semana</span> <strong class="n ${cls(w.saldo)}" style="font-size:18px;margin-left:4px">${sinal(w.saldo) || '00:00'}</strong></td></tr></tfoot>`;
+    lista = w.dias.map(itemDia).join('') + `<li style="font-weight:700"><div class="dl-v"><span class="n">${fmt(w.contratual)}</span><span class="n">${fmt(w.escalada)}</span><span class="n">${fmt(w.hc)}</span><span class="n ${cls(w.saldoDiario)}" style="text-align:right">${sinal(w.saldoDiario) || '00:00'}</span></div><div style="font-size:12px;font-weight:500" class="muted">Saldo da semana: <strong class="n ${cls(w.saldo)}">${sinal(w.saldo) || '00:00'}</strong></div></li>`;
   } else {
-    corpo = `<div class="tbox"><table class="t">
-      <caption>Dias de ${cap(MESES[emp.mes])}/${emp.ano}, agrupados por semana</caption>
-      <thead><tr><th scope="col">Data</th><th scope="col">Registros</th><th scope="col" class="r">Contratual</th><th scope="col" class="r">Escalada</th><th scope="col" class="r">Consideradas</th><th scope="col" class="r">Saldo diário</th><th scope="col">Ocorrência</th></tr></thead>
-      <tbody>${semanas.map(w => w.dias.map(d => {
-        const t = tipoDia(d);
-        const rowc = t.c === 'feriado' ? 'feriado' : t.c === 'afast' ? 'afast' : t.c === 'quiet' ? 'quiet' : '';
-        const oc = [d.feriado || d.afast ? t.t : '', !d.feriado && !d.afast ? cap(d.ocorrencia) : '', d.obs].filter(Boolean).join(' — ');
-        return `<tr class="${rowc}${nivelDia(d) ? ' issue' : ''}">
-          <th scope="row" class="n">${marcaDia(d)}${DIAS_NOME[d.dow].slice(0, 3)}, ${dd(d.dia)}/${mm}</th>
-          <td class="n">${esc(regCurto(d))}${ehManual(d) ? ' <span class="m-tag" title="Acerto manual">M</span>' : ''}</td>
-          <td class="r n">${d.contratual ? fmt(d.contratual) : ''}</td>
-          <td class="r n">${d.escalada ? fmt(d.escalada) : ''}</td>
-          <td class="r n">${d.hc ? fmt(d.hc) : ''}${d.credito ? ' <span class="chip sm info tiny">crédito</span>' : ''}</td>
-          <td class="r n ${d.saldo != null ? cls(d.saldo) : ''}">${d.saldo != null ? sinal(d.saldo) : ''}</td>
-          <td>${esc(oc)}${d.pagamento ? ' <span class="chip sm neutral tiny">pagamento</span>' : ''}</td></tr>`;
-      }).join('') + `<tr class="sub"><td>Semana ${w.n}</td><td></td><td class="r n">${fmt(w.contratual)}</td><td class="r n">${fmt(w.escalada)}${w.credito ? ` <span class="chip sm info tiny">+${fmt(w.credito)}</span>` : ''}</td><td class="r n">${fmt(w.hc)}</td><td class="r n ${cls(w.saldoDiario)}">${sinal(w.saldoDiario) || '00:00'}</td><td class="n">Saldo da semana: <span class="${cls(w.saldo)}">${sinal(w.saldo) || '00:00'}</span></td></tr>`).join('')}</tbody>
-    </table></div>`;
+    cab = `<div class="wk-h"><h2>${cap(MESES[A.emp.mes])}/${A.emp.ano} <span class="muted" style="font-weight:500">· mês inteiro</span></h2></div>`;
+    corpo = `<tbody>${semanas.map(x => x.dias.map(linhaDia).join('') + `<tr class="sub">${rodapeTotais(x, `Semana ${x.n}`)}<td class="n">Saldo da semana: <span class="${cls(x.saldo)}">${sinal(x.saldo) || '00:00'}</span></td></tr>`).join('')}</tbody>
+      <tfoot><tr>${rodapeTotais({ contratual: M.contratual, escalada: M.escalada, credito: M.credito, hc: M.hc, saldoDiario: M.saldoDiario }, 'Total do mês')}<td><span class="muted" style="font-size:12px;font-weight:600">Saldo do mês</span> <strong class="n ${cls(M.saldo)}" style="font-size:18px;margin-left:4px">${sinal(M.saldo) || '00:00'}</strong></td></tr></tfoot>`;
+    lista = semanas.map(x => `<li style="background:var(--bg);font-weight:700;font-size:13px">Semana ${x.n} · ${x.periodo}/${mm} <span class="n ${cls(x.saldo)}">${sinal(x.saldo) || '00:00'}</span></li>` + x.dias.map(itemDia).join('')).join('');
   }
-
-  $('dias').innerHTML = `
-    <div class="sec-head" style="margin:0">
-      <div><h2>Dias do mês</h2><p>Registros, horas consideradas e saldo diário de cada plantão.</p></div>
-      <div class="seg" role="group" aria-label="Modo de exibição">
-        <button type="button" data-modo="cal" aria-pressed="${modoDias === 'cal'}">Calendário</button>
-        <button type="button" data-modo="tab" aria-pressed="${modoDias === 'tab'}">Tabela</button>
-      </div>
+  const somaSD = mes ? M.saldoDiario : w.saldoDiario;
+  const tabela = `<div class="tbox tbl-dias"><table class="t" style="min-width:960px"><caption class="sr">Dias ${mes ? 'do mês' : 'da semana ' + w.n}</caption>${thead}${corpo}</table></div>
+    <div class="dl-cab dlist" aria-hidden="true" style="display:none"></div>
+    <ul class="dlist"><li class="dl-cab" aria-hidden="true" style="display:grid;flex-direction:row"><span style="border-top:3px solid var(--contr)">Contratual</span><span style="border-top:3px solid var(--esc)">Escalada</span><span style="border-top:3px solid var(--cons)">Consider.</span><span style="border-top:3px solid var(--txt);text-align:right">Saldo dia</span></li>${lista}</ul>
+    <p class="panel-f">Saldo ${mes ? 'do mês' : 'da semana'} = consideradas − contratual. A soma do saldo diário (<span class="n">${sinal(somaSD) || '00:00'}</span>) compara com a escala, não com o contrato.</p>`;
+  $('vRes').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+      <div class="wsel" role="group" aria-label="Semana">${sel}</div>
+      <div class="seg" role="group" aria-label="Visualização"><button data-modo="tab" aria-pressed="${modoDias === 'tab'}">Tabela</button><button data-modo="cal" aria-pressed="${modoDias === 'cal'}">Calendário</button></div>
     </div>
-    ${corpo}
-    ${ocorr.length ? `<ul class="occ">${ocorr.map(d => `<li>${ehManual(d) ? '<span class="m-tag">M</span>' : ''}<span><span class="n">${dd(d.dia)}/${mm}</span> — ${esc(cap(d.ocorrencia))}${ehManual(d) ? ' (registro incluído manualmente)' : ''}${d.obs ? ': ' + esc(d.obs) : ''}.</span></li>`).join('')}</ul>` : ''}`;
-  $('dias').querySelectorAll('[data-modo]').forEach(b => b.onclick = () => { modoDias = b.dataset.modo; renderDias(A); });
+    <section class="panel">${modoDias === 'cal' ? renderCal() : cab + tabela}</section>`;
+}
+function renderCal() {
+  const dias = A.dias, ini = dias[0].dow, cells = [];
+  for (let b = 0; b < ini; b++) cells.push('<div class="cell blank" aria-hidden="true"></div>');
+  dias.forEach(d => {
+    const [tc, tt] = tipoDia(d), nv = nivelDia(d);
+    const k = tc === 'c-pla' ? 'plantao' : tc === 'c-pag' ? 'pag' : tc === 'c-afa' ? 'afast' : '';
+    cells.push(`<div class="cell ${k} ${nv === 'ajustar' ? 'aj' : ''}"><div class="ct"><span class="cd n">${nv ? `<span style="color:${nv === 'ajustar' ? 'var(--aj)' : 'var(--ver)'}">${ICO_W}</span>` : ''}${dd(d.dia)}</span><span class="n ${d.saldo != null ? cls(d.saldo) : ''}">${d.saldo != null ? sinal(d.saldo) : ''}</span></div>
+      <div class="cy">${esc(tt)}</div><div class="n muted">${esc(regTxt(d))}</div>
+      <div class="ch n">${d.hc ? `<span style="background:var(--cons-bg);border-radius:3px;padding:0 4px">${fmt(d.hc)}</span>` : ''}</div></div>`);
+  });
+  while (cells.length % 7) cells.push('<div class="cell blank" aria-hidden="true"></div>');
+  return `<div class="cal">${DIAS_NOME.map(n => `<div class="dow">${n.slice(0, 3)}</div>`).join('')}${cells.join('')}</div>
+    <p class="panel-f">No calendário, o número em verde são as horas consideradas e o do canto, o saldo diário. Para comparar com contratual e escala, use a tabela.</p>`;
 }
 
-// abas: destaca a seção visível
-let obs = null;
-function ativarTabs() {
-  const links = [...document.querySelectorAll('#tabs a')];
-  links.forEach(a => a.onclick = () => { links.forEach(x => x.classList.toggle('on', x === a)); });
-  if (obs) obs.disconnect();
-  if (!('IntersectionObserver' in window)) return;
-  obs = new IntersectionObserver(ents => {
-    ents.forEach(e => { if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id)); });
-  }, { rootMargin: '-80px 0px -60% 0px' });
-  ['resumo', 'atencao', 'semanas', 'dias', 'conferencia'].forEach(id => obs.observe($(id)));
+// ---------- aba Pontos de atenção ----------
+function visual(v) {
+  if (!v) return '';
+  if (v.tipo === 'batidas') return `<ul class="bat">${v.itens.map(b => `<li class="${b.estado}"><strong class="n">${esc(b.h)}</strong> ${esc(b.t)}</li>`).join('')}</ul>`;
+  if (v.tipo === 'conta') return `<table class="cta"><caption class="sr">Conta</caption><tbody>${v.linhas.map(l => {
+    const valCls = l.t === 'total' ? (String(l.v).startsWith('−') ? 'neg' : String(l.v).startsWith('+') ? 'pos' : '') : '';
+    return `<tr class="t-${l.t || 'norm'}"><td>${esc(l.l)}</td><td class="n ${valCls}">${esc(l.v)}</td></tr>`;
+  }).join('')}</tbody></table>`;
+  if (v.tipo === 'faixa') return `<div class="fx" aria-hidden="true">${v.segs.map(s => `<div class="${s.kind}" style="flex:${s.f}">${esc(s.t)}</div>`).join('')}</div><p class="fx-n n">${esc(v.nota)}</p>`;
+  if (v.tipo === 'plantao') return `<div class="pl-top"><span class="n"><strong>Entrada</strong> ${esc(v.ent)}</span><span class="n"><strong>Saída</strong> ${esc(v.sai)}</span></div><div class="pl-bar" aria-hidden="true"></div><div class="n" style="font-size:13px;text-align:center">${esc(v.conta)}</div>
+    <div class="cmp">${v.barras.map(b => `<span>${esc(b.l)}</span><div class="tr" aria-hidden="true"><div style="width:${b.pct}%;background:${b.erro ? '#D5332C' : 'var(--cons)'}"></div></div><strong class="n" style="${b.erro ? 'color:var(--aj)' : ''}">${esc(b.v)}</strong>`).join('')}</div>`;
+  return '';
+}
+function cartao(i) {
+  const [c, nome] = NIVEL[i.nivel];
+  const temDia = !i.mes && /\d/.test(i.data) && !/ a /.test(i.data);
+  const ref = [i.onde, i.ref ? 'Checklist ' + i.ref : i.refTxt].filter(Boolean).join(' · ');
+  return `<article class="pc ${i.nivel === 'ajustar' ? 'aj' : ''}">
+    <div class="pc-h"><span class="chip ${c}">${nome}</span><span class="dt n">${esc(i.data)}</span><h3>${esc(i.titulo)}</h3>${temDia ? `<button class="lnk" data-dia="${i.dia}">Ver dia</button>` : ''}</div>
+    <div class="pc-b">
+      <div><div class="pc-l">1 · O QUE ACONTECEU</div><p>${esc(i.aconteceu)}</p></div>
+      <div><div class="pc-l">2 · ${i.visual?.tipo === 'conta' ? 'A CONTA' : i.visual?.tipo === 'faixa' ? 'NA ESCALA' : 'NOS REGISTROS'}</div>${visual(i.visual)}</div>
+      <div><div class="pc-l">3 · O QUE FAZER</div><p>${esc(i.fazer)}</p>${ref ? `<p class="pc-ref">${esc(ref)}</p>` : ''}</div>
+    </div>
+    ${i.tipo === 'hc-divergente' ? `<div class="pc-f">Efeito no saldo do mês: <strong style="color:var(--aj)">${sinal(i.impacto)} a mais</strong>. O saldo do dia deveria ser <strong class="${cls(i.esperado)}">${sinal(i.esperado) || '00:00'}</strong>.</div>` : ''}
+  </article>`;
+}
+function renderPontos() {
+  const { issues } = A;
+  const c = contagem(issues), nInf = issues.filter(i => i.nivel === 'info').length;
+  const vis = issues.filter(i => filtro === 'todos' || i.nivel === filtro);
+  const doMes = vis.filter(i => i.mes && i.nivel !== 'info'), porDia = vis.filter(i => !i.mes && i.nivel !== 'info'), infos = vis.filter(i => i.nivel === 'info');
+  const pags = A.grupos.filter(g => g.tipo === 'pag');
+  const F = [['todos', 'Todos', issues.length], ['ajustar', 'Ajustar', c.aj], ['verificar', 'Verificar', c.ver], ['info', 'Informação', nInf]];
+  $('vRes').innerHTML = `
+    <div class="filt" role="group" aria-label="Filtrar por nível">${F.map(([f, n, q]) => `<button data-f="${f}" aria-pressed="${filtro === f}">${n} <span class="n">${q}</span></button>`).join('')}</div>
+    ${!issues.length ? '<div class="panel" style="padding:20px"><strong>Nenhum ponto de atenção.</strong> <span class="muted">Os registros e a escala não mostram inconsistências.</span></div>' : ''}
+    ${doMes.length ? `<div class="grp-t">DO MÊS</div>${doMes.map(cartao).join('')}` : ''}
+    ${porDia.length ? `<div class="grp-t">POR DIA</div>${porDia.map(cartao).join('')}` : ''}
+    ${infos.length ? `<div class="grp-t">INFORMAÇÕES</div>${infos.map(i => `<div class="info-row"><span class="chip c-inf">Informação</span><span class="dt n muted" style="font-size:13px;font-weight:700">${esc(i.data)}</span><span class="tx"><strong>${esc(i.titulo)}.</strong> ${esc(i.visual?.tipo === 'conta' && i.tipo === 'ressalva' ? i.visual.linhas[0].v : i.fazer)}</span>${!i.mes ? `<button class="lnk" data-dia="${i.dia}">Ver dia</button>` : ''}</div>`).join('')}` : ''}
+    ${pags.length ? `<p style="font-size:13px;color:var(--txt3)"><strong>Não são problemas</strong> (foram pagos): ${pags.map(g => `${esc((PAG_CURTO[g.nome] || g.nome).toLowerCase())} <span class="n">${esc(listaDias(g.dias))}</span>`).join(' · ')}.</p>` : ''}`;
+}
+
+// ---------- aba Conferência ----------
+function renderConf() {
+  const { conf, emp } = A;
+  const nomes = { 'CH Contratual Mês': ['CH contratual', 'var(--contr)'], 'CH Escalada Mês': ['CH escalada', 'var(--esc)'], 'CH Executada': ['Horas consideradas', 'var(--cons)'], 'Saldo do mês': ['Saldo do mês', 'var(--txt)'] };
+  const escDif = conf.find(c => c.item === 'CH Escalada Mês' && !c.ok);
+  const jornadas = Object.values(emp.jornadas);
+  const diasTxt = A.diasContrat.length >= 7 ? 'todos os dias' : `${DIAS_NOME[A.diasContrat[0]].slice(0, 3).toLowerCase()} a ${DIAS_NOME[A.diasContrat.at(-1)].slice(0, 3).toLowerCase()}`;
+  $('vRes').innerHTML = `<div class="conf-wrap">
+    <section class="panel">
+      <div class="panel-h"><h2>Totais recalculados × relatório</h2></div>
+      ${conf.length ? `<div class="tbox"><table class="t" style="min-width:520px"><caption class="sr">Conferência dos totais com o PDF</caption>
+        <thead><tr><th scope="col">Total</th><th scope="col" class="r">Recalculado</th><th scope="col" class="r">No relatório</th><th scope="col">Situação</th></tr></thead>
+        <tbody>${conf.map(c => { const [n, cor] = nomes[c.item] || [c.item, 'var(--txt)']; const sal = c.item === 'Saldo do mês';
+          return `<tr><th scope="row"><span style="display:inline-flex;align-items:center;gap:8px"><span style="width:4px;height:18px;border-radius:2px;background:${cor}"></span>${n}</span></th>
+          <td class="r n">${sal ? sinal(c.calc) : fmt(c.calc)}</td><td class="r n">${sal ? sinal(c.rel) : fmt(c.rel)}</td>
+          <td style="font-size:13px;font-weight:600;color:${c.ok ? 'var(--ok)' : c.essencial ? 'var(--aj)' : 'var(--ver)'}">${c.ok ? '✓ Confere' : 'Difere ' + fmt(Math.abs(c.calc - c.rel))}</td></tr>`; }).join('')}</tbody></table></div>` : '<p style="padding:0 20px 16px" class="muted">O relatório não trouxe o quadro de totais.</p>'}
+      ${escDif ? '<p class="panel-f">A diferença na CH escalada não altera o saldo.</p>' : ''}
+    </section>
+    <section class="panel">
+      <h2 style="font-size:16px;font-weight:700;margin-bottom:10px">Como o cálculo é feito</h2>
+      <dl class="regras">
+        <dt>Contratual</dt><dd>${fmt(A.diaria)} por dia útil (${diasTxt}), sem feriados</dd>
+        <dt>Escalada</dt><dd>CH de cada código de jornada do mês${jornadas.length ? ` (${jornadas.map(j => j.codigo + ': ' + fmt(j.ch)).join(', ')})` : ''}</dd>
+        <dt>Consideradas</dt><dd>Soma da coluna HC do relatório</dd>
+        <dt>Saldo</dt><dd>Consideradas − contratual</dd>
+        <dt>Hora ficta</dt><dd>7min30s por hora noturna (22h às 5h)</dd>
+        <dt>Registros</dt><dd>Só até 3h antes e 3h depois da jornada</dd>
+        <dt>Pagamento</dt><dd>Extensão: saldo do dia desconsiderado. Sobreaviso e jornada extraordinária: todo o tempo do dia</dd>
+      </dl>
+      <p style="margin-top:12px;font-size:12px" class="muted">Pontos de atenção seguem o checklist do POP.DGP.127, Anexo III.</p>
+    </section></div>`;
 }
 
 // ---------- resumo para o empregado ----------
 function resumoTexto() {
-  const { A } = atual; const { emp, M, semanas, issues } = A;
-  const narr = narrativa(A);
+  const { emp, M, semanas, issues } = A;
+  const { linhas, concl } = linhasSaldo();
   const L = [];
   L.push(`Análise de saldo – ${cap(MESES[emp.mes])}/${emp.ano}`);
   L.push(`${titulo(emp.nome)} – matrícula ${emp.matricula}`);
@@ -915,44 +735,29 @@ function resumoTexto() {
   L.push(`Saldo do mês: ${sinal(M.saldo) || '00:00'} (${fmt(M.hc)} horas consideradas − ${fmt(M.contratual)} de CH contratual).`);
   L.push(`Soma da coluna Saldo Diário: ${sinal(M.saldoDiario) || '00:00'}.`);
   L.push('');
-  L.push('De onde vem o saldo:');
-  narr.itens.forEach(t => L.push('• ' + semTags(t)));
-  if (narr.conclusao) L.push(semTags(narr.conclusao));
+  L.push(`Por que o saldo deu ${sinal(M.saldo) || '00:00'}:`);
+  linhas.forEach(l => L.push(`• ${(sinal(l.v) || '00:00').padEnd(7)} ${l.t} ${l.d}${l.alerta ? ' Atenção: ' + l.alerta : ''}`.trim()));
+  if (concl) L.push(concl);
   const pend = issues.filter(i => i.nivel !== 'info');
   if (pend.length) {
-    L.push('');
-    L.push('Pontos de atenção:');
-    pend.forEach(i => L.push(`• ${i.data} – ${i.titulo} (${i.nivel === 'ajustar' ? 'ajustar' : 'verificar'}): ${i.texto}`));
+    L.push(''); L.push('Pontos de atenção:');
+    pend.forEach(i => L.push(`• ${i.data} – ${i.titulo} (${i.nivel}). ${i.aconteceu} O que fazer: ${i.fazer}`));
     if (M.impactoInconsist) L.push(`Corrigidas as horas incompatíveis, o saldo ficaria em torno de ${sinal(M.saldoCorrigido) || '00:00'}.`);
   }
-  L.push('');
-  L.push('Semanas:');
-  semanas.forEach(w => L.push(`• Semana ${w.n} (${w.periodo}): contratual ${fmt(w.contratual)}, escalada ${fmt(w.escalada + w.credito)}, consideradas ${fmt(w.hc)} – escala ${w.statusEscala.toLowerCase()}, saldo ${sinal(w.saldo) || '00:00'}${w.afast.length ? ' – ' + w.afast.join(', ').toLowerCase() : ''}.`));
+  L.push(''); L.push('Semanas:');
+  semanas.forEach(w => L.push(`• Semana ${w.n} (${w.periodo}): contratual ${fmt(w.contratual)}, escalada ${fmt(w.escalada + w.credito)}, consideradas ${fmt(w.hc)}, saldo ${sinal(w.saldo) || '00:00'}.`));
   return L.join('\n');
 }
-
 let ultimoFoco = null;
-function abrirResumo() {
-  ultimoFoco = document.activeElement;
-  $('resumoTxt').value = resumoTexto();
-  $('overlay').classList.remove('hidden');
-  $('resumoTxt').focus(); $('resumoTxt').setSelectionRange(0, 0); $('resumoTxt').scrollTop = 0;
-}
+function abrirResumo() { ultimoFoco = document.activeElement; $('resumoTxt').value = resumoTexto(); $('overlay').classList.remove('hidden'); $('resumoTxt').focus(); $('resumoTxt').setSelectionRange(0, 0); $('resumoTxt').scrollTop = 0; }
 function fecharResumo() { $('overlay').classList.add('hidden'); ultimoFoco && ultimoFoco.focus(); }
 function toast(t) { const el = $('toast'); el.textContent = t; el.classList.remove('hidden'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.add('hidden'), 2800); }
-
-$('btnResumoTop').onclick = abrirResumo;
-$('btnResumoMob').onclick = abrirResumo;
-$('btnFechar').onclick = fecharResumo;
-$('btnCancelar').onclick = fecharResumo;
+$('btnResumo').onclick = abrirResumo;
+$('btnFechar').onclick = fecharResumo; $('btnCancelar').onclick = fecharResumo;
 $('overlay').addEventListener('click', e => { if (e.target === $('overlay')) fecharResumo(); });
 $('overlay').addEventListener('keydown', e => { if (e.key === 'Escape') fecharResumo(); });
-$('btnCopiar').onclick = async () => {
-  const txt = $('resumoTxt').value;
-  try { await navigator.clipboard.writeText(txt); toast('Texto copiado. Cole no e-mail ou no SEI.'); }
-  catch { $('resumoTxt').select(); toast('Texto selecionado: use Ctrl+C para copiar.'); }
-};
-$('btnImportar').onclick = mostrarImport;
+$('btnCopiar').onclick = async () => { const t = $('resumoTxt').value; try { await navigator.clipboard.writeText(t); toast('Texto copiado. Cole no e-mail ou no SEI.'); } catch { $('resumoTxt').select(); toast('Texto selecionado: use Ctrl+C para copiar.'); } };
+$('btnRel').onclick = mostrarImport;
 
 // ---------- arrastar e soltar ----------
 const drop = $('drop'), inp = $('file');

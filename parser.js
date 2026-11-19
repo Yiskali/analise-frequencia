@@ -248,8 +248,19 @@ export function analisar(emp) {
   }
 
   // ---------- registros de ponto x jornada ----------
+  // Cada ponto de atenção traz: título simples, o que aconteceu, uma demonstração (visual) e o que fazer.
+  const DOWC = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const dLonga = d => DOWC[d.dow] + ', ' + dataCurta(d.dia, mes);
   const issues = [];
-  const addIssue = (d, o) => { const c = o.check ? CHECK[o.check] : null; const it = { dia: d.dia, data: o.mes ? 'Mês' : dataCurta(d.dia, mes), ref: c?.ref, providencia: c?.prov, funcionalidade: c?.func, ...o }; issues.push(it); if (!o.mes) d.issues.push(it); };
+  const addIssue = (d, o) => {
+    const c = o.check ? CHECK[o.check] : null;
+    const it = { dia: d.dia, data: o.mes ? 'Mês todo' : dLonga(d), ref: c?.ref, providencia: c?.prov,
+                 onde: c && c.func !== 'Não se aplica' ? c.func.split(';')[0].trim().replace(/ > /g, ' › ') : null, ...o };
+    issues.push(it); if (!o.mes) d.issues.push(it);
+  };
+  const hm = m => { const a = Math.abs(Math.round(m)); const h = Math.floor(a / 60), mi = a % 60; return h + 'h' + (mi ? String(mi).padStart(2, '0') : ''); };
+  const conta = (linhas) => ({ tipo: 'conta', linhas });
+  const L = (l, v, t) => ({ l, v, t: t || '' });
   const punches = [];
   dias.forEach(d => {
     const re = /(\d{2}):(\d{2})\s*([rmc])?/gi; let m;
@@ -263,6 +274,7 @@ export function analisar(emp) {
     const J = jorn(d.codigo); const s = (d.dia - 1) * 1440 + J.inicio;
     return { d, J, s, e: s + J.duracao };
   });
+  const quando = (p, d) => (p.dia !== d.dia ? DOWC[dias[p.dia - 1].dow].toLowerCase() + ' ' + String(p.dia).padStart(2, '0') + ' · ' : '') + hhmm(p.t);
   for (const tr of turnos) {
     const { d, J, s, e } = tr;
     const take = punches.filter(p => !p.used && p.t >= s - MARGEM && p.t <= e + MARGEM);
@@ -273,42 +285,76 @@ export function analisar(emp) {
     take.forEach(p => { const ult = reg[reg.length - 1]; if (ult && p.t - ult.t <= DUP_MIN) dups.push([ult, p]); else reg.push(p); });
     const fmtP = p => hhmm(p.t) + (p.dia !== d.dia ? ' (' + dataCurta(p.dia, mes) + ')' : '');
     d.turno = reg.map(p => hhmm(p.t));
-    if (dups.length) addIssue(d, { nivel: 'verificar', tipo: 'duplicidade',
-      titulo: 'Marcações consecutivas com menos de 15 minutos', check: 'A4',
-      texto: dups.map(([a, b]) => `${fmtP(a)} e ${fmtP(b)}`).join('; ') + '. Pode ser duplicidade de marcação ou dobra de plantão, e pode levar o sistema a combinar entradas e saídas erradas.' });
-    if (take.length > 4 && !dups.length) addIssue(d, { nivel: 'info', tipo: 'excesso', titulo: 'Quantidade elevada de marcações na jornada', check: 'A3',
-      texto: `${take.length} marcações na mesma jornada (${take.map(fmtP).join(', ')}).` });
+    d.turnoDias = reg.map(p => p.dia);
+    if (dups.length) {
+      const itens = [];
+      take.forEach(p => { const rep = dups.some(([, b]) => b === p); itens.push({ h: fmtP(p), t: rep ? 'repetida' : '', estado: rep ? 'erro' : 'ok' }); });
+      const difs = [...new Set(dups.map(([a, b]) => b.t - a.t))];
+      addIssue(d, { nivel: 'verificar', tipo: 'duplicidade', check: 'A4',
+        titulo: `Batidas repetidas, com ${difs.length === 1 ? difs[0] + ' ' + (difs[0] === 1 ? 'minuto' : 'minutos') : 'poucos minutos'} de diferença`,
+        aconteceu: 'O ponto foi batido duas vezes seguidas. Batidas repetidas podem confundir o sistema na hora de juntar entrada e saída.',
+        visual: { tipo: 'batidas', itens },
+        fazer: 'Confirmar com a empregada se é batida repetida ou dobra de plantão. Se for repetida, rejeitar a marcação com justificativa.' });
+    }
+    if (take.length > 4 && !dups.length) addIssue(d, { nivel: 'info', tipo: 'excesso', check: 'A3',
+      titulo: `${take.length} batidas no mesmo plantão`,
+      aconteceu: 'Houve várias entradas e saídas na mesma jornada.',
+      visual: { tipo: 'batidas', itens: take.map(p => ({ h: fmtP(p), t: '', estado: 'neutro' })) },
+      fazer: 'Se a conta do dia estiver certa, não precisa ajustar só pela quantidade de batidas.' });
     if (d.pagamento || d.sobreaviso) continue;
     const n = reg.length;
     if (n === 0) {
-      if (!d.hc && !d.ocorrencia) addIssue(d, { nivel: 'verificar', tipo: 'sem-registro', titulo: 'Dia escalado sem registro', texto: 'Não há registro de ponto nem ocorrência para este dia. Se houve ausência, ela precisa ser tratada.' });
+      if (!d.hc && !d.ocorrencia) addIssue(d, { nivel: 'verificar', tipo: 'sem-registro',
+        titulo: 'Plantão sem nenhuma batida e sem ocorrência',
+        aconteceu: 'Havia plantão na escala, mas não há registro de ponto nem justificativa.',
+        visual: conta([L('Escalado', fmt(J.ch)), L('Registros', 'nenhum'), L('Ocorrência', 'nenhuma', 'sub')]),
+        fazer: 'Verificar se houve ausência (tratar como falta ou afastamento) ou se a pessoa trabalhou e não registrou.' });
       continue;
     }
     if (n % 2 === 1) {
-      addIssue(d, { nivel: 'ajustar', tipo: 'batida-impar', titulo: 'Batida ímpar',
-        texto: `${n} ${n === 1 ? 'registro' : 'registros'} (${reg.map(fmtP).join(', ')}): falta uma entrada ou saída.` +
-          (d.saldo != null && d.saldo < 0 ? ` O saldo negativo do dia (${fmt(d.saldo, true)}) vem dessa batida.` : d.saldo != null && d.saldo > 0 ? ` O saldo do dia (${fmt(d.saldo, true)}) não é confiável.` : '') +
-          ' É preciso ajustar o registro de ponto.', impacto: null, check: 'A1' });
+      const itens = reg.map((p, k) => ({ h: quando(p, d), t: k % 2 === 0 ? 'entrada' : 'saída', estado: 'ok' }));
+      itens.push({ h: '— : —', t: n % 2 === 1 ? 'saída não registrada' : 'entrada não registrada', estado: 'erro' });
+      addIssue(d, { nivel: 'ajustar', tipo: 'batida-impar', check: 'A1',
+        titulo: 'Falta uma batida: entrada sem saída',
+        aconteceu: `Há ${n} ${n === 1 ? 'batida' : 'batidas'} no plantão. Sem o par, o sistema não fecha a conta do dia` +
+          (d.saldo != null && d.saldo < 0 ? ` e o saldo do dia fica ${fmt(d.saldo, true).replace(/\s/g, '')}.` : d.saldo != null ? ` e o saldo do dia (${fmt(d.saldo, true).replace(/\s/g, '')}) não é confiável.` : '.'),
+        visual: { tipo: 'batidas', itens },
+        fazer: 'Orientar a empregada a pedir a regularização no Portal do Empregado, com aprovação do gestor. Se a frequência já foi homologada: processo SEI à UAP.' });
       continue;
     }
     let trab = 0, noturno = 0;
     for (let k = 0; k < n; k += 2) { trab += reg[k + 1].t - reg[k].t; noturno += minutosNoturnos(reg[k].t, reg[k + 1].t); }
-    const calc = trab + Math.round(noturno / 7) - (J.intervaloFora ? (J.intervalo || 0) : 0);
+    const ficta = Math.round(noturno / 7), intv = J.intervaloFora ? (J.intervalo || 0) : 0;
+    const calc = trab + ficta - intv;
     d.hcCalc = calc;
     if (d.hc && Math.abs(d.hc - calc) > TOL_HC && Math.abs(d.hc - J.ch) > TOL_HC) {
-      const esperado = calc - J.ch;
-      addIssue(d, { nivel: 'ajustar', tipo: 'hc-divergente', titulo: 'Horas consideradas incompatíveis com os registros',
-        texto: `O relatório considerou ${fmt(d.hc)}, mas os registros (${reg.map(fmtP).join(' → ')}) somam ${fmt(calc)}${noturno ? ' com o adicional noturno' : ''}. ` +
-          `O saldo do dia deveria ser ${fmt(esperado, true)}, não ${fmt(d.saldo ?? d.hc - J.ch, true)}.`,
-        impacto: d.hc - calc, check: 'B5' });
+      const partesTxt = [hm(trab) + ' trabalhadas'];
+      if (ficta) partesTxt.push(hm(ficta) + ' de hora noturna');
+      if (intv) partesTxt.push('− ' + hm(intv) + ' de intervalo');
+      addIssue(d, { nivel: 'ajustar', tipo: 'hc-divergente', check: 'B5',
+        titulo: `O sistema contou ${hm(d.hc)} num plantão de ${hm(J.ch)}`,
+        aconteceu: `Pelos registros, foram cerca de ${hm(calc)}. O relatório considerou ${hm(d.hc)}.` +
+          (dups.length ? ' Provável causa: as batidas repetidas fizeram o sistema juntar este plantão com outro.' : ''),
+        visual: { tipo: 'plantao', ent: quando(reg[0], d), sai: quando(reg[n - 1], d), conta: partesTxt.join(' + ').replace('+ −', '−') + ' = ' + hm(calc),
+                  barras: [{ l: 'Pelos registros', v: fmt(calc), pct: Math.min(100, calc / Math.max(calc, d.hc) * 100), erro: false },
+                           { l: 'No relatório', v: fmt(d.hc), pct: Math.min(100, d.hc / Math.max(calc, d.hc) * 100), erro: true }] },
+        fazer: 'Conferir as batidas fora da janela de 3h ou duas jornadas seguidas. Rejeitar o registro errado ou ajustar a jornada.',
+        impacto: d.hc - calc, esperado: calc - J.ch });
     }
   }
   // interjornada inferior a 11h entre jornadas planejadas
   const jornadasReais = turnos.filter(t => !t.d.sobreaviso && !t.d.afast);
   for (let k = 1; k < jornadasReais.length; k++) {
     const a = jornadasReais[k - 1], b = jornadasReais[k], gap = b.s - a.e;
-    if (gap >= 0 && gap < INTERJORNADA) addIssue(b.d, { nivel: 'verificar', tipo: 'interjornada', titulo: 'Interjornada inferior a 11 horas', check: 'A2',
-      texto: `A jornada de ${dataCurta(a.d.dia, mes)} termina às ${hhmm(a.e)}${Math.floor(a.e / 1440) + 1 !== a.d.dia ? ' (' + dataCurta(Math.floor(a.e / 1440) + 1, mes) + ')' : ''} e a de ${dataCurta(b.d.dia, mes)} começa às ${hhmm(b.s)}: ${fmt(gap)} de intervalo.` });
+    if (gap >= 0 && gap < INTERJORNADA) {
+      const dA = DOWC[a.d.dow].toLowerCase(), fimA = Math.floor(a.e / 1440) + 1;
+      addIssue(b.d, { nivel: 'verificar', tipo: 'interjornada', check: 'A2',
+        titulo: `Só ${hm(gap)} de descanso entre dois plantões (o mínimo é 11h)`,
+        aconteceu: `O plantão de ${dA} ${dataCurta(a.d.dia, mes)} terminou às ${hhmm(a.e)}${fimA !== a.d.dia ? ' do dia ' + dataCurta(fimA, mes) : ''}. O seguinte começou às ${hhmm(b.s)}${Math.floor(b.s / 1440) + 1 !== fimA ? ' do dia ' + dataCurta(b.d.dia, mes) : ' do mesmo dia'}.`,
+        visual: { tipo: 'faixa', segs: [{ t: 'Plantão ' + hm(a.J.duracao), f: a.J.duracao, kind: 'plantao' }, { t: 'Descanso ' + hm(gap), f: gap, kind: 'descanso' }, { t: 'Plantão ' + hm(b.J.duracao), f: b.J.duracao, kind: 'plantao' }],
+                  nota: `Descanso: ${hm(gap)} · mínimo exigido: 11h · faltaram ${hm(INTERJORNADA - gap)}` },
+        fazer: 'Conferir se a escala está certa. Se foi trabalhado assim, comunicar ao gestor: corrigir o ponto não regulariza a jornada.' });
+    }
   }
   // registros que não pertencem a nenhuma jornada
   const soltos = punches.filter(p => !p.used && !(p.dia === 1 && p.t < 720));
@@ -317,11 +363,25 @@ export function analisar(emp) {
   Object.entries(porDia).forEach(([dia, ps]) => {
     const d = dias[+dia - 1];
     if (d.pagamento || d.afast) return;
-    const perto = turnos.some(t => ps.some(p => p.t >= t.s - 360 && p.t <= t.e + 360));
-    if (perto) addIssue(d, { nivel: 'verificar', tipo: 'fora-escala', titulo: 'Registro fora da janela de 3h da jornada', check: 'B4',
-      texto: `${ps.map(p => hhmm(p.t)).join(', ')}: o sistema não contabiliza marcações feitas mais de 3h antes do início ou depois do término da jornada cadastrada.` });
-    else addIssue(d, { nivel: 'verificar', tipo: 'fora-escala', titulo: 'Marcações sem código de jornada', check: 'B1',
-      texto: `${ps.map(p => hhmm(p.t)).join(', ')} em dia sem jornada cadastrada: as horas não são contabilizadas.` });
+    const perto = turnos.find(t => ps.some(p => p.t >= t.s - 360 && p.t <= t.e + 360));
+    const hs = ps.map(p => hhmm(p.t)).join(', ');
+    if (perto) {
+      const ini = perto.s - MARGEM, fim = perto.e + MARGEM, antes = ps[0].t < perto.s;
+      addIssue(d, { nivel: 'verificar', tipo: 'fora-escala', check: 'B4',
+        titulo: `${ps.length > 1 ? 'Batidas' : 'Batida'} às ${hs} não ${ps.length > 1 ? 'foram contadas' : 'foi contada'}`,
+        aconteceu: 'O sistema só considera batidas até 3h antes do início e 3h depois do fim da jornada.',
+        visual: { tipo: 'faixa', segs: antes
+            ? [{ t: hs + ' fora', f: 120, kind: 'fora' }, { t: 'janela ' + hhmm(ini), f: MARGEM, kind: 'janela' }, { t: 'Plantão ' + hhmm(perto.s) + ' às ' + hhmm(perto.e), f: perto.J.duracao, kind: 'plantao' }, { t: 'até ' + hhmm(fim), f: MARGEM, kind: 'janela' }]
+            : [{ t: 'desde ' + hhmm(ini), f: MARGEM, kind: 'janela' }, { t: 'Plantão ' + hhmm(perto.s) + ' às ' + hhmm(perto.e), f: perto.J.duracao, kind: 'plantao' }, { t: 'janela ' + hhmm(fim), f: MARGEM, kind: 'janela' }, { t: hs + ' fora', f: 120, kind: 'fora' }],
+          nota: `Batida às ${hs} · janela aceita: ${hhmm(ini)} às ${hhmm(fim)}` },
+        fazer: 'Se a pessoa trabalhou nesse horário, ajustar o horário de trabalho ou o código de jornada do dia.' });
+    } else {
+      addIssue(d, { nivel: 'verificar', tipo: 'fora-escala', check: 'B1',
+        titulo: 'Batidas em dia sem jornada cadastrada',
+        aconteceu: 'Há registros de ponto, mas nenhum código de jornada no dia. Essas horas não são contadas.',
+        visual: conta([L('Registros', hs), L('Código de jornada', 'nenhum'), L('Horas contadas', '00:00', 'total')]),
+        fazer: 'Conferir se havia jornada prevista e cadastrar o código correspondente.' });
+    }
   });
 
   // ---------- férias: escala x CH contratual do período ----------
@@ -331,39 +391,81 @@ export function analisar(emp) {
     const esc = b.reduce((a, d) => a + d.escalada, 0), con = b.reduce((a, d) => a + d.contratual, 0), dif = esc - con;
     if (!dif) return;
     const plantao12 = b.some(d => d.escalada >= 720);
-    const periodo = `${dataCurta(b[0].dia, mes)} a ${dataCurta(b[b.length - 1].dia, mes)}`;
-    const base = `Nas férias (${periodo}) a escala somou ${fmt(esc)} e a CH contratual do período é ${fmt(con)}: ${fmt(Math.abs(dif))} ${dif > 0 ? 'a mais' : 'a menos'}.`;
-    if (plantao12 && Math.abs(dif) <= 720) addIssue(b[0], { nivel: 'verificar', tipo: 'ferias-escala', titulo: 'Escala nas férias diferente da CH contratual',
-      texto: base + ' Na escala 12x36 a diferença é admitida, desde que não passe de 12h.', impacto: dif });
-    else addIssue(b[0], { nivel: 'ajustar', tipo: 'ferias-escala', titulo: 'Escala nas férias diferente da CH contratual',
-      texto: base + ' O gestor não pode escalar a mais nem a menos que a CH contratual no período de férias.', impacto: dif });
+    const nEsc = b.filter(d => d.escalada).length, nCon = b.filter(d => d.contratual).length;
+    const chEsc = nEsc ? Math.round(esc / nEsc) : 0;
+    const vis = conta([L(`Escalado nas férias: ${nEsc} ${nEsc === 1 ? 'dia' : 'dias'} × ${hm(chEsc)}`, fmt(esc)), L(`Contrato do período: ${nCon} dias × ${hm(diaria)}`, fmt(con), 'sub'),
+                       L(plantao12 && Math.abs(dif) <= 720 ? 'Diferença (limite: 12h)' : 'Diferença', fmt(dif, true).replace(/\s/g, ''), 'total')]);
+    const ok12 = plantao12 && Math.abs(dif) <= 720;
+    addIssue(b[0], { nivel: ok12 ? 'verificar' : 'ajustar', tipo: 'ferias-escala', impacto: dif, data: `${dataCurta(b[0].dia, mes)} a ${dataCurta(b[b.length - 1].dia, mes)}`,
+      titulo: `Escala nas férias ${hm(Math.abs(dif))} ${dif > 0 ? 'acima' : 'abaixo'} do contrato`,
+      aconteceu: ok12 ? 'Na 12x36 a diferença nas férias é admitida, desde que não passe de 12h.' : `No período de férias, o gestor escalou ${dif > 0 ? 'mais' : 'menos'} horas do que o contrato prevê. Isso não é permitido.`,
+      visual: vis,
+      fazer: ok12 ? 'Conferir se a diferença está dentro do limite. Se estiver, não precisa ajustar.' : 'Pedir ao gestor que ajuste a escala do período de férias para igualar a CH contratual.',
+      refTxt: ok12 ? 'Regra interna da 12x36' : 'Regra interna: fora da 12x36, a diferença deve ser zero' });
   });
+
+  // ---------- afastamentos, faltas e escala do mês ----------
   dias.forEach(d => {
     if (d.afast && d.afast !== 'Férias' && d.contratual && !d.codigo && !d.hc && !d.descanso)
-      addIssue(d, { nivel: 'verificar', tipo: 'afast-sem-codigo', titulo: 'Afastamento sem código de jornada', check: 'C2',
-        texto: `${d.afast} em dia útil sem código de jornada: as horas do afastamento podem não ser contabilizadas.` });
+      addIssue(d, { nivel: 'verificar', tipo: 'afast-sem-codigo', check: 'C2',
+        titulo: `${d.afast} em dia sem jornada cadastrada`,
+        aconteceu: 'O afastamento foi lançado, mas o dia não tem código de jornada. As horas podem não ser abonadas.',
+        visual: conta([L('Afastamento', d.afast), L('Código de jornada', 'nenhum'), L('Horas abonadas', '00:00', 'total')]),
+        fazer: 'Inserir o código de jornada planejado para o dia e recalcular o banco de horas.' });
     if (d.afast && d.contratual && /sem jornada|ausencia com compensacao/.test(norm(d.regTexto + ' ' + d.ocorrencia)) && !d.hc)
-      addIssue(d, { nivel: 'verificar', tipo: 'afast-codigo', titulo: 'Afastamento com código incompatível', check: 'C3',
-        texto: `${d.afast} lançado junto com “sem jornada” ou “ausência com compensação”: o afastamento pode não ser contabilizado.` });
+      addIssue(d, { nivel: 'verificar', tipo: 'afast-codigo', check: 'C3',
+        titulo: `${d.afast} lançado junto com “sem jornada”`,
+        aconteceu: 'O dia tem afastamento, mas o código é “sem jornada” ou “ausência com compensação”. O afastamento pode não ser contado.',
+        visual: conta([L('Afastamento', d.afast), L('Código no dia', /compensacao/.test(norm(d.regTexto + ' ' + d.ocorrencia)) ? 'Ausência com compensação' : 'Sem jornada', 'erro'), L('Horas abonadas', '00:00', 'total')]),
+        fazer: 'Substituir o código pelo da jornada que deveria ser considerada.' });
     const oc = norm(d.ocorrencia + ' ' + d.regTexto);
     if (/\bfalta\b/.test(oc) && !/injustificada/.test(oc))
-      addIssue(d, { nivel: 'ajustar', tipo: 'falta', titulo: 'Falta não classificada', check: 'F19', texto: 'Ausência no dia e horário programados, sem tratamento da justificativa.' });
+      addIssue(d, { nivel: 'ajustar', tipo: 'falta', check: 'F19',
+        titulo: 'Ausência no plantão sem justificativa tratada',
+        aconteceu: 'Havia jornada prevista e o dia está como “falta”, sem classificação.',
+        visual: conta([L('Escalado', d.escalada ? fmt(d.escalada) : '—'), L('Registros', d.registros ? d.registros.replace(/[rmc]/g, '') : 'nenhum'), L('Saldo do dia', d.saldo != null ? fmt(d.saldo, true).replace(/\s/g, '') : '—', 'total')]),
+        fazer: 'O gestor classifica como ausência com compensação ou falta injustificada, ou a GP registra afastamento legal. Na homologação automática, vira falta injustificada.' });
     else if (/falta injustificada/.test(oc))
-      addIssue(d, { nivel: 'info', tipo: 'falta-inj', titulo: 'Falta injustificada', texto: 'Tem reflexo na folha de pagamento e nas férias.' });
+      addIssue(d, { nivel: 'info', tipo: 'falta-inj',
+        titulo: 'Falta classificada como injustificada',
+        aconteceu: 'O gestor classificou a ausência como falta injustificada.',
+        visual: conta([L('Escalado', d.escalada ? fmt(d.escalada) : '—'), L('Saldo do dia', d.saldo != null ? fmt(d.saldo, true).replace(/\s/g, '') : '—', 'total')]),
+        fazer: 'Nenhum ajuste na frequência. A falta tem reflexo na folha de pagamento e nas férias.' });
   });
   {
-    const escJ = dias.filter(d => !d.sobreaviso).reduce((a, d) => a + d.escalada, 0);
+    const diasJ = dias.filter(d => d.escalada && !d.sobreaviso);
+    const escJ = diasJ.reduce((a, d) => a + d.escalada, 0);
     const conM = dias.reduce((a, d) => a + d.contratual, 0);
+    const nUteis = dias.filter(d => d.contratual).length;
     const dif = escJ - conM;
-    if (dif && dias.length) addIssue(dias[0], { nivel: 'verificar', tipo: 'escala-mes', titulo: 'CH escalada no mês diferente da CH contratual', check: 'B3', mes: true,
-      texto: `As jornadas escaladas no mês somam ${fmt(escJ)} e a CH contratual é ${fmt(conM)}: ${fmt(Math.abs(dif))} ${dif > 0 ? 'a mais' : 'a menos'}${dias.some(d => d.sobreaviso) ? ' (sem contar o sobreaviso)' : ''}.` });
+    if (dif && dias.length) {
+      const porCod = {};
+      diasJ.forEach(d => { const J = jorn(d.codigo); const k = d.codigo; (porCod[k] ||= { n: 0, ch: d.escalada, J, ferias: 0 }); porCod[k].n++; if (d.afast === 'Férias') porCod[k].ferias++; });
+      const nomeJ = (J) => {
+        if (!J || J.inicio == null) return ['jornada', 'jornadas'];
+        const fim = (J.inicio + J.duracao) % 1440;
+        return J.duracao >= 600 ? (J.inicio >= 17 * 60 || fim < J.inicio ? ['plantão noturno', 'plantões noturnos'] : ['plantão diurno', 'plantões diurnos']) : J.inicio < 12 * 60 ? ['manhã', 'manhãs'] : J.inicio < 18 * 60 ? ['tarde', 'tardes'] : ['noite', 'noites'];
+      };
+      const linhas = Object.values(porCod).sort((a, b) => b.ch - a.ch).map(p => L(`${p.n} ${nomeJ(p.J)[p.n === 1 ? 0 : 1]} × ${hm(p.ch)}${p.ferias ? ` (${p.ferias} em férias)` : ''}`, fmt(p.n * p.ch)));
+      linhas.push(L('Escalado no mês', fmt(escJ), 'sub'), L(`Contrato: ${nUteis} dias × ${hm(diaria)}`, '− ' + fmt(conM)), L(dif > 0 ? 'Escala a mais' : 'Escala a menos', fmt(dif, true).replace(/\s/g, ''), 'total'));
+      addIssue(dias[0], { nivel: 'verificar', tipo: 'escala-mes', check: 'B3', mes: true,
+        titulo: `A escala teve ${hm(Math.abs(dif))} a ${dif > 0 ? 'mais' : 'menos'} do que o contrato`,
+        aconteceu: `Somando os plantões do mês, o gestor escalou ${dif > 0 ? 'mais' : 'menos'} horas do que o contrato pede${dias.some(d => d.sobreaviso) ? '. O sobreaviso não entra nessa conta' : ''}.`,
+        visual: conta(linhas),
+        fazer: 'Avisar o gestor e a empregada: considerar essa diferença na próxima escala ou combinar a compensação.' });
+    }
   }
   (emp.ressalvas || []).forEach(r => {
     const dia = parseInt(r.data, 10); const d = dias[dia - 1];
-    if (d) addIssue(d, { nivel: 'info', tipo: 'ressalva', titulo: 'Homologado com ressalva', texto: r.texto ? `Ressalva registrada: “${r.texto}”.` : 'Dia homologado com ressalva.' });
+    if (d) addIssue(d, { nivel: 'info', tipo: 'ressalva',
+      titulo: 'O gestor deixou uma ressalva no dia',
+      aconteceu: 'A frequência foi homologada com ressalva, que aparece no rodapé do relatório.',
+      visual: conta([L('Ressalva', r.texto ? '“' + r.texto + '”' : '—')]),
+      fazer: 'Ler a ressalva antes de concluir a análise do dia.' });
   });
   const ordemNivel = { ajustar: 0, verificar: 1, info: 2 };
   issues.sort((a, b) => ordemNivel[a.nivel] - ordemNivel[b.nivel] || (a.mes ? -1 : b.mes ? 1 : a.dia - b.dia));
+  issues.forEach(i => { if (!i.texto) i.texto = i.aconteceu; });
 
   // ---------- semanas (domingo a sábado) ----------
   const semanas = []; let s = null;
