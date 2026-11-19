@@ -162,6 +162,21 @@ function assignCols(d, items, c) {
 }
 
 // ---------------- Análise ----------------
+// Checklist de Triagem e Tratamento (POP.DGP.127, Anexo III)
+const CHECK = {
+  A1: { ref: 'A1', prov: 'Orientar o empregado a solicitar a regularização pelo Portal do Empregado, com justificativa e aprovação do gestor. Se a frequência já estiver homologada, a solicitação deve ser feita por processo SEI à UAP, com anuência do gestor.', func: 'Frequência > Ponto Eletrônico > Registro de Frequência' },
+  A2: { ref: 'A2', prov: 'Conferir o código de jornada e a compatibilidade com os horários trabalhados, inclusive jornadas consecutivas com interjornada inferior a 11h. Avaliar a correção do código ou a rejeição fundamentada de registro comprovadamente equivocado.', func: 'Frequência > Ponto Eletrônico > Registro de Frequência; Frequência > Horário > Cadastro Horário Excepcional' },
+  A3: { ref: 'A3', prov: 'Conferir se as marcações causam batida ímpar ou erro de contabilização. Se a apuração estiver correta, não ajustar só por causa da quantidade de registros.', func: 'Não se aplica' },
+  A4: { ref: 'A4', prov: 'Verificar duplicidade de marcação ou dobra de plantão. Se houver erro na contabilização, avaliar a rejeição da marcação e/ou a adequação do código de jornada.', func: 'Frequência > Ponto Eletrônico > Registro de Frequência; Frequência > Horário > Cadastro Horário Excepcional' },
+  B1: { ref: 'B1', prov: 'Conferir se há código de jornada cadastrado para o dia e, quando cabível, registrar o código da jornada planejada.', func: 'Frequência > Horário > Cadastro Horário Excepcional' },
+  B3: { ref: 'B3', prov: 'Orientar gestor e empregado a considerar o saldo na elaboração da escala seguinte e pactuar compensação quando cabível.', func: 'Não se aplica' },
+  B4: { ref: 'B4', prov: 'O sistema só considera registros feitos até 3h antes do início e 3h depois do término da jornada cadastrada. Se necessário, ajustar o horário de trabalho ou o código de jornada.', func: 'Frequência > Horário > Cadastro Horário Excepcional' },
+  B5: { ref: 'B4/B5', prov: 'Verificar registros fora da janela de 3h e a ocorrência de duas jornadas consecutivas. Avaliar a rejeição de registro e/ou a alteração da jornada cadastrada.', func: 'Frequência > Ponto Eletrônico > Registro de Frequência; Frequência > Horário > Cadastro Horário Excepcional' },
+  C2: { ref: 'C2', prov: 'Inserir o código de jornada planejado para o dia e efetuar o recálculo do banco de horas.', func: 'Frequência > Horário > Cadastro Horário Excepcional; Frequência > Banco de Horas > Recalcular BH Homologado' },
+  C3: { ref: 'C3', prov: 'Verificar se há código “sem jornada” ou “ausência com compensação” e, se for o caso, substituir pelo código da jornada a ser considerada.', func: 'Frequência > Horário > Cadastro Horário Excepcional' },
+  F19: { ref: 'Falta', prov: 'A falta deve ser classificada pelo gestor como ausência com compensação ou falta injustificada, ou pela gestão de pessoas com registro de afastamento legal. Na homologação automática, a falta não classificada vira falta injustificada.', func: 'Portal do Empregado / Frequência' }
+};
+
 // Ocorrências cujo tempo vai para pagamento: não são inconsistências.
 const PAGAMENTO = [
   { re: /extensao de jornada remunerada/, label: 'Extensão de jornada remunerada', modo: 'excedente' },
@@ -171,8 +186,9 @@ const PAGAMENTO = [
 const AFAST_RE = /licen[çc]a|atestado|afastamento|abono|abonad|folga compensat|dispensa|nojo|gala|luto|casamento|doa[çc][ãa]o|paternidade|maternidade|INSS|acidente/i;
 const DESCANSO_RE = /sem jornada|\bdsr\b|folga|descanso/;
 const TOL_HC = 10;      // tolerância (min) ao comparar horas consideradas com os registros
-const DUP_MIN = 5;      // registros com até 5 min de diferença = duplicidade
-const MARGEM = 240;     // janela de busca dos registros: 4h antes/depois da jornada
+const DUP_MIN = 14;     // marcações consecutivas com intervalo inferior a 15 min (POP.DGP.127, A4)
+const MARGEM = 180;     // o sistema só considera registros até 3h antes do início e 3h depois do término (B4)
+const INTERJORNADA = 660; // 11h entre jornadas
 
 function capitalize(s) { s = s.trim(); return s ? s[0].toUpperCase() + s.slice(1) : s; }
 const hhmm = t => { const m = ((t % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
@@ -233,7 +249,7 @@ export function analisar(emp) {
 
   // ---------- registros de ponto x jornada ----------
   const issues = [];
-  const addIssue = (d, o) => { const it = { dia: d.dia, data: dataCurta(d.dia, mes), ...o }; issues.push(it); d.issues.push(it); };
+  const addIssue = (d, o) => { const c = o.check ? CHECK[o.check] : null; const it = { dia: d.dia, data: o.mes ? 'Mês' : dataCurta(d.dia, mes), ref: c?.ref, providencia: c?.prov, funcionalidade: c?.func, ...o }; issues.push(it); if (!o.mes) d.issues.push(it); };
   const punches = [];
   dias.forEach(d => {
     const re = /(\d{2}):(\d{2})\s*([rmc])?/gi; let m;
@@ -251,25 +267,28 @@ export function analisar(emp) {
     const { d, J, s, e } = tr;
     const take = punches.filter(p => !p.used && p.t >= s - MARGEM && p.t <= e + MARGEM);
     take.forEach(p => p.used = true);
+    tr.take = take;
     if (d.afast || (d.feriado && !take.length)) continue;
     const reg = [], dups = [];
     take.forEach(p => { const ult = reg[reg.length - 1]; if (ult && p.t - ult.t <= DUP_MIN) dups.push([ult, p]); else reg.push(p); });
     const fmtP = p => hhmm(p.t) + (p.dia !== d.dia ? ' (' + dataCurta(p.dia, mes) + ')' : '');
     d.turno = reg.map(p => hhmm(p.t));
     if (dups.length) addIssue(d, { nivel: 'verificar', tipo: 'duplicidade',
-      titulo: 'Registros em duplicidade',
-      texto: dups.map(([a, b]) => `${fmtP(a)} e ${fmtP(b)}`).join('; ') + '. Registros repetidos podem levar o sistema a combinar entradas e saídas erradas.' });
+      titulo: 'Marcações consecutivas com menos de 15 minutos', check: 'A4',
+      texto: dups.map(([a, b]) => `${fmtP(a)} e ${fmtP(b)}`).join('; ') + '. Pode ser duplicidade de marcação ou dobra de plantão, e pode levar o sistema a combinar entradas e saídas erradas.' });
+    if (take.length > 4 && !dups.length) addIssue(d, { nivel: 'info', tipo: 'excesso', titulo: 'Quantidade elevada de marcações na jornada', check: 'A3',
+      texto: `${take.length} marcações na mesma jornada (${take.map(fmtP).join(', ')}).` });
     if (d.pagamento || d.sobreaviso) continue;
     const n = reg.length;
     if (n === 0) {
-      if (!d.hc && !d.ocorrencia) addIssue(d, { nivel: 'verificar', tipo: 'sem-registro', titulo: 'Dia escalado sem registro', texto: 'Não há registro de ponto nem ocorrência para este dia.' });
+      if (!d.hc && !d.ocorrencia) addIssue(d, { nivel: 'verificar', tipo: 'sem-registro', titulo: 'Dia escalado sem registro', texto: 'Não há registro de ponto nem ocorrência para este dia. Se houve ausência, ela precisa ser tratada.' });
       continue;
     }
     if (n % 2 === 1) {
       addIssue(d, { nivel: 'ajustar', tipo: 'batida-impar', titulo: 'Batida ímpar',
         texto: `${n} ${n === 1 ? 'registro' : 'registros'} (${reg.map(fmtP).join(', ')}): falta uma entrada ou saída.` +
           (d.saldo != null && d.saldo < 0 ? ` O saldo negativo do dia (${fmt(d.saldo, true)}) vem dessa batida.` : d.saldo != null && d.saldo > 0 ? ` O saldo do dia (${fmt(d.saldo, true)}) não é confiável.` : '') +
-          ' É preciso ajustar o registro de ponto.', impacto: null });
+          ' É preciso ajustar o registro de ponto.', impacto: null, check: 'A1' });
       continue;
     }
     let trab = 0, noturno = 0;
@@ -281,8 +300,15 @@ export function analisar(emp) {
       addIssue(d, { nivel: 'ajustar', tipo: 'hc-divergente', titulo: 'Horas consideradas incompatíveis com os registros',
         texto: `O relatório considerou ${fmt(d.hc)}, mas os registros (${reg.map(fmtP).join(' → ')}) somam ${fmt(calc)}${noturno ? ' com o adicional noturno' : ''}. ` +
           `O saldo do dia deveria ser ${fmt(esperado, true)}, não ${fmt(d.saldo ?? d.hc - J.ch, true)}.`,
-        impacto: d.hc - calc });
+        impacto: d.hc - calc, check: 'B5' });
     }
+  }
+  // interjornada inferior a 11h entre jornadas planejadas
+  const jornadasReais = turnos.filter(t => !t.d.sobreaviso && !t.d.afast);
+  for (let k = 1; k < jornadasReais.length; k++) {
+    const a = jornadasReais[k - 1], b = jornadasReais[k], gap = b.s - a.e;
+    if (gap >= 0 && gap < INTERJORNADA) addIssue(b.d, { nivel: 'verificar', tipo: 'interjornada', titulo: 'Interjornada inferior a 11 horas', check: 'A2',
+      texto: `A jornada de ${dataCurta(a.d.dia, mes)} termina às ${hhmm(a.e)}${Math.floor(a.e / 1440) + 1 !== a.d.dia ? ' (' + dataCurta(Math.floor(a.e / 1440) + 1, mes) + ')' : ''} e a de ${dataCurta(b.d.dia, mes)} começa às ${hhmm(b.s)}: ${fmt(gap)} de intervalo.` });
   }
   // registros que não pertencem a nenhuma jornada
   const soltos = punches.filter(p => !p.used && !(p.dia === 1 && p.t < 720));
@@ -291,8 +317,11 @@ export function analisar(emp) {
   Object.entries(porDia).forEach(([dia, ps]) => {
     const d = dias[+dia - 1];
     if (d.pagamento || d.afast) return;
-    addIssue(d, { nivel: 'verificar', tipo: 'fora-escala', titulo: 'Registro fora da jornada escalada',
-      texto: `${ps.map(p => hhmm(p.t)).join(', ')} sem jornada correspondente. Verifique se houve trabalho fora da escala ou erro de registro.` });
+    const perto = turnos.some(t => ps.some(p => p.t >= t.s - 360 && p.t <= t.e + 360));
+    if (perto) addIssue(d, { nivel: 'verificar', tipo: 'fora-escala', titulo: 'Registro fora da janela de 3h da jornada', check: 'B4',
+      texto: `${ps.map(p => hhmm(p.t)).join(', ')}: o sistema não contabiliza marcações feitas mais de 3h antes do início ou depois do término da jornada cadastrada.` });
+    else addIssue(d, { nivel: 'verificar', tipo: 'fora-escala', titulo: 'Marcações sem código de jornada', check: 'B1',
+      texto: `${ps.map(p => hhmm(p.t)).join(', ')} em dia sem jornada cadastrada: as horas não são contabilizadas.` });
   });
 
   // ---------- férias: escala x CH contratual do período ----------
@@ -309,12 +338,32 @@ export function analisar(emp) {
     else addIssue(b[0], { nivel: 'ajustar', tipo: 'ferias-escala', titulo: 'Escala nas férias diferente da CH contratual',
       texto: base + ' O gestor não pode escalar a mais nem a menos que a CH contratual no período de férias.', impacto: dif });
   });
+  dias.forEach(d => {
+    if (d.afast && d.afast !== 'Férias' && d.contratual && !d.codigo && !d.hc && !d.descanso)
+      addIssue(d, { nivel: 'verificar', tipo: 'afast-sem-codigo', titulo: 'Afastamento sem código de jornada', check: 'C2',
+        texto: `${d.afast} em dia útil sem código de jornada: as horas do afastamento podem não ser contabilizadas.` });
+    if (d.afast && d.contratual && /sem jornada|ausencia com compensacao/.test(norm(d.regTexto + ' ' + d.ocorrencia)) && !d.hc)
+      addIssue(d, { nivel: 'verificar', tipo: 'afast-codigo', titulo: 'Afastamento com código incompatível', check: 'C3',
+        texto: `${d.afast} lançado junto com “sem jornada” ou “ausência com compensação”: o afastamento pode não ser contabilizado.` });
+    const oc = norm(d.ocorrencia + ' ' + d.regTexto);
+    if (/\bfalta\b/.test(oc) && !/injustificada/.test(oc))
+      addIssue(d, { nivel: 'ajustar', tipo: 'falta', titulo: 'Falta não classificada', check: 'F19', texto: 'Ausência no dia e horário programados, sem tratamento da justificativa.' });
+    else if (/falta injustificada/.test(oc))
+      addIssue(d, { nivel: 'info', tipo: 'falta-inj', titulo: 'Falta injustificada', texto: 'Tem reflexo na folha de pagamento e nas férias.' });
+  });
+  {
+    const escJ = dias.filter(d => !d.sobreaviso).reduce((a, d) => a + d.escalada, 0);
+    const conM = dias.reduce((a, d) => a + d.contratual, 0);
+    const dif = escJ - conM;
+    if (dif && dias.length) addIssue(dias[0], { nivel: 'verificar', tipo: 'escala-mes', titulo: 'CH escalada no mês diferente da CH contratual', check: 'B3', mes: true,
+      texto: `As jornadas escaladas no mês somam ${fmt(escJ)} e a CH contratual é ${fmt(conM)}: ${fmt(Math.abs(dif))} ${dif > 0 ? 'a mais' : 'a menos'}${dias.some(d => d.sobreaviso) ? ' (sem contar o sobreaviso)' : ''}.` });
+  }
   (emp.ressalvas || []).forEach(r => {
     const dia = parseInt(r.data, 10); const d = dias[dia - 1];
     if (d) addIssue(d, { nivel: 'info', tipo: 'ressalva', titulo: 'Homologado com ressalva', texto: r.texto ? `Ressalva registrada: “${r.texto}”.` : 'Dia homologado com ressalva.' });
   });
   const ordemNivel = { ajustar: 0, verificar: 1, info: 2 };
-  issues.sort((a, b) => ordemNivel[a.nivel] - ordemNivel[b.nivel] || a.dia - b.dia);
+  issues.sort((a, b) => ordemNivel[a.nivel] - ordemNivel[b.nivel] || (a.mes ? -1 : b.mes ? 1 : a.dia - b.dia));
 
   // ---------- semanas (domingo a sábado) ----------
   const semanas = []; let s = null;

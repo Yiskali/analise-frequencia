@@ -17,11 +17,16 @@ O PDF é lido no próprio navegador; nenhum dado é enviado.
 - **Semanas:** domingo a sábado, com CH contratual, escalada e considerada, classificação da escala (deficitária, adequada, superavitária) e saldo da semana.
 - **Dias do mês:** calendário ou tabela com registros, horas consideradas, saldo diário, feriados, afastamentos e acertos manuais.
 - **Conferência:** compara os totais recalculados com os impressos no PDF.
-- **Pontos de atenção:** aponta o que precisa de ajuste ou verificação:
+- **Pontos de atenção:** segue o Checklist de Triagem e Tratamento do POP.DGP.127 (Anexo III), com a providência e a funcionalidade do Mentorh de cada item. Aponta:
   - batida ímpar (falta uma entrada ou saída) e o saldo do dia que ela distorce;
   - horas consideradas incompatíveis com os registros (com o saldo corrigido estimado);
   - registros em duplicidade, dia escalado sem registro e registro fora da jornada;
   - escala nas férias diferente da CH contratual do período (na 12x36, diferença admitida até 12h);
+  - marcações consecutivas com menos de 15 min (A4) e quantidade elevada de marcações (A3);
+  - interjornada inferior a 11h (A2) e registros fora da janela de 3h da jornada (B4);
+  - marcações sem código de jornada (B1) e CH escalada no mês diferente da contratual (B3);
+  - afastamento sem código de jornada (C2) ou com código incompatível (C3);
+  - falta não classificada e falta injustificada;
   - dias homologados com ressalva.
 
 ## Regras de cálculo
