@@ -233,6 +233,10 @@
   .i-title{font-weight:700;font-size:14px}
   .i-body p{font-size:14px;color:var(--muted);margin-top:2px}
   .i-imp{color:var(--red-t) !important}
+  .prov{margin-top:8px;font-size:13px}
+  .prov summary{cursor:pointer;color:var(--blue);font-weight:600;display:inline-block;padding:2px 0}
+  .prov p{font-size:13px;color:var(--text);margin-top:4px}
+  .prov .func{color:var(--muted)}
   .w-ico{display:inline-flex;align-items:center;margin-right:4px;vertical-align:-1px}
   .w-ico.aj{color:var(--red-t)} .w-ico.ver{color:var(--yellow-t)}
   .cell.pag{background:var(--surface);border:1.5px dashed var(--navy)}
@@ -674,6 +678,7 @@ function render(i) {
         <div class="i-title"><span class="n">${esc(i.data)}</span> · ${esc(i.titulo)}</div>
         <p>${esc(i.texto)}</p>
         ${i.impacto && i.tipo === 'hc-divergente' ? `<p class="i-imp">Impacto no saldo do mês: <strong class="n">${sinal(i.impacto)}</strong></p>` : ''}
+        ${i.providencia ? `<details class="prov"><summary>Providência${i.ref ? ` · Checklist ${esc(i.ref)}` : ''}</summary><p>${esc(i.providencia)}</p>${i.funcionalidade && i.funcionalidade !== 'Não se aplica' ? `<p class="func">Mentorh: ${esc(i.funcionalidade)}</p>` : ''}</details>` : ''}
       </div></li>`).join('')}</ul>` : ''}
     ${pags.length ? `<div class="note">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#154899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
@@ -737,6 +742,8 @@ function render(i) {
         <li><strong>CH escalada:</strong> carga da jornada (${jornadas.map(j => j.codigo + ': ' + fmt(j.ch)).join(', ') || '—'}) em cada dia com código de jornada, inclusive nos afastamentos.</li>
         <li><strong>Horas consideradas:</strong> coluna HC do relatório. A soma é a CH executada.</li>
         <li><strong>Saldo do mês:</strong> horas consideradas − CH contratual.</li>
+        <li><strong>Pontos de atenção:</strong> seguem o Checklist de Triagem e Tratamento do POP.DGP.127 (Anexo III). Só são considerados os registros até 3h antes do início e 3h depois do término da jornada; marcações com menos de 15 min entre si são tratadas como possível duplicidade.</li>
+        <li><strong>Hora ficta:</strong> 7min30s a cada hora noturna (52min30s) trabalhada entre 22h e 5h.</li>
         <li><strong>Dias trabalhados:</strong> exclui os dias de afastamento (férias, licenças, atestados etc.), em que o sistema credita a escala prevista.</li>
       </ul>
     </details>`;
