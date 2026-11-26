@@ -54,6 +54,12 @@ export function parseReport(pages) {
     const mRel = t.match(/Relat[óo]rio de Frequ[êe]ncia\s*-\s*([A-Za-zçÇ]+)\s*\/\s*(\d{4})/i);
     if (mRel) { mesAno = { mes: MESES.indexOf(norm(mRel[1]).replace('marco', 'março')), ano: +mRel[2] }; if (mesAno.mes < 0) mesAno.mes = MESES.map(norm).indexOf(norm(mRel[1])); }
 
+    if (!mRel) for (const it of l.items) {
+      const mm = it.str.trim().match(/^([A-Za-zçÇ]+)\s*\/\s*(\d{4})$/);
+      const ix = mm ? MESES.map(norm).indexOf(norm(mm[1])) : -1;
+      if (ix >= 0) { mesAno = { mes: ix, ano: +mm[2] }; if (cur && cur.mes == null) { cur.mes = ix; cur.ano = +mm[2]; } break; }
+    }
+
     if (first === 'Empregado') {
       const txt = restText(l);
       const mm = txt.match(/^(.*?)\s*-\s*(\d+)\s*$/);
@@ -231,7 +237,7 @@ export function analisar(emp) {
     let afast = null;
     if (ferias) afast = 'Férias';
     else if (!feriado && !pagamento && !descanso && !p.registros) {
-      if (p.regTexto && !ehFimSemanaTxt) afast = capitalize(p.regTexto);
+      if (p.regTexto && !ehFimSemanaTxt) afast = /^afastamento$/i.test(p.regTexto.trim()) && p.ocorrencia ? capitalize(p.ocorrencia.replace(/^afastamento por\s*/i, '').replace(/\s*-\s*at[eé].*$/i, '')) : capitalize(p.regTexto);
       else if (AFAST_RE.test(p.ocorrencia)) afast = capitalize(p.ocorrencia);
     }
     const contratual = diasContrat.includes(dow) && !feriado ? diaria : 0;
@@ -472,12 +478,18 @@ export function analisar(emp) {
     const v = { escala: J && J.inicio != null ? (J.sobreaviso ? 'Sobreaviso ' : '') + hhmm(J.inicio) + ' → ' + hhmm(J.inicio + J.duracao) : '', entrada: '', saida: '', hc: 0, saldo: null, motivo: '', status: 'ok' };
     const batidas = []; { const re = /(\d{2}):(\d{2})\s*([rmc])?/gi; let m; while ((m = re.exec(d.registros))) batidas.push({ h: m[1] + ':' + m[2], tipo: (m[3] || '').toLowerCase() }); }
     v.batidas = batidas;
-    if (d.turnoReg && d.turnoReg.length) { const r = d.turnoReg; v.entrada = fmtT(r[0].t, d); v.saida = r.length % 2 === 0 ? fmtT(r[r.length - 1].t, d) : ''; }
+    if (d.turnoReg && d.turnoReg.length && !(J && J.sobreaviso)) { const r = d.turnoReg; v.entrada = fmtT(r[0].t, d); v.saida = r.length % 2 === 0 ? fmtT(r[r.length - 1].t, d) : ''; }
     const meus = punches.filter(p => p.dia === d.dia);
-    if (d.afast) { v.hc = d.escalada; v.motivo = d.escalada ? `${d.afast}: crédito da escala do dia` : `${d.afast}: sem escala no dia, sem crédito`; }
+    if (d.afast) {
+      const fic = J && J.inicio != null && !J.sobreaviso ? Math.round(minutosNoturnos(J.inicio, J.inicio + J.duracao) / 7) : 0;
+      const hcEsc = d.escalada + (d.escalada ? fic : 0);
+      const cred = Math.abs((d.hc || 0) - hcEsc) <= TOL_DIA ? hcEsc : d.escalada;
+      v.hc = cred;
+      v.motivo = !d.escalada ? `${d.afast}: sem escala no dia, sem crédito` : cred > d.escalada ? `${d.afast}: crédito da escala (${fmt(d.escalada)}) + ${fic} min de hora ficta` : `${d.afast}: crédito da escala do dia`;
+    }
     else if (d.feriado && !d.registros) { v.hc = d.codigo ? d.escalada : (d.contratual ? 0 : diaria); v.motivo = 'Feriado sem plantão: crédito da CH diária'; if (!d.codigo) v.hc = diaria; }
     else if (d.pagamento && d.pagModo === 'excedente') { v.hc = d.escalada; v.motivo = 'Extensão remunerada: conta só a CH da escala; o excedente é pago'; }
-    else if (d.pagamento) { v.hc = 0; v.motivo = 'O tempo trabalhado vai para pagamento'; }
+    else if (d.pagamento) { v.hc = 0; v.motivo = d.sobreaviso && d.turnoReg && d.turnoReg.length ? `Sobreaviso com acionamento (${d.turnoReg.map(p => hhmm(p.t)).join(', ')}): o tempo vai para pagamento` : 'O tempo trabalhado vai para pagamento'; }
     else if (d.codigo && J && !J.sobreaviso) {
       const reg = d.turnoReg || [];
       if (!reg.length) { v.hc = 0; v.saldo = d.contratual || d.escalada ? -J.ch : null; v.motivo = d.ocorrencia ? capitalize(d.ocorrencia) : 'Sem batidas no plantão'; v.status = d.ocorrencia ? 'info' : 'incompleto'; }
