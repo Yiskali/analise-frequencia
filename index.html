@@ -356,7 +356,7 @@
 <div id="toast" class="toast hidden" role="status"></div>
 
 <script type="module">
-import { parseReport, analisar, fmt, DIAS_NOME, MESES } from './parser.js';
+import { lerRelatorio, analisar, fmt, DIAS_NOME, MESES } from './parser.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -417,7 +417,7 @@ function renderImport() {
       const pts = [c.aj ? `<span class="n" style="font-size:12px;font-weight:700;color:var(--aj)">${c.aj} ajustar</span>` : '', c.ver ? `<span class="n" style="font-size:12px;font-weight:700;color:var(--ver)">${c.ver} verificar</span>` : ''].filter(Boolean).join(' · ') || '<span class="muted" style="font-size:12px">nenhum</span>';
       linhas.push(`<tr><td><div style="font-weight:700">${esc(titulo(r.emp.nome))}</div><div class="n muted" style="font-size:12px">Mat. ${esc(r.emp.matricula)} · ${esc(titulo((r.emp.cargo.split(' - ')[0] || '').trim()))}</div></td>
         <td>${cap(MESES[r.emp.mes])}/${r.emp.ano}</td><td class="r n v-sal ${cls(r.A.M.saldo)}">${sinal(r.A.M.saldo) || '00:00'}</td><td>${pts}</td>
-        <td class="muted" style="font-size:13px">${esc(r.arquivo)}</td><td class="r"><button class="btn sm" data-abrir="${k}">Abrir</button></td></tr>`);
+        <td class="muted" style="font-size:13px">${esc(r.arquivo)}<div style="font-size:11px">${r.emp.tipo === 'espelho' ? 'Espelho de Ponto' : 'Relatório de Frequência'}</div></td><td class="r"><button class="btn sm" data-abrir="${k}">Abrir</button></td></tr>`);
     });
   });
   $('impBody').innerHTML = linhas.join('') || '<tr><td colspan="6" class="muted">Nenhum relatório encontrado.</td></tr>';
@@ -443,7 +443,7 @@ async function importar(files) {
     }
     try {
       const pages = await lerPdf(f, (p, t) => { it.pag = p; it.total = t; renderImport(); });
-      const emps = parseReport(pages).filter(e => e.mes != null && e.ano && Object.keys(e.dias).length);
+      const emps = lerRelatorio(pages).filter(e => e.mes != null && e.ano && Object.keys(e.dias).length);
       if (!emps.length) { it.estado = 'erro'; it.msg = 'Não encontrei a tabela diária do Relatório de Frequência neste PDF.'; }
       else { it.estado = 'pronto'; emps.forEach(e => { const r = { arquivo: f.name, emp: e, A: analisar(e) }; relatorios.push(r); it.rels.push(r); }); }
     } catch (err) { console.error(err); it.estado = 'erro'; it.msg = 'Não foi possível ler este PDF. Ele pode estar protegido ou corrompido.'; }
@@ -472,7 +472,7 @@ function renderCtx() {
   const hom = emp.homologada.match(/HOMOLOGADA:\s*(.*?)\s+em\s+([\d/]+)/i);
   $('ctx').innerHTML = `
     <div class="ctx-l"><h1>${esc(titulo(emp.nome))}</h1><span class="ctx-meta">Mat. ${esc(emp.matricula)} · ${esc(cargo)} · ${esc(lot)} · ${Math.round(A.semanal / 60)}h semanais</span></div>
-    <div class="ctx-r"><span class="comp">${cap(MESES[emp.mes])}/${emp.ano}</span>${hom ? `<span class="chip c-ok" title="Homologada por ${esc(titulo(hom[1]))}">Homologada em ${esc(hom[2].slice(0, 5))}</span>` : '<span class="chip c-ver">Não homologada</span>'}</div>`;
+    <div class="ctx-r">${emp.tipo === 'espelho' ? '<span class="chip c-inf">Espelho de Ponto</span>' : ''}<span class="comp">${cap(MESES[emp.mes])}/${emp.ano}</span>${hom ? `<span class="chip c-ok" title="Homologada por ${esc(titulo(hom[1]))}">Homologada em ${esc(hom[2].slice(0, 5))}</span>` : '<span class="chip c-ver">Não homologada</span>'}</div>`;
   const c = contagem(issues);
   const nDiv = A.dias.filter(d => d.valid.status === 'diverge' || d.valid.status === 'incompleto').length;
   const T = [['resumo', 'Resumo', 'Resumo'], ['semanas', 'Semanas', 'Semanas'], ['dia', 'Dia a dia', 'Dia a dia'], ['pontos', 'Pontos de atenção', 'Pontos'], ['conf', 'Conferência', 'Conf.']];
@@ -499,6 +499,7 @@ function linhasSaldo() {
     else if (p.id === 'escala') { if (p.v) out.push({ v: p.v, t: `A escala teve ${p.v > 0 ? 'mais' : 'menos'} horas que o contrato nos dias trabalhados.`, d: `${fmt(p.esc)} escaladas × ${fmt(p.con)} do contrato.` }); }
     else if (p.id === 'outros-trab') out.push({ v: p.v, t: 'Outros créditos em dias sem código de jornada.', d: '' });
     else if (p.id === 'resid') out.push({ v: p.v, t: 'Outros ajustes do relatório.', d: '' });
+    else if (p.tipo === 'falta') out.push({ v: p.v, t: `${g.dias.length > 1 ? 'Faltas' : 'Falta'} (${listaDias(g.dias)}).`, d: 'O dia não foi trabalhado: as horas do contrato ficaram faltando.' });
     else if (p.tipo === 'feriado') out.push({ v: p.v, t: `${g.dias.length > 1 ? 'Feriados' : 'Feriado'} (${listaDias(g.dias)}) sem plantão.`, d: 'O dia é abonado no contrato e ainda recebe crédito da CH diária.' });
     else if (p.tipo === 'afast') {
       const nome = /^f[ée]rias$/i.test(g.nome) ? 'Férias' : g.nome;
@@ -609,6 +610,7 @@ function linhaDia(d) {
     <td class="r n v-esc">${d.escalada ? fmt(d.escalada) : '—'}</td>
     <td class="r n v-cons" style="${nv === 'ajustar' && d.issues.some(i => i.tipo === 'hc-divergente') ? 'color:var(--aj);font-weight:700' : ''}">${d.hc ? fmt(d.hc) : '—'}${d.credito ? ' <span class="chip c-inf" style="font-size:10px;padding:0 5px">crédito</span>' : ''}</td>
     <td class="r n v-sal ${d.saldo != null ? cls(d.saldo) : 'zero'}">${d.saldo != null ? sinal(d.saldo) || '00:00' : '—'}</td>
+    ${A.emp.tipo === 'espelho' ? `<td class="r n">${d.extras ? fmt(d.extras) : '—'}</td><td class="r n">${d.adnot ? fmt(d.adnot) : '—'}</td><td class="r n">${d.feriadoH ? fmt(d.feriadoH) : '—'}</td>` : ''}
     <td style="min-width:220px">${obsDia(d)}</td></tr>`;
 }
 function itemDia(d) {
@@ -619,7 +621,9 @@ function itemDia(d) {
     <div class="dl-v"><span class="n" style="background:var(--contr-bg)">${d.contratual ? fmt(d.contratual) : '—'}</span><span class="n" style="background:var(--esc-bg)">${d.escalada ? fmt(d.escalada) : '—'}</span><span class="n" style="background:var(--cons-bg)">${d.hc ? fmt(d.hc) : '—'}</span><span class="n ${d.saldo != null ? cls(d.saldo) : 'zero'}" style="text-align:right;font-weight:700">${d.saldo != null ? sinal(d.saldo) || '00:00' : '—'}</span></div></li>`;
 }
 function rodapeTotais(w, label) {
-  return `<td colspan="3">${label}</td><td class="r n v-contr">${fmt(w.contratual)}</td><td class="r n v-esc">${fmt(w.escalada)}${w.credito ? ` <span class="chip c-inf" style="font-size:10px;padding:0 5px">+${fmt(w.credito)}</span>` : ''}</td><td class="r n v-cons">${fmt(w.hc)}</td><td class="r n ${cls(w.saldoDiario)}">${sinal(w.saldoDiario) || '00:00'}</td>`;
+  const esp = A.emp.tipo === 'espelho', ds = w.dias || A.dias, soma = k => ds.reduce((a, d) => a + (d[k] || 0), 0);
+  return `<td colspan="3">${label}</td><td class="r n v-contr">${fmt(w.contratual)}</td><td class="r n v-esc">${fmt(w.escalada)}${w.credito ? ` <span class="chip c-inf" style="font-size:10px;padding:0 5px">+${fmt(w.credito)}</span>` : ''}</td><td class="r n v-cons">${fmt(w.hc)}</td><td class="r n ${cls(w.saldoDiario)}">${sinal(w.saldoDiario) || '00:00'}</td>` +
+    (esp ? `<td class="r n">${fmt(soma('extras'))}</td><td class="r n">${fmt(soma('adnot'))}</td><td class="r n">${fmt(soma('feriadoH'))}</td>` : '');
 }
 function renderSemanas() {
   const { semanas, M } = A, mm = dd(A.emp.mes + 1), mes = semSel === 'mes';
@@ -627,7 +631,7 @@ function renderSemanas() {
   const sel = semanas.map((x, k) => `<button aria-pressed="${semSel === k}" data-wk="${k}"><span class="nm">Sem ${x.n}</span><span class="sv n ${cls(x.saldo)}">${sinal(x.saldo) || '00:00'}</span></button>`).join('') +
     `<button aria-pressed="${mes}" data-wk="mes"><span class="nm">Mês inteiro</span><span class="sv n ${cls(M.saldo)}">${sinal(M.saldo) || '00:00'}</span></button>`;
   let cab, corpo, lista;
-  const thead = `<thead><tr><th scope="col" style="width:96px">Dia</th><th scope="col">Tipo</th><th scope="col">Registros</th><th scope="col" class="r h-contr">Contratual</th><th scope="col" class="r h-esc">Escalada</th><th scope="col" class="r h-cons">Consideradas</th><th scope="col" class="r h-sal">Saldo diário</th><th scope="col">Observação</th></tr></thead>`;
+  const thead = `<thead><tr><th scope="col" style="width:96px">Dia</th><th scope="col">Tipo</th><th scope="col">Registros</th><th scope="col" class="r h-contr">Contratual</th><th scope="col" class="r h-esc">Escalada</th><th scope="col" class="r h-cons">Consideradas</th><th scope="col" class="r h-sal">Saldo diário</th>${A.emp.tipo === 'espelho' ? '<th scope="col" class="r">Extras</th><th scope="col" class="r">Ad. Not.</th><th scope="col" class="r">Feriado</th>' : ''}<th scope="col">Observação</th></tr></thead>`;
   if (!mes) {
     const sobre = w.dias.filter(d => d.sobreaviso).reduce((a, d) => a + d.escalada, 0);
     const ci = contagem(w.dias.flatMap(d => d.issues));
@@ -643,7 +647,7 @@ function renderSemanas() {
     lista = semanas.map(x => `<li style="background:var(--bg);font-weight:700;font-size:13px">Semana ${x.n} · ${x.periodo}/${mm} <span class="n ${cls(x.saldo)}">${sinal(x.saldo) || '00:00'}</span></li>` + x.dias.map(itemDia).join('')).join('');
   }
   const somaSD = mes ? M.saldoDiario : w.saldoDiario;
-  const tabela = `<div class="tbox tbl-dias"><table class="t" style="min-width:960px"><caption class="sr">Dias ${mes ? 'do mês' : 'da semana ' + w.n}</caption>${thead}${corpo}</table></div>
+  const tabela = `<div class="tbox tbl-dias"><table class="t" style="min-width:${A.emp.tipo === 'espelho' ? 1180 : 960}px"><caption class="sr">Dias ${mes ? 'do mês' : 'da semana ' + w.n}</caption>${thead}${corpo}</table></div>
     <div class="dl-cab dlist" aria-hidden="true" style="display:none"></div>
     <ul class="dlist"><li class="dl-cab" aria-hidden="true" style="display:grid;flex-direction:row"><span style="border-top:3px solid var(--contr)">Contratual</span><span style="border-top:3px solid var(--esc)">Escalada</span><span style="border-top:3px solid var(--cons)">Consider.</span><span style="border-top:3px solid var(--txt);text-align:right">Saldo dia</span></li>${lista}</ul>
     <p class="panel-f">Saldo ${mes ? 'do mês' : 'da semana'} = consideradas − contratual. A soma do saldo diário (<span class="n">${sinal(somaSD) || '00:00'}</span>) compara com a escala, não com o contrato.</p>`;
@@ -686,11 +690,11 @@ function batidasEsta(d) {
   }).join('')}</span>`;
 }
 function linhaDiaADia(d) {
-  const v = d.valid, [sc, st] = ST[v.status] || ST.ok;
+  const v = d.valid, [sc, st] = ST[d.issues.some(i => i.tipo === 'extras-diverge') ? 'diverge' : d.issues.some(i => i.tipo === 'extras-ausente' || i.tipo === 'adnot') && v.status === 'ok' ? 'atencao' : v.status] || ST.ok;
   const div = v.status === 'diverge';
   const hcRel = d.hc ? fmt(d.hc) : '00:00', sRel = d.saldo != null ? sinal(d.saldo) || '00:00' : '—';
   const hcDev = v.hc == null ? '?' : fmt(v.hc), sDev = v.hc == null ? '?' : v.saldo != null ? sinal(v.saldo) || '00:00' : '—';
-  const es = v.entrada ? `${esc(v.entrada)} → ${v.saida ? esc(v.saida) : '<strong style="color:var(--aj)">falta a saída</strong>'}` : '<span class="muted">—</span>';
+  const es = v.entrada ? (v.saida ? `${esc(v.entrada)} → ${esc(v.saida)}` : d.pagamento ? `${esc(v.entrada)} <span class="muted" style="font-size:12px">(sem par)</span>` : `${esc(v.entrada)} → <strong style="color:var(--aj)">falta a saída</strong>`) : '<span class="muted">—</span>';
   const linkPonto = d.issues.some(i => i.nivel !== 'info') ? ` <button class="lnk" data-ir="pontos">Ver ponto</button>` : '';
   return `<tr data-row="${d.dia}" class="${div || v.status === 'incompleto' ? 'r-aj' : ''} ${!d.codigo && !d.registros && !d.afast && !(d.feriado) ? 'r-desc' : ''}">
     <th scope="row" class="n">${DOWC[d.dow]} ${dd(d.dia)}</th>
@@ -698,9 +702,11 @@ function linhaDiaADia(d) {
     <td class="g-esta">${batidasEsta(d)}</td>
     <td class="r n g-esta ${div && !v.hcOk ? 'cel-err' : ''}">${hcRel}</td>
     <td class="r n g-esta ${div && !v.saldoOk ? 'cel-err' : d.saldo != null ? cls(d.saldo) : 'zero'}" style="font-weight:700">${sRel}</td>
+    ${A.emp.tipo === 'espelho' ? `<td class="r n g-esta ${d.extrasEsp != null && Math.abs((d.extras || 0) - d.extrasEsp) > 10 ? 'cel-err' : ''}">${d.extras ? fmt(d.extras) : '—'}</td><td class="r n g-esta ${d.adnotEsp != null && Math.abs((d.adnot || 0) - d.adnotEsp) > 10 ? 'cel-err' : ''}">${d.adnot ? fmt(d.adnot) : '—'}</td>` : ''}
     <td class="n g-dev" style="font-size:13px">${es}</td>
     <td class="r n g-dev ${div && !v.hcOk ? 'cel-ok' : ''}">${hcDev}</td>
     <td class="r n g-dev ${div && !v.saldoOk ? 'cel-ok' : v.saldo != null ? cls(v.saldo) : 'zero'}" style="font-weight:700">${sDev}</td>
+    ${A.emp.tipo === 'espelho' ? `<td class="r n g-dev ${d.extrasEsp != null && Math.abs((d.extras || 0) - d.extrasEsp) > 10 ? 'cel-ok' : ''}">${d.extrasEsp != null ? fmt(d.extrasEsp) : d.pagamento && !d.sobreaviso ? '?' : '—'}</td><td class="r n g-dev ${d.adnotEsp != null && Math.abs((d.adnot || 0) - d.adnotEsp) > 10 ? 'cel-ok' : ''}">${d.adnotEsp != null ? fmt(d.adnotEsp) : '—'}</td>` : ''}
     <td style="min-width:230px"><span class="chip ${sc}">${st}</span><div style="font-size:12px;color:var(--txt2);margin-top:3px">${esc(v.motivo)}${linkPonto}</div></td></tr>`;
 }
 function itemDiaADia(d) {
@@ -725,13 +731,13 @@ function renderDiaADia() {
       <div class="seg" role="group" aria-label="Mostrar"><button data-sp="0" aria-pressed="${!soProblemas}">Todos os dias</button><button data-sp="1" aria-pressed="${soProblemas}">Só com problema (${nProb})</button></div>
     </div>
     <section class="panel">
-      ${grupos.length ? `<div class="tbox tbl-dias"><table class="t" style="min-width:1120px">
+      ${grupos.length ? `<div class="tbox tbl-dias"><table class="t" style="min-width:${A.emp.tipo === 'espelho' ? 1400 : 1120}px">
         <caption class="sr">Conferência de cada dia: como está no relatório e como deveria ser</caption>
         <thead>
-          <tr><th scope="col" rowspan="2" style="width:84px">Dia</th><th scope="col" rowspan="2">Escala</th><th scope="colgroup" colspan="3" class="gh-esta">COMO ESTÁ NO RELATÓRIO</th><th scope="colgroup" colspan="3" class="gh-dev">COMO DEVERIA SER</th><th scope="col" rowspan="2">Situação</th></tr>
-          <tr><th scope="col" class="g-esta">Batidas</th><th scope="col" class="r g-esta">Horas</th><th scope="col" class="r g-esta">Saldo</th><th scope="col" class="g-dev">Entrada → saída</th><th scope="col" class="r g-dev">Horas</th><th scope="col" class="r g-dev">Saldo</th></tr>
+          <tr><th scope="col" rowspan="2" style="width:84px">Dia</th><th scope="col" rowspan="2">Escala</th><th scope="colgroup" colspan="${A.emp.tipo === 'espelho' ? 5 : 3}" class="gh-esta">COMO ESTÁ NO RELATÓRIO</th><th scope="colgroup" colspan="${A.emp.tipo === 'espelho' ? 5 : 3}" class="gh-dev">COMO DEVERIA SER</th><th scope="col" rowspan="2">Situação</th></tr>
+          <tr><th scope="col" class="g-esta">Batidas</th><th scope="col" class="r g-esta">Horas</th><th scope="col" class="r g-esta">Saldo</th>${A.emp.tipo === 'espelho' ? '<th scope="col" class="r g-esta">Extras</th><th scope="col" class="r g-esta">Ad. Not.</th>' : ''}<th scope="col" class="g-dev">Entrada → saída</th><th scope="col" class="r g-dev">Horas</th><th scope="col" class="r g-dev">Saldo</th>${A.emp.tipo === 'espelho' ? '<th scope="col" class="r g-dev">Extras</th><th scope="col" class="r g-dev">Ad. Not.</th>' : ''}</tr>
         </thead>
-        <tbody>${grupos.map(g => `<tr class="sub"><td colspan="9">Semana ${g.w.n} <span class="muted n" style="font-weight:500">· ${g.w.periodo}/${mm}</span></td></tr>` + g.ds.map(linhaDiaADia).join('')).join('')}</tbody>
+        <tbody>${grupos.map(g => `<tr class="sub"><td colspan="${A.emp.tipo === 'espelho' ? 13 : 9}">Semana ${g.w.n} <span class="muted n" style="font-weight:500">· ${g.w.periodo}/${mm}</span></td></tr>` + g.ds.map(linhaDiaADia).join('')).join('')}</tbody>
       </table></div>
       <ul class="dlist">${grupos.map(g => `<li style="background:var(--bg);font-weight:700;font-size:13px">Semana ${g.w.n} · ${g.w.periodo}/${mm}</li>` + g.ds.map(itemDiaADia).join('')).join('')}</ul>`
       : '<p style="padding:20px"><strong>Todos os dias conferem.</strong> <span class="muted">As horas e o saldo de cada dia batem com os registros.</span></p>'}
@@ -785,7 +791,7 @@ function renderPontos() {
 // ---------- aba Conferência ----------
 function renderConf() {
   const { conf, emp } = A;
-  const nomes = { 'CH Contratual Mês': ['CH contratual', 'var(--contr)'], 'CH Escalada Mês': ['CH escalada', 'var(--esc)'], 'CH Executada': ['Horas consideradas', 'var(--cons)'], 'Saldo do mês': ['Saldo do mês', 'var(--txt)'] };
+  const nomes = { 'Ad. Noturno': ['Adicional noturno', 'var(--txt2)'], 'Horas extras': ['Horas extras', 'var(--txt2)'], 'Horas em feriado': ['Horas em feriado', 'var(--txt2)'], 'CH Contratual Mês': ['CH contratual', 'var(--contr)'], 'CH Escalada Mês': ['CH escalada', 'var(--esc)'], 'CH Executada': ['Horas consideradas', 'var(--cons)'], 'Saldo do mês': ['Saldo do mês', 'var(--txt)'] };
   const escDif = conf.find(c => c.item === 'CH Escalada Mês' && !c.ok);
   const jornadas = Object.values(emp.jornadas);
   const diasTxt = A.diasContrat.length >= 7 ? 'todos os dias' : `${DIAS_NOME[A.diasContrat[0]].slice(0, 3).toLowerCase()} a ${DIAS_NOME[A.diasContrat.at(-1)].slice(0, 3).toLowerCase()}`;
@@ -798,7 +804,7 @@ function renderConf() {
           return `<tr><th scope="row"><span style="display:inline-flex;align-items:center;gap:8px"><span style="width:4px;height:18px;border-radius:2px;background:${cor}"></span>${n}</span></th>
           <td class="r n">${sal ? sinal(c.calc) : fmt(c.calc)}</td><td class="r n">${sal ? sinal(c.rel) : fmt(c.rel)}</td>
           <td style="font-size:13px;font-weight:600;color:${c.ok ? 'var(--ok)' : c.essencial ? 'var(--aj)' : 'var(--ver)'}">${c.ok ? '✓ Confere' : 'Difere ' + fmt(Math.abs(c.calc - c.rel))}</td></tr>`; }).join('')}</tbody></table></div>` : '<p style="padding:0 20px 16px" class="muted">O relatório não trouxe o quadro de totais.</p>'}
-      ${escDif ? '<p class="panel-f">A diferença na CH escalada não altera o saldo.</p>' : ''}
+      ${escDif ? '<p class="panel-f">A diferença na CH escalada não altera o saldo.</p>' : ''}${conf.some(c => !c.ok && !c.essencial && c.item !== 'CH Escalada Mês') ? '<p class="panel-f">Os totais do rodapé do espelho podem incluir lançamentos que não aparecem na tabela diária. Não alteram o saldo.</p>' : ''}${A.emp.tipo === 'espelho' ? '<p class="panel-f">O Espelho de Ponto não traz a CH escalada do mês.</p>' : ''}
     </section>
     <section class="panel">
       <h2 style="font-size:16px;font-weight:700;margin-bottom:10px">Como o cálculo é feito</h2>

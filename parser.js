@@ -167,6 +167,127 @@ function assignCols(d, items, c) {
   }
 }
 
+// ---------------- Espelho de Ponto (Not. Judicial) ----------------
+export function ehEspelho(pages) {
+  return pages.some(items => items.some(i => /Espelho de Ponto/i.test(i.str)));
+}
+
+export function parseEspelho(pages) {
+  const lines = buildLines(pages);
+  const emps = [];
+  let cur = null, cols = null, mode = null, mesAno = null, totHeader = false;
+  const DIA_RE = /^(\d{1,2})\s*(DOM|SEG|TER|QUA|QUI|SEX|S[ÁA]B)\b/i;
+
+  for (const l of lines) {
+    const first = l.items[0].str, t = l.text;
+    const mp = t.match(/Per[ií]odo:\s*(\d{2})\/(\d{2})\/(\d{4})/);
+    if (mp) mesAno = { mes: +mp[2] - 1, ano: +mp[3] };
+    if (first === 'Empregado') {
+      const txt = restText(l); const mm = txt.match(/^(.*?)\s*-\s*(\d+)\s*$/);
+      const nome = mm ? mm[1].trim() : txt, matricula = mm ? mm[2] : '';
+      if (!cur || cur.matricula !== matricula || (mesAno && (cur.mes !== mesAno.mes || cur.ano !== mesAno.ano))) {
+        cur = { tipo: 'espelho', nome, matricula, cargo: '', unidade: '', lotacao: '', jornadaPadrao: '', vinculo: '', homologada: '',
+                mes: mesAno ? mesAno.mes : null, ano: mesAno ? mesAno.ano : null, dias: {}, totais: null, totaisEspelho: null, jornadas: {}, obsMes: {}, ressalvas: [] };
+        emps.push(cur);
+      }
+      mode = null; continue;
+    }
+    if (!cur) continue;
+    if (cur.mes == null && mesAno) { cur.mes = mesAno.mes; cur.ano = mesAno.ano; }
+    if (first === 'Cargo Efetivo') { cur.cargo = restText(l); continue; }
+    if (first === 'Unidade') {
+      const r = restText(l); const ml = r.match(/-?\s*Lota[çc][ãa]o Exerc[ií]cio:\s*(.*)$/);
+      cur.unidade = r.replace(/-?\s*Lota[çc][ãa]o Exerc[ií]cio:.*$/, '').trim(); if (ml) cur.lotacao = ml[1].trim(); continue;
+    }
+    if (first === 'Jornada Padrão' || first === 'Horário Padrão') {
+      const r = restText(l); const mv = r.match(/V[íi]nculo:\s*(.*)$/); if (mv) cur.vinculo = mv[1].trim();
+      cur.jornadaPadrao = r.replace(/-?\s*V[íi]nculo:.*$/, '').replace(/\s*-\s*$/, '').replace(/CH:\s*(\d+)/, '(CH: $1)').trim(); continue;
+    }
+    if (/HOMOLOGADA/i.test(t)) { cur.homologada = t.trim(); continue; }
+
+    if (l.items.some(i => i.str === 'D. Sem.')) {
+      const gx = re => (l.items.find(i => re.test(i.str)) || {}).x;
+      cols = { cod: 55, reg: 95, ad: (gx(/^Ad\.Not/) ?? 240) - 8, jud: (gx(/^Judiciais/) ?? 310) - 8, sp: (gx(/^Sem Pgto/) ?? 362) - 8,
+               ext: (gx(/^Extras/) ?? 438) - 12, fer: (gx(/^Feriado/) ?? 497) - 12, hc: (gx(/^Consideradas/) ?? 548) - 8,
+               sal: (gx(/^Saldo/) ?? 622) - 14, oc: 660 };
+      cols.reg = Math.min(cols.reg, 100);
+      mode = 'dias'; continue;
+    }
+    if (first === 'TOTAL' && mode === 'dias' && cols) {
+      const val = (a, b) => { const it = l.items.find(i => i.x >= a && i.x < b && /\d/.test(i.str)); return it ? toMin(it.str) : null; };
+      cur.totaisEspelho = { adnot: val(cols.ad, cols.jud), extras: val(cols.ext, cols.fer), feriado: val(cols.fer, cols.hc), hc: val(cols.hc, cols.sal) };
+      mode = null; continue;
+    }
+    if (mode === 'dias' && cols) {
+      const md = first.match(DIA_RE);
+      if (!md) {
+        // continuação de ocorrência
+        continue;
+      }
+      const d = { dia: +md[1], codigo: '', registros: '', regTexto: '', hc: null, saldo: null, ocorrencia: '', obs: '', extras: null, adnot: null, feriadoH: null, judic: null, semPgto: null };
+      for (const it of l.items.slice(1)) {
+        const s = it.str.trim(), x = it.x;
+        if (x < cols.reg) { if (/^\d{3,4}$/.test(s)) d.codigo = s; }
+        else if (x < cols.ad) { if (/\d{2}:\d{2}/.test(s)) d.registros = (d.registros + ' ' + s).trim(); else d.regTexto = (d.regTexto + ' ' + s).trim(); }
+        else if (x < cols.jud) d.adnot = toMin(s);
+        else if (x < cols.sp) d.judic = toMin(s);
+        else if (x < cols.ext) d.semPgto = toMin(s);
+        else if (x < cols.fer) d.extras = toMin(s);
+        else if (x < cols.hc) d.feriadoH = toMin(s);
+        else if (x < cols.sal) d.hc = toMin(s);
+        else if (x < cols.oc) d.saldo = toMin(s);
+        else d.ocorrencia = (d.ocorrencia + ' ' + s).trim();
+      }
+      cur.dias[d.dia] = d; continue;
+    }
+    if (l.items.some(i => /^CH Contratual$/.test(i.str)) && l.items.some(i => /^CH Executada$/.test(i.str))) { totHeader = true; mode = 'tot'; continue; }
+    if (mode === 'tot' && totHeader && l.items.length >= 6 && l.items.every(i => /^[+-]?\s*\d{1,4}(:\d{2})?$/.test(i.str))) {
+      const v = l.items.map(i => i.str);
+      cur.totais = { escalada: null, contratual: toMin(v[0]), executada: toMin(v[1]), diferenca: toMin(v[2]), semanal: toMin(v[3]), diaria: toMin(v[4]),
+                     diasUteis: parseInt(v[5], 10), feriados: +v[6] || 0, pontoFacultativo: +v[7] || 0, afastamentos: +v[8] || 0, ferias: +v[10] || 0 };
+      totHeader = false; mode = null; continue;
+    }
+    if (/^Observa[çc][õo]es Do m[êe]s/i.test(t)) { mode = 'obs'; continue; }
+    if (/Homologado com ressalva/i.test(t)) { mode = 'ressalvas'; continue; }
+    if (/Detalhamento do Hor[áa]rio/.test(t)) { mode = 'jornadas'; continue; }
+    if (/^OSM\b|Consultoria e Sistemas|^\d+ de \d+$|^Hor[áa]rios contratuais/.test(t) || first === 'EBSERH') continue;
+    if (mode === 'obs') {
+      const mo = t.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+\S+\s+\*+\s*(.*)$/);
+      if (mo && +mo[2] - 1 === cur.mes) cur.obsMes[+mo[1]] = mo[4].trim();
+      continue;
+    }
+    if (mode === 'ressalvas') {
+      const mr = t.match(/^(\d{2}\/\d{2}\/\d{4})\s+\S+\s+\*?\s*(.*)$/);
+      if (mr) cur.ressalvas.push({ data: mr[1], texto: mr[2].replace(/^\*\s*/, '').trim() });
+      continue;
+    }
+    if (mode === 'jornadas' && /^\d{3,4}$/.test(first)) {
+      const times = l.items.slice(1).filter(i => /^\d{1,2}:\d{2}$/.test(i.str)).map(i => i.str);
+      const desc = l.items[1] ? l.items[1].str : '';
+      const hr = desc.match(/(\d{2}):(\d{2})\s*(?:[àa]s|-)\s*(\d{2}):(\d{2})/i);
+      const ini = hr ? +hr[1] * 60 + +hr[2] : null, fim = hr ? +hr[3] * 60 + +hr[4] : null;
+      cur.jornadas[first] = { codigo: first, descricao: desc, ch: toMin(times[0]), intervalo: toMin(times[times.length - 1]),
+        intervaloFora: l.items.some(i => /fora da jornada/i.test(i.str)), sobreaviso: /sobreaviso/i.test(desc),
+        inicio: ini, duracao: hr ? ((fim - ini + 1440) % 1440 || 1440) : null };
+    }
+  }
+  // ocorrência completa a partir das observações do mês
+  emps.forEach(e => {
+    Object.values(e.dias).forEach(d => {
+      const o = e.obsMes[d.dia];
+      if (o) {
+        const limpa = o.replace(/^afastamento \(\d+\)\s*-\s*/i, '').replace(/\s*-\s*\d{2}\/\d{2}\/\d{4}.*$/, '').replace(/\s*-\s*\(.*$/, '').replace(/\s*\(sem jornada:.*$/i, '').replace(/[.\s]+$/, '');
+        d.ocorrencia = limpa || d.ocorrencia;
+      } else d.ocorrencia = d.ocorrencia.replace(/^afastamento \(\d+\)\s*/i, '');
+    });
+  });
+  return emps;
+}
+
+export function lerRelatorio(pages) {
+  return ehEspelho(pages) ? parseEspelho(pages) : parseReport(pages);
+}
+
 // ---------------- Análise ----------------
 // Checklist de Triagem e Tratamento (POP.DGP.127, Anexo III)
 const CHECK = {
@@ -185,10 +306,11 @@ const CHECK = {
 
 // Ocorrências cujo tempo vai para pagamento: não são inconsistências.
 const PAGAMENTO = [
-  { re: /extensao de jornada remunerada/, label: 'Extensão de jornada remunerada', modo: 'excedente' },
-  { re: /jornada extraordinaria remunerada/, label: 'Jornada extraordinária remunerada', modo: 'total' },
+  { re: /extensao de jornada/, label: 'Extensão de jornada remunerada', modo: 'excedente' },
+  { re: /jornada extraordinaria/, label: 'Jornada extraordinária remunerada', modo: 'total' },
   { re: /sobreaviso/, label: 'Plantão de sobreaviso', modo: 'total' }
 ];
+const PAG_NOME = { 'Extensão de jornada remunerada': 'Extensão de jornada', 'Jornada extraordinária remunerada': 'Jornada extraordinária', 'Plantão de sobreaviso': 'Sobreaviso' };
 const AFAST_RE = /licen[çc]a|atestado|afastamento|abono|abonad|folga compensat|dispensa|nojo|gala|luto|casamento|doa[çc][ãa]o|paternidade|maternidade|INSS|acidente/i;
 const DESCANSO_RE = /sem jornada|\bdsr\b|folga|descanso/;
 const TOL_HC = 10;      // tolerância (min) ao comparar horas consideradas com os registros
@@ -245,6 +367,7 @@ export function analisar(emp) {
     const hc = p.hc ?? 0;
     const credito = !p.codigo && hc > 0 && !p.registros ? hc : 0;
     let grupo = 'trabalho';
+    if (/\bfalta\b/.test(norm(p.ocorrencia)) && !p.registros.replace(/\d{2}:\d{2}\s*c/gi, '').match(/\d{2}:\d{2}/)) grupo = 'falta';
     if (afast) grupo = 'afast:' + afast;
     else if (pagamento) grupo = 'pag:' + pagamento.label;
     else if (feriado && !p.registros) grupo = 'feriado';
@@ -309,6 +432,8 @@ export function analisar(emp) {
       visual: { tipo: 'batidas', itens: take.map(p => ({ h: fmtP(p), t: '', estado: 'neutro' })) },
       fazer: 'Se a conta do dia estiver certa, não precisa ajustar só pela quantidade de batidas.' });
     if (d.pagamento || d.sobreaviso) continue;
+    if (/\bfalta\b/.test(norm(d.ocorrencia))) continue;
+    if (emp.tipo === 'espelho' && d.feriado) continue;
     const n = reg.length;
     if (n === 0) {
       if (!d.hc && !d.ocorrencia) addIssue(d, { nivel: 'verificar', tipo: 'sem-registro',
@@ -358,7 +483,7 @@ export function analisar(emp) {
       addIssue(b.d, { nivel: 'verificar', tipo: 'interjornada', check: 'A2',
         titulo: `Só ${hm(gap)} de descanso entre dois plantões (o mínimo é 11h)`,
         aconteceu: `O plantão de ${dA} ${dataCurta(a.d.dia, mes)} terminou às ${hhmm(a.e)}${fimA !== a.d.dia ? ' do dia ' + dataCurta(fimA, mes) : ''}. O seguinte começou às ${hhmm(b.s)}${Math.floor(b.s / 1440) + 1 !== fimA ? ' do dia ' + dataCurta(b.d.dia, mes) : ' do mesmo dia'}.`,
-        visual: { tipo: 'faixa', segs: [{ t: 'Plantão ' + hm(a.J.duracao), f: a.J.duracao, kind: 'plantao' }, { t: 'Descanso ' + hm(gap), f: gap, kind: 'descanso' }, { t: 'Plantão ' + hm(b.J.duracao), f: b.J.duracao, kind: 'plantao' }],
+        visual: { tipo: 'faixa', segs: [{ t: 'Plantão ' + hm(a.J.duracao), f: a.J.duracao, kind: 'plantao' }, ...(gap ? [{ t: 'Descanso ' + hm(gap), f: gap, kind: 'descanso' }] : []), { t: 'Plantão ' + hm(b.J.duracao), f: b.J.duracao, kind: 'plantao' }],
                   nota: `Descanso: ${hm(gap)} · mínimo exigido: 11h · faltaram ${hm(INTERJORNADA - gap)}` },
         fazer: 'Conferir se a escala está certa. Se foi trabalhado assim, comunicar ao gestor: corrigir o ponto não regulariza a jornada.' });
     }
@@ -508,6 +633,7 @@ export function analisar(emp) {
     else if (d.registros && meus.length && meus.every(p => p.used)) { v.hc = 0; v.motivo = 'A batida é a saída do plantão do dia anterior'; }
     else if (d.registros) { v.hc = 0; v.motivo = 'Sem jornada cadastrada: essas horas não contam'; v.status = 'info'; }
     else { v.hc = 0; v.motivo = d.descanso ? 'Sem jornada' : (d.contratual ? 'Sem plantão' : 'Descanso'); }
+    if (d.grupo === 'falta') { v.hc = 0; v.saldo = null; v.entrada = ''; v.saida = ''; v.motivo = 'Falta: o dia não foi trabalhado e conta zero'; v.status = 'info'; }
     if (v.status === 'ok') {
       const hcOk = Math.abs((d.hc || 0) - (v.hc || 0)) <= TOL_DIA;
       const sOk = Math.abs((d.saldo || 0) - (v.saldo || 0)) <= TOL_DIA || (d.saldo == null && !v.saldo) || (v.saldo == null && d.pagamento);
@@ -517,6 +643,52 @@ export function analisar(emp) {
     if (d.issues.some(i => i.tipo === 'duplicidade') && v.status === 'ok') v.status = 'atencao';
     d.valid = v;
   });
+
+  // ---------- Espelho de Ponto: extras, adicional noturno e feriado ----------
+  if (emp.tipo === 'espelho') {
+    dias.forEach(d => {
+      const J = jorn(d.codigo); if (!J || J.sobreaviso || d.afast) return;
+      const reg = d.turnoReg || [];
+      if (reg.length && reg.length % 2 === 0) {
+        let not = 0; for (let k = 0; k < reg.length; k += 2) not += minutosNoturnos(reg[k].t, reg[k + 1].t);
+        const exp = Math.round(not * 60 / 52.5);
+        d.adnotEsp = exp;
+        if (Math.abs((d.adnot || 0) - exp) > TOL_HC) addIssue(d, { nivel: 'verificar', tipo: 'adnot',
+          titulo: d.adnot ? `Adicional noturno de ${hm(d.adnot)}, mas os registros dão ${hm(exp)}` : 'Adicional noturno não lançado',
+          aconteceu: `O plantão teve ${hm(not)} entre 22h e 5h, que valem ${hm(exp)} de adicional noturno. O espelho mostra ${d.adnot ? fmt(d.adnot) : 'a coluna vazia'}.`,
+          visual: conta([L('Entre 22h e 5h (relógio)', fmt(not)), L('Em horas noturnas (52min30s)', fmt(exp), 'sub'), L('No espelho', d.adnot ? fmt(d.adnot) : 'vazio', 'erro')]),
+          fazer: 'Conferir o lançamento do adicional noturno do dia.' + (d.feriado ? ' Em feriado, verificar se as horas foram só para a coluna Feriado.' : '') });
+      }
+      if (d.pagamento) {
+        const own = punches.filter(p => p.dia === d.dia);
+        const P = [...new Set([...own, ...reg.filter(p => p.dia !== d.dia)])].sort((a, b) => a.t - b.t);
+        const Pd = []; P.forEach(p => { const u = Pd[Pd.length - 1]; if (!u || p.t - u.t > DUP_MIN) Pd.push(p); });
+        let total = null;
+        if (Pd.length && Pd.length % 2 === 0) { let tr = 0, nt = 0; for (let k = 0; k < Pd.length; k += 2) { tr += Pd[k + 1].t - Pd[k].t; nt += minutosNoturnos(Pd[k].t, Pd[k + 1].t); } total = tr + Math.round(nt / 7); }
+        const exp = total == null ? null : d.pagModo === 'excedente' ? Math.max(0, total - J.ch) : total;
+        d.extrasEsp = exp;
+        if (d.valid && Pd.length) { const f = t => fmtT(t, d); d.valid.entrada = f(Pd[0].t); d.valid.saida = Pd.length % 2 === 0 ? f(Pd[Pd.length - 1].t) : ''; d.valid.semPar = Pd.length % 2 === 1; }
+        const itens = Pd.map((p, k) => ({ h: (p.dia !== d.dia ? DOWC[dias[p.dia - 1].dow] + ' ' + String(p.dia).padStart(2, '0') + ' · ' : '') + hhmm(p.t), t: k % 2 ? 'saída' : 'entrada', estado: 'ok' }));
+        const canceladas = !own.length && /c/.test(d.registros);
+        if (!d.extras) {
+          let porque = 'A coluna Extras está vazia neste dia.';
+          let fazer = 'Conferir o código de jornada e as batidas do dia para que o tempo seja pago como extra.';
+          if (canceladas) porque = 'A coluna Extras está vazia e as batidas do dia foram canceladas.';
+          else if (total != null && exp === 0 && J.ch >= 1440) { porque = `Com a jornada de ${hm(J.ch)} (código ${d.codigo}), as batidas (${hm(total)}) ficam dentro da jornada e não viram extras. O dia recebeu ${fmt(d.hc || 0)} nas consideradas.`; fazer = 'Usar o código da jornada realmente trabalhada para que o tempo da extensão seja calculado como extra.'; }
+          else if (exp) porque = `Pelos registros, ${hm(exp)} deveriam ir para Extras, mas a coluna está vazia.`;
+          else if (total == null && Pd.length) porque = 'A coluna Extras está vazia e falta uma batida para calcular o tempo.';
+          addIssue(d, { nivel: 'verificar', tipo: 'extras-ausente', titulo: `${PAG_NOME[d.pagamento] || d.pagamento} sem horas extras lançadas`, aconteceu: porque,
+            visual: itens.length ? { tipo: 'batidas', itens } : conta([L('Batidas válidas', 'nenhuma'), L('Extras no espelho', 'vazio', 'erro')]), fazer });
+        } else if (exp != null && Math.abs(d.extras - exp) > TOL_HC) {
+          addIssue(d, { nivel: 'ajustar', tipo: 'extras-diverge', titulo: `Extras de ${hm(d.extras)}, mas os registros dão ${hm(exp)}`,
+            aconteceu: 'O tempo lançado como extra não bate com as batidas do dia.',
+            visual: conta([L('Tempo trabalhado (com hora noturna)', fmt(total)), L(d.pagModo === 'excedente' ? '− CH da jornada' : 'Tudo vai para extra', d.pagModo === 'excedente' ? '− ' + fmt(J.ch) : ''), L('Extras pelos registros', fmt(exp), 'sub'), L('No espelho', fmt(d.extras), 'erro')]),
+            fazer: 'Conferir as batidas e o código de jornada do dia.' });
+        }
+      }
+      if (d.feriado && d.registros && d.valid) { d.valid.status = 'info'; d.valid.motivo = `Feriado trabalhado: o espelho lança ${d.feriadoH ? fmt(d.feriadoH) : 'as horas'} na coluna Feriado`; }
+    });
+  }
 
   const ordemNivel = { ajustar: 0, verificar: 1, info: 2 };
   issues.sort((a, b) => ordemNivel[a.nivel] - ordemNivel[b.nivel] || (a.mes ? -1 : b.mes ? 1 : a.dia - b.dia));
@@ -563,7 +735,7 @@ export function analisar(emp) {
   const trabalho = { v: hcT - con, sd, esc, con, hc: hcT };
   const grupos = {};
   dias.filter(d => d.grupo !== 'trabalho').forEach(d => {
-    const g = grupos[d.grupo] ||= { id: d.grupo, nome: d.grupo === 'feriado' ? 'Feriado' : d.grupo.replace(/^\w+:/, ''), tipo: d.grupo.split(':')[0], dias: [], contratual: 0, hc: 0, escalada: 0, nEscala: 0, nContrat: 0, modo: d.pagModo };
+    const g = grupos[d.grupo] ||= { id: d.grupo, nome: d.grupo === 'feriado' ? 'Feriado' : d.grupo === 'falta' ? 'Falta' : d.grupo.replace(/^\w+:/, ''), tipo: d.grupo.split(':')[0], dias: [], contratual: 0, hc: 0, escalada: 0, nEscala: 0, nContrat: 0, modo: d.pagModo };
     g.dias.push(d.dia); g.contratual += d.contratual; g.hc += d.hc; g.escalada += d.escalada;
     if (d.escalada) g.nEscala++; if (d.contratual) g.nContrat++;
   });
@@ -581,6 +753,12 @@ export function analisar(emp) {
   if (T.escalada != null) conf.push({ item: 'CH Escalada Mês', calc: M.escalada, rel: T.escalada, essencial: false });
   if (T.executada != null) conf.push({ item: 'CH Executada', calc: M.hc, rel: T.executada, essencial: true });
   if (T.diferenca != null) conf.push({ item: 'Saldo do mês', calc: M.saldo, rel: T.diferenca, essencial: true });
+  if (emp.tipo === 'espelho' && emp.totaisEspelho) {
+    const TE = emp.totaisEspelho, soma = k => dias.reduce((x, d) => x + (d[k] || 0), 0);
+    if (TE.adnot != null) conf.push({ item: 'Ad. Noturno', calc: soma('adnot'), rel: TE.adnot, essencial: false });
+    if (TE.extras != null) conf.push({ item: 'Horas extras', calc: soma('extras'), rel: TE.extras, essencial: false });
+    if (TE.feriado != null) conf.push({ item: 'Horas em feriado', calc: soma('feriadoH'), rel: TE.feriado, essencial: false });
+  }
   conf.forEach(c => c.ok = c.calc === c.rel);
 
   return { emp, dias, semanas, M, trabalho, partes, grupos: Object.values(grupos), issues, conf, diaria, semanal, diasContrat };
