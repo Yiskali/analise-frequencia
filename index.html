@@ -162,6 +162,25 @@
   .cell .cy{font-weight:600;color:var(--txt3)}
   .cell .ch{margin-top:auto;display:flex;gap:6px;font-size:12px}
 
+  /* dia a dia */
+  th.gh-esta{background:#F3F4F7 !important;text-align:center !important;border-bottom:none !important;font-size:11px !important;letter-spacing:.05em}
+  th.gh-dev{background:var(--acao-bg) !important;color:var(--acao) !important;text-align:center !important;border-bottom:none !important;font-size:11px !important;letter-spacing:.05em}
+  th.g-esta{background:#F3F4F7 !important} th.g-dev{background:var(--acao-bg) !important}
+  td.g-esta{background:#FAFAFB} td.g-dev{background:#F7F9FD}
+  td.g-dev:first-of-type,th.g-dev:first-of-type{border-left:2px solid var(--bd)}
+  td.cel-err{background:var(--aj-bg) !important;color:var(--aj) !important;font-weight:700}
+  td.cel-ok,span.cel-ok{color:var(--pos) !important;font-weight:800}
+  span.cel-err{color:var(--aj);font-weight:700}
+  .bt{display:inline-flex;flex-wrap:wrap;gap:4px}
+  .b{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:4px;background:#fff;border:1px solid var(--bd);font-size:13px;font-variant-numeric:tabular-nums}
+  .b small{font-size:10px;font-weight:700}
+  .b.ant{background:var(--inf-bg);color:var(--txt2);border-color:var(--inf-bg)}
+  .b.dup{background:var(--aj-bg);color:var(--aj);border-color:var(--aj-bd)}
+  .b.canc{text-decoration:line-through;color:#9AA3B5}
+  .cmp2{display:grid;grid-template-columns:62px 1fr 48px 56px;gap:6px;align-items:center;font-size:13px}
+  .cmp2 .lb{font-size:11px;font-weight:700;color:var(--txt2)}
+  .cmp2 > span:nth-child(3),.cmp2 > span:nth-child(4){text-align:right}
+
   /* pontos */
   .filt{display:flex;gap:8px;flex-wrap:wrap}
   .filt button{font-family:inherit;cursor:pointer;min-height:40px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:700;border:1px solid var(--bd);background:#fff;color:var(--txt3)}
@@ -455,14 +474,15 @@ function renderCtx() {
     <div class="ctx-l"><h1>${esc(titulo(emp.nome))}</h1><span class="ctx-meta">Mat. ${esc(emp.matricula)} · ${esc(cargo)} · ${esc(lot)} · ${Math.round(A.semanal / 60)}h semanais</span></div>
     <div class="ctx-r"><span class="comp">${cap(MESES[emp.mes])}/${emp.ano}</span>${hom ? `<span class="chip c-ok" title="Homologada por ${esc(titulo(hom[1]))}">Homologada em ${esc(hom[2].slice(0, 5))}</span>` : '<span class="chip c-ver">Não homologada</span>'}</div>`;
   const c = contagem(issues);
-  const T = [['resumo', 'Resumo', 'Resumo'], ['semanas', 'Semanas', 'Semanas'], ['pontos', 'Pontos de atenção', 'Pontos'], ['conf', 'Conferência', 'Conferência']];
-  $('tabs').innerHTML = T.map(([id, longo, curto]) => `<button class="tab" role="tab" data-aba="${id}" aria-selected="${aba === id}"><span class="longo">${longo}</span><span class="curto">${curto}</span>${id === 'pontos' ? `${c.aj ? `<span class="badge b-aj n" aria-label="${c.aj} para ajustar">${c.aj}</span>` : ''}${c.ver ? `<span class="badge b-ver n" aria-label="${c.ver} para verificar">${c.ver}</span>` : ''}` : ''}</button>`).join('');
+  const nDiv = A.dias.filter(d => d.valid.status === 'diverge' || d.valid.status === 'incompleto').length;
+  const T = [['resumo', 'Resumo', 'Resumo'], ['semanas', 'Semanas', 'Semanas'], ['dia', 'Dia a dia', 'Dia a dia'], ['pontos', 'Pontos de atenção', 'Pontos'], ['conf', 'Conferência', 'Conf.']];
+  $('tabs').innerHTML = T.map(([id, longo, curto]) => `<button class="tab" role="tab" data-aba="${id}" aria-selected="${aba === id}"><span class="longo">${longo}</span><span class="curto">${curto}</span>${id === 'dia' && nDiv ? `<span class="badge b-aj n" aria-label="${nDiv} dias com problema">${nDiv}</span>` : ''}${id === 'pontos' ? `${c.aj ? `<span class="badge b-aj n" aria-label="${c.aj} para ajustar">${c.aj}</span>` : ''}${c.ver ? `<span class="badge b-ver n" aria-label="${c.ver} para verificar">${c.ver}</span>` : ''}` : ''}</button>`).join('');
 }
 $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-aba]'); if (b) { aba = b.dataset.aba; renderAba(); } });
 function irPara(novaAba, extra) { aba = novaAba; Object.assign(window, {}); if (extra) extra(); renderAba(); window.scrollTo(0, 0); }
 function renderAba() {
   $('tabs').querySelectorAll('[data-aba]').forEach(b => b.setAttribute('aria-selected', b.dataset.aba === aba));
-  ({ resumo: renderResumo, semanas: renderSemanas, pontos: renderPontos, conf: renderConf })[aba]();
+  ({ resumo: renderResumo, semanas: renderSemanas, dia: renderDiaADia, pontos: renderPontos, conf: renderConf })[aba]();
 }
 
 // ---------- textos de "por que o saldo deu" ----------
@@ -545,6 +565,7 @@ $('vRes').addEventListener('click', e => {
   if (wk) { semSel = wk.dataset.wk === 'mes' ? 'mes' : +wk.dataset.wk; renderSemanas(); return; }
   if (md) { modoDias = md.dataset.modo; renderSemanas(); return; }
   if (f) { filtro = f.dataset.f; renderPontos(); }
+  const sp = e.target.closest('[data-sp]'); if (sp) { soProblemas = sp.dataset.sp === '1'; renderDiaADia(); }
 });
 function verDia(dia) {
   semSel = A.semanas.findIndex(w => w.dias.some(d => d.dia === dia)); modoDias = 'tab'; aba = 'semanas'; renderAba();
@@ -646,6 +667,76 @@ function renderCal() {
   while (cells.length % 7) cells.push('<div class="cell blank" aria-hidden="true"></div>');
   return `<div class="cal">${DIAS_NOME.map(n => `<div class="dow">${n.slice(0, 3)}</div>`).join('')}${cells.join('')}</div>
     <p class="panel-f">No calendário, o número em verde são as horas consideradas e o do canto, o saldo diário. Para comparar com contratual e escala, use a tabela.</p>`;
+}
+
+
+// ---------- aba Dia a dia: como está × como deveria ser ----------
+let soProblemas = false;
+const ST = { ok: ['c-ok', '✓ Confere'], diverge: ['c-aj', 'Diverge'], incompleto: ['c-aj', 'Falta batida'], atencao: ['c-ver', 'Verificar'], info: ['c-inf', 'Informação'] };
+function batidasEsta(d) {
+  const ant = A.dias[d.dia - 2], prox = A.dias[d.dia];
+  const deAnt = new Set((ant?.turnoReg || []).filter(p => p.dia === d.dia).map(p => p.t % 1440));
+  const dupT = new Set(); d.issues.concat(ant ? ant.issues : []).forEach(i => { if (i.tipo === 'duplicidade' && i.visual) i.visual.itens.forEach(b => { if (b.estado === 'erro') dupT.add(b.h.slice(0, 5)); }); });
+  if (!d.valid.batidas.length) return '<span class="muted">—</span>';
+  return `<span class="bt">${d.valid.batidas.map(b => {
+    const min = +b.h.slice(0, 2) * 60 + +b.h.slice(3);
+    const c = b.tipo === 'c' ? 'canc' : dupT.has(b.h) && !deAnt.has(min) ? 'dup' : deAnt.has(min) ? 'ant' : '';
+    const tt = b.tipo === 'c' ? 'Cancelada' : c === 'dup' ? 'Repetida' : c === 'ant' ? 'Saída do plantão anterior' : b.tipo === 'm' ? 'Incluída manualmente' : '';
+    return `<span class="b ${c}" ${tt ? `title="${tt}"` : ''}>${b.h}${b.tipo === 'm' ? '<span class="m-tag">M</span>' : ''}${c === 'ant' ? '<small>ant.</small>' : ''}${c === 'dup' ? '<small>rep.</small>' : ''}</span>`;
+  }).join('')}</span>`;
+}
+function linhaDiaADia(d) {
+  const v = d.valid, [sc, st] = ST[v.status] || ST.ok;
+  const div = v.status === 'diverge';
+  const hcRel = d.hc ? fmt(d.hc) : '00:00', sRel = d.saldo != null ? sinal(d.saldo) || '00:00' : '—';
+  const hcDev = v.hc == null ? '?' : fmt(v.hc), sDev = v.hc == null ? '?' : v.saldo != null ? sinal(v.saldo) || '00:00' : '—';
+  const es = v.entrada ? `${esc(v.entrada)} → ${v.saida ? esc(v.saida) : '<strong style="color:var(--aj)">falta a saída</strong>'}` : '<span class="muted">—</span>';
+  const linkPonto = d.issues.some(i => i.nivel !== 'info') ? ` <button class="lnk" data-ir="pontos">Ver ponto</button>` : '';
+  return `<tr data-row="${d.dia}" class="${div || v.status === 'incompleto' ? 'r-aj' : ''} ${!d.codigo && !d.registros && !d.afast && !(d.feriado) ? 'r-desc' : ''}">
+    <th scope="row" class="n">${DOWC[d.dow]} ${dd(d.dia)}</th>
+    <td class="n" style="font-size:13px;color:var(--txt3)">${esc(v.escala) || '—'}</td>
+    <td class="g-esta">${batidasEsta(d)}</td>
+    <td class="r n g-esta ${div && !v.hcOk ? 'cel-err' : ''}">${hcRel}</td>
+    <td class="r n g-esta ${div && !v.saldoOk ? 'cel-err' : d.saldo != null ? cls(d.saldo) : 'zero'}" style="font-weight:700">${sRel}</td>
+    <td class="n g-dev" style="font-size:13px">${es}</td>
+    <td class="r n g-dev ${div && !v.hcOk ? 'cel-ok' : ''}">${hcDev}</td>
+    <td class="r n g-dev ${div && !v.saldoOk ? 'cel-ok' : v.saldo != null ? cls(v.saldo) : 'zero'}" style="font-weight:700">${sDev}</td>
+    <td style="min-width:230px"><span class="chip ${sc}">${st}</span><div style="font-size:12px;color:var(--txt2);margin-top:3px">${esc(v.motivo)}${linkPonto}</div></td></tr>`;
+}
+function itemDiaADia(d) {
+  const v = d.valid, [sc, st] = ST[v.status] || ST.ok, div = v.status === 'diverge';
+  return `<li class="${div || v.status === 'incompleto' ? 'r-aj' : ''}">
+    <div class="dl-h"><span><strong class="n">${DOWC[d.dow]} ${dd(d.dia)}</strong> <span class="muted n">${esc(v.escala)}</span></span><span class="chip ${sc}">${st}</span></div>
+    <div class="cmp2"><span class="lb">Como está</span><span>${batidasEsta(d)}</span><span class="n ${div && !v.hcOk ? 'cel-err' : ''}">${d.hc ? fmt(d.hc) : '00:00'}</span><span class="n ${div && !v.saldoOk ? 'cel-err' : ''}" style="font-weight:700">${d.saldo != null ? sinal(d.saldo) || '00:00' : '—'}</span></div>
+    <div class="cmp2"><span class="lb">Deveria</span><span class="n" style="font-size:12px">${v.entrada ? esc(v.entrada) + ' → ' + (v.saida ? esc(v.saida) : 'falta a saída') : '—'}</span><span class="n ${div && !v.hcOk ? 'cel-ok' : ''}">${v.hc == null ? '?' : fmt(v.hc)}</span><span class="n ${div && !v.saldoOk ? 'cel-ok' : ''}" style="font-weight:700">${v.hc == null ? '?' : v.saldo != null ? sinal(v.saldo) || '00:00' : '—'}</span></div>
+    <div style="font-size:12px" class="muted">${esc(v.motivo)}</div></li>`;
+}
+function renderDiaADia() {
+  const { semanas, dias } = A, mm = dd(A.emp.mes + 1);
+  const cont = k => dias.filter(d => d.valid.status === k).length;
+  const prob = d => d.valid.status !== 'ok';
+  const nProb = dias.filter(prob).length;
+  const grupos = semanas.map(w => ({ w, ds: w.dias.filter(d => !soProblemas || prob(d)) })).filter(g => g.ds.length);
+  const resumo = [[cont('ok'), 'conferem', 'var(--ok)'], [cont('diverge'), plural(cont('diverge'), 'diverge', 'divergem'), 'var(--aj)'], [cont('incompleto'), 'com batida faltando', 'var(--aj)'], [cont('atencao'), 'para verificar', 'var(--ver)'], [cont('info'), 'informação', 'var(--txt3)']].filter(x => x[0]);
+  $('vRes').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+      <div><h2 style="font-size:18px;font-weight:700">Conferência dia a dia</h2>
+        <p class="muted" style="font-size:13px;margin-top:2px">${dias.length} dias: ${resumo.map(([n, t, c]) => `<strong class="n" style="color:${c}">${n}</strong> ${t}`).join(' · ')}</p></div>
+      <div class="seg" role="group" aria-label="Mostrar"><button data-sp="0" aria-pressed="${!soProblemas}">Todos os dias</button><button data-sp="1" aria-pressed="${soProblemas}">Só com problema (${nProb})</button></div>
+    </div>
+    <section class="panel">
+      ${grupos.length ? `<div class="tbox tbl-dias"><table class="t" style="min-width:1120px">
+        <caption class="sr">Conferência de cada dia: como está no relatório e como deveria ser</caption>
+        <thead>
+          <tr><th scope="col" rowspan="2" style="width:84px">Dia</th><th scope="col" rowspan="2">Escala</th><th scope="colgroup" colspan="3" class="gh-esta">COMO ESTÁ NO RELATÓRIO</th><th scope="colgroup" colspan="3" class="gh-dev">COMO DEVERIA SER</th><th scope="col" rowspan="2">Situação</th></tr>
+          <tr><th scope="col" class="g-esta">Batidas</th><th scope="col" class="r g-esta">Horas</th><th scope="col" class="r g-esta">Saldo</th><th scope="col" class="g-dev">Entrada → saída</th><th scope="col" class="r g-dev">Horas</th><th scope="col" class="r g-dev">Saldo</th></tr>
+        </thead>
+        <tbody>${grupos.map(g => `<tr class="sub"><td colspan="9">Semana ${g.w.n} <span class="muted n" style="font-weight:500">· ${g.w.periodo}/${mm}</span></td></tr>` + g.ds.map(linhaDiaADia).join('')).join('')}</tbody>
+      </table></div>
+      <ul class="dlist">${grupos.map(g => `<li style="background:var(--bg);font-weight:700;font-size:13px">Semana ${g.w.n} · ${g.w.periodo}/${mm}</li>` + g.ds.map(itemDiaADia).join('')).join('')}</ul>`
+      : '<p style="padding:20px"><strong>Todos os dias conferem.</strong> <span class="muted">As horas e o saldo de cada dia batem com os registros.</span></p>'}
+      <p class="panel-f">“Como deveria ser” junta entrada e saída de cada plantão (inclusive o noturno, que termina no dia seguinte), soma a hora noturna (7min30s por hora entre 22h e 5h) e aplica a tolerância de 5 min por batida. Batidas marcadas <span class="b ant" style="display:inline-flex">ant.</span> são a saída do plantão do dia anterior; <span class="b dup" style="display:inline-flex">rep.</span> são repetidas; riscadas foram canceladas.</p>
+    </section>`;
 }
 
 // ---------- aba Pontos de atenção ----------

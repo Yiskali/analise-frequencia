@@ -14,6 +14,7 @@ O PDF é lido no próprio navegador; nenhum dado é enviado.
 
 - **Resumo:** saldo do mês (e o saldo estimado sem erros, quando houver), CH contratual, horas consideradas, a conta "Por que o saldo deu…" em linguagem simples e a tabela das semanas.
 - **Semanas:** uma semana por vez (ou o mês inteiro), em tabela com as colunas de horas identificadas por cor (contratual em cinza, escalada em azul-marinho, consideradas em verde) e o saldo em azul (positivo) ou laranja (negativo). Calendário como visão opcional.
+- **Dia a dia:** confere todos os dias do mês, batida por batida. Mostra lado a lado **como está no relatório** (batidas, horas e saldo) e **como deveria ser** (entrada e saída de cada plantão, inclusive o noturno que termina no dia seguinte, horas e saldo recalculados com hora noturna e tolerância de 5 min por batida). Marca batidas canceladas, repetidas e as que são a saída do plantão anterior, e filtra só os dias com problema.
 - **Pontos de atenção:** cada ponto com título simples e três partes: o que aconteceu, a demonstração nos registros (batidas, conta ou linha do tempo) e o que fazer, com o item do checklist e o caminho no Mentorh. Filtro por nível: Ajustar, Verificar e Informação.
 - **Conferência:** totais recalculados × relatório e regras do cálculo.
 
