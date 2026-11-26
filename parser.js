@@ -286,6 +286,7 @@ export function analisar(emp) {
     const fmtP = p => hhmm(p.t) + (p.dia !== d.dia ? ' (' + dataCurta(p.dia, mes) + ')' : '');
     d.turno = reg.map(p => hhmm(p.t));
     d.turnoDias = reg.map(p => p.dia);
+    d.turnoReg = reg; d.turnoIni = s; d.turnoFim = e;
     if (dups.length) {
       const itens = [];
       take.forEach(p => { const rep = dups.some(([, b]) => b === p); itens.push({ h: fmtP(p), t: rep ? 'repetida' : '', estado: rep ? 'erro' : 'ok' }); });
@@ -463,6 +464,48 @@ export function analisar(emp) {
       visual: conta([L('Ressalva', r.texto ? '“' + r.texto + '”' : '—')]),
       fazer: 'Ler a ressalva antes de concluir a análise do dia.' });
   });
+  // ---------- validação dia a dia: como está × como deveria ser ----------
+  const TOL_DIA = 2;
+  const fmtT = (t, d) => { const dia = Math.floor(t / 1440) + 1; return (dia !== d.dia ? DOWC[new Date(ano, mes, dia).getDay()] + ' ' + String(dia).padStart(2, '0') + ' · ' : '') + hhmm(t); };
+  dias.forEach(d => {
+    const J = jorn(d.codigo);
+    const v = { escala: J && J.inicio != null ? (J.sobreaviso ? 'Sobreaviso ' : '') + hhmm(J.inicio) + ' → ' + hhmm(J.inicio + J.duracao) : '', entrada: '', saida: '', hc: 0, saldo: null, motivo: '', status: 'ok' };
+    const batidas = []; { const re = /(\d{2}):(\d{2})\s*([rmc])?/gi; let m; while ((m = re.exec(d.registros))) batidas.push({ h: m[1] + ':' + m[2], tipo: (m[3] || '').toLowerCase() }); }
+    v.batidas = batidas;
+    if (d.turnoReg && d.turnoReg.length) { const r = d.turnoReg; v.entrada = fmtT(r[0].t, d); v.saida = r.length % 2 === 0 ? fmtT(r[r.length - 1].t, d) : ''; }
+    const meus = punches.filter(p => p.dia === d.dia);
+    if (d.afast) { v.hc = d.escalada; v.motivo = d.escalada ? `${d.afast}: crédito da escala do dia` : `${d.afast}: sem escala no dia, sem crédito`; }
+    else if (d.feriado && !d.registros) { v.hc = d.codigo ? d.escalada : (d.contratual ? 0 : diaria); v.motivo = 'Feriado sem plantão: crédito da CH diária'; if (!d.codigo) v.hc = diaria; }
+    else if (d.pagamento && d.pagModo === 'excedente') { v.hc = d.escalada; v.motivo = 'Extensão remunerada: conta só a CH da escala; o excedente é pago'; }
+    else if (d.pagamento) { v.hc = 0; v.motivo = 'O tempo trabalhado vai para pagamento'; }
+    else if (d.codigo && J && !J.sobreaviso) {
+      const reg = d.turnoReg || [];
+      if (!reg.length) { v.hc = 0; v.saldo = d.contratual || d.escalada ? -J.ch : null; v.motivo = d.ocorrencia ? capitalize(d.ocorrencia) : 'Sem batidas no plantão'; v.status = d.ocorrencia ? 'info' : 'incompleto'; }
+      else if (reg.length % 2) { v.hc = null; v.saldo = null; v.motivo = 'Falta uma batida: não dá para calcular o dia'; v.status = 'incompleto'; }
+      else {
+        let trab = 0, not = 0;
+        for (let k = 0; k < reg.length; k += 2) { trab += reg[k + 1].t - reg[k].t; not += minutosNoturnos(reg[k].t, reg[k + 1].t); }
+        const calc = trab + Math.round(not / 7) - (J.intervaloFora ? (J.intervalo || 0) : 0);
+        const dentroTol = Math.abs(reg[0].t - d.turnoIni) <= 5 && Math.abs(reg[reg.length - 1].t - d.turnoFim) <= 5 && Math.abs(calc - J.ch) <= 10;
+        v.hc = dentroTol ? J.ch : calc;
+        v.saldo = v.hc - J.ch;
+        v.motivo = (dentroTol ? 'Dentro da tolerância de 5 min por batida' : `${Math.floor(trab / 60)}h${String(trab % 60).padStart(2, '0')} trabalhadas`) + (!dentroTol && not ? ` + ${Math.round(not / 7)} min de hora noturna` : '') + (!dentroTol && J.intervaloFora && J.intervalo ? ` − ${J.intervalo} min de intervalo` : '');
+      }
+    }
+    else if (d.sobreaviso) { v.hc = 0; v.motivo = 'Sobreaviso: o tempo vai para pagamento'; }
+    else if (d.registros && meus.length && meus.every(p => p.used)) { v.hc = 0; v.motivo = 'A batida é a saída do plantão do dia anterior'; }
+    else if (d.registros) { v.hc = 0; v.motivo = 'Sem jornada cadastrada: essas horas não contam'; v.status = 'info'; }
+    else { v.hc = 0; v.motivo = d.descanso ? 'Sem jornada' : (d.contratual ? 'Sem plantão' : 'Descanso'); }
+    if (v.status === 'ok') {
+      const hcOk = Math.abs((d.hc || 0) - (v.hc || 0)) <= TOL_DIA;
+      const sOk = Math.abs((d.saldo || 0) - (v.saldo || 0)) <= TOL_DIA || (d.saldo == null && !v.saldo) || (v.saldo == null && d.pagamento);
+      v.hcOk = hcOk; v.saldoOk = d.pagamento || d.afast || (d.feriado && !d.registros) ? hcOk : sOk;
+      if (!hcOk || !v.saldoOk) v.status = 'diverge';
+    }
+    if (d.issues.some(i => i.tipo === 'duplicidade') && v.status === 'ok') v.status = 'atencao';
+    d.valid = v;
+  });
+
   const ordemNivel = { ajustar: 0, verificar: 1, info: 2 };
   issues.sort((a, b) => ordemNivel[a.nivel] - ordemNivel[b.nivel] || (a.mes ? -1 : b.mes ? 1 : a.dia - b.dia));
   issues.forEach(i => { if (!i.texto) i.texto = i.aconteceu; });
