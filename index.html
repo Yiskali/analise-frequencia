@@ -706,7 +706,7 @@ function linhaDiaADia(d) {
     <td class="n g-dev" style="font-size:13px">${es}</td>
     <td class="r n g-dev ${div && !v.hcOk ? 'cel-ok' : ''}">${hcDev}</td>
     <td class="r n g-dev ${div && !v.saldoOk ? 'cel-ok' : v.saldo != null ? cls(v.saldo) : 'zero'}" style="font-weight:700">${sDev}</td>
-    ${A.emp.tipo === 'espelho' ? `<td class="r n g-dev ${d.extrasAlt || (d.extrasEsp != null && Math.abs((d.extras || 0) - d.extrasEsp) > 10) ? 'cel-ok' : ''}">${d.extrasAlt ? `<span title="Extensão sem as batidas canceladas; o excedente do plantão (${fmt(d.extrasAlt.exced)}) depende da regra">${fmt(d.extrasAlt.ext)} <small style="font-weight:600">ext.</small></span>` : d.extrasEsp != null ? fmt(d.extrasEsp) : d.pagamento && !d.sobreaviso ? '?' : '—'}</td><td class="r n g-dev ${d.adnotEsp != null && Math.abs((d.adnot || 0) - d.adnotEsp) > 10 ? 'cel-ok' : ''}">${d.adnotEsp != null ? fmt(d.adnotEsp) : '—'}</td>` : ''}
+    ${A.emp.tipo === 'espelho' ? `<td class="r n g-dev ${d.extrasAlt || (d.extrasEsp != null && Math.abs((d.extras || 0) - d.extrasEsp) > 10) ? 'cel-ok' : ''}">${d.extrasAlt ? `<span title="Extensão ${fmt(d.extrasAlt.ext)} + excedente do plantão ${fmt(d.extrasAlt.exced)}">${fmt(d.extrasAlt.ext + d.extrasAlt.exced)}</span>` : d.extrasEsp != null ? fmt(d.extrasEsp) : d.pagamento && !d.sobreaviso ? '?' : '—'}</td><td class="r n g-dev ${d.adnotEsp != null && Math.abs((d.adnot || 0) - d.adnotEsp) > 10 ? 'cel-ok' : ''}">${d.adnotEsp != null ? fmt(d.adnotEsp) : '—'}</td>` : ''}
     <td style="min-width:230px"><span class="chip ${sc}">${st}</span><div style="font-size:12px;color:var(--txt2);margin-top:3px">${esc(v.motivo)}${linkPonto}</div></td></tr>`;
 }
 function itemDiaADia(d) {

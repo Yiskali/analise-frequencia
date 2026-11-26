@@ -689,17 +689,21 @@ export function analisar(emp) {
             }
           }
         }
-        if (alt && d.extras) {
+        // regra: extras da extensão = período fora do plantão + excedente do plantão
+        const altOk = alt && Math.abs((d.extras || 0) - (alt.ext + alt.exced)) <= TOL_HC;
+        if (altOk) d.extrasEsp = d.extras;
+        if (alt && d.extras && !altOk && (exp == null || Math.abs(d.extras - exp) > TOL_HC)) {
           const f = p => (p.dia !== d.dia ? DOWC[dias[p.dia - 1].dow] + ' ' + String(p.dia).padStart(2, '0') + ' · ' : '') + hhmm(p.t);
           const linhas = [
             ...alt.fora.map(([a, b]) => L(`Extensão: ${f(a)} → ${f(b)}`, fmt(b.t - a.t))),
             ...alt.dentro.map(([a, b]) => L(`Plantão: ${f(a)} → ${f(b)}`, fmt(b.t - a.t) + (alt.ficta ? ' + ' + hm(alt.ficta) + ' noturna' : ''))),
-            L('Excedente do plantão (− ' + hm(J.ch) + ')', fmt(alt.exced), 'sub'),
+            L('Excedente do plantão (− ' + hm(J.ch) + ')', fmt(alt.exced)),
+            L('Extras pelos registros (extensão + excedente)', fmt(alt.ext + alt.exced), 'sub'),
             L('Extras no espelho', fmt(d.extras), 'erro')
           ];
           d.extrasEsp = null; d.extrasAlt = alt;
           addIssue(d, { nivel: 'verificar', tipo: 'extras-cancelada', titulo: `Extras de ${hm(d.extras)} contadas sobre batidas canceladas`,
-            aconteceu: `As batidas ${canc.map(c => hhmm(c.t)).join(' e ')} foram canceladas. Sem elas, o espelho juntou ${f(Pd[0])} → ${f(Pd[Pd.length - 1])} num período só. Separando a extensão do plantão, a extensão foi de ${hm(alt.ext)}.`,
+            aconteceu: `As batidas ${canc.map(c => hhmm(c.t)).join(' e ')} foram canceladas. Sem elas, o espelho juntou ${f(Pd[0])} → ${f(Pd[Pd.length - 1])} num período só. Separando a extensão do plantão, as extras seriam ${hm(alt.ext + alt.exced)}.`,
             visual: conta(linhas),
             fazer: 'Conferir se o cancelamento estava correto. Se as batidas eram válidas, restabelecê-las para que a extensão e o plantão sejam calculados separadamente.' });
         } else if (!d.extras) {
