@@ -1,6 +1,6 @@
 # Análise de Saldo de Frequência
 
-Ferramenta em HTML para analisar o **Relatório de Frequência do MentorH** (PDF) e explicar ao empregado como o saldo do mês é formado — e por que ele **não é a soma da coluna Saldo Diário**.
+Ferramenta em HTML para analisar o **Relatório de Frequência** e o **Espelho de Ponto** do MentorH (PDF) e explicar ao empregado como o saldo do mês é formado — e por que ele **não é a soma da coluna Saldo Diário**.
 
 ## Como usar
 
@@ -24,6 +24,16 @@ Seguem o Checklist de Triagem e Tratamento do POP.DGP.127 (Anexo III):
 - **Ajustar:** batida ímpar (A1); horas consideradas incompatíveis com os registros (B4/B5); falta não classificada; escala nas férias diferente da CH contratual (fora da 12x36 ou acima de 12h).
 - **Verificar:** marcações com menos de 15 min (A4); dia escalado sem registro; registro fora da janela de 3h (B4); marcações sem código de jornada (B1); interjornada inferior a 11h (A2); CH escalada no mês diferente da contratual (B3); escala nas férias na 12x36 (até 12h); afastamento sem código de jornada (C2) ou com código incompatível (C3).
 - **Informação:** quantidade elevada de marcações (A3); homologado com ressalva; falta injustificada.
+
+## Espelho de Ponto
+
+O sistema reconhece sozinho se o PDF é Relatório de Frequência ou Espelho de Ponto (Not. Judicial). No espelho, além do saldo, confere:
+- **Extras:** tempo trabalhado no dia (com hora noturna) menos a CH da jornada, na extensão de jornada; todo o tempo, na jornada extraordinária. Aponta quando a coluna está vazia ou diferente dos registros.
+- **Ad. Not.:** horas entre 22h e 5h convertidas em hora noturna (7h de relógio = 8h).
+- **Feriado:** dia de feriado trabalhado aparece como informação, com as horas da coluna Feriado.
+- **Totais do rodapé:** adicional noturno, extras e feriado.
+
+O espelho não traz a CH escalada do mês.
 
 ## Regras de cálculo
 
