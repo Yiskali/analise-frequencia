@@ -565,7 +565,11 @@ export function analisar(emp) {
         fazer: 'Nenhum ajuste na frequência. A falta tem reflexo na folha de pagamento e nas férias.' });
   });
   {
-    const diasJ = dias.filter(d => d.escalada && !d.sobreaviso);
+    // fora da conta: sobreaviso, jornada extraordinária remunerada e Disponibilidade Alcançável (DA)
+    const ehDA = d => { const J = jorn(d.codigo); return /disponibilidade|\bda\b/i.test((J && J.descricao) || '') || /disponibilidade alcan/.test(d.ocorrencia || ''); };
+    const ehJER = d => d.pagamento && d.pagModo === 'total' && !d.sobreaviso;
+    const forDaConta = dias.filter(d => d.escalada && (d.sobreaviso || ehJER(d) || ehDA(d)));
+    const diasJ = dias.filter(d => d.escalada && !forDaConta.includes(d));
     const escJ = diasJ.reduce((a, d) => a + d.escalada, 0);
     const conM = dias.reduce((a, d) => a + d.contratual, 0);
     const nUteis = dias.filter(d => d.contratual).length;
@@ -576,16 +580,29 @@ export function analisar(emp) {
       const nomeJ = (J) => {
         if (!J || J.inicio == null) return ['jornada', 'jornadas'];
         const fim = (J.inicio + J.duracao) % 1440;
+        if (J.duracao >= 1440) return ['plantão de 24h', 'plantões de 24h'];
         return J.duracao >= 600 ? (J.inicio >= 17 * 60 || fim < J.inicio ? ['plantão noturno', 'plantões noturnos'] : ['plantão diurno', 'plantões diurnos']) : J.inicio < 12 * 60 ? ['manhã', 'manhãs'] : J.inicio < 18 * 60 ? ['tarde', 'tardes'] : ['noite', 'noites'];
       };
       const linhas = Object.values(porCod).sort((a, b) => b.ch - a.ch).map(p => L(`${p.n} ${nomeJ(p.J)[p.n === 1 ? 0 : 1]} × ${hm(p.ch)}${p.ferias ? ` (${p.ferias} em férias)` : ''}`, fmt(p.n * p.ch)));
       linhas.push(L('Escalado no mês', fmt(escJ), 'sub'), L(`Contrato: ${nUteis} dias × ${hm(diaria)}`, '− ' + fmt(conM)), L(dif > 0 ? 'Escala a mais' : 'Escala a menos', fmt(dif, true).replace(/\s/g, ''), 'total'));
       addIssue(dias[0], { nivel: 'verificar', tipo: 'escala-mes', check: 'B3', mes: true,
         titulo: `A escala teve ${hm(Math.abs(dif))} a ${dif > 0 ? 'mais' : 'menos'} do que o contrato`,
-        aconteceu: `Somando os plantões do mês, o gestor escalou ${dif > 0 ? 'mais' : 'menos'} horas do que o contrato pede${dias.some(d => d.sobreaviso) ? '. O sobreaviso não entra nessa conta' : ''}.`,
+        aconteceu: `Somando os plantões do mês, o gestor escalou ${dif > 0 ? 'mais' : 'menos'} horas do que o contrato pede.${(() => { const t = []; if (forDaConta.some(d => d.sobreaviso)) t.push('sobreaviso'); if (forDaConta.some(ehJER)) t.push('jornada extraordinária'); if (forDaConta.some(ehDA)) t.push('Disponibilidade Alcançável'); return t.length ? ' Não entram nessa conta: ' + t.join(', ') + ` (${forDaConta.length} ${forDaConta.length === 1 ? 'dia' : 'dias'}).` : ''; })()}`,
         visual: conta(linhas),
         fazer: 'Avisar o gestor e a empregada: considerar essa diferença na próxima escala ou combinar a compensação.' });
     }
+  }
+  {
+    const medico = /m[eé]dic/i.test(emp.cargo || '');
+    if (!medico) dias.forEach(d => {
+      const J = jorn(d.codigo); const dur = (J && J.duracao) || d.escalada || 0;
+      if (!d.escalada || d.sobreaviso || dur <= 720) return;
+      addIssue(d, { nivel: 'ajustar', tipo: 'plantao-24h',
+        titulo: `Plantão de ${hm(dur)} para cargo que não é médico`,
+        aconteceu: `A empregada foi escalada num plantão de ${hm(dur)}${J && J.inicio != null ? ` (código ${d.codigo}, ${hhmm(J.inicio)} às ${hhmm((J.inicio + J.duracao) % 1440)})` : ''}. Plantão acima de 12h só é permitido para a categoria médica, no regime de 24h consecutivas.`,
+        visual: conta([L('Cargo', (emp.cargo || '—').split(' - ')[0]), L('Plantão escalado', fmt(dur)), L('Limite para o cargo', '12:00'), L('Acima do limite', '+' + fmt(dur - 720), 'erro')]),
+        fazer: 'Avisar o gestor: a escala deve usar jornada de até 12h para esse cargo. Corrigir o código de jornada do dia.' });
+    });
   }
   (emp.ressalvas || []).forEach(r => {
     const dia = parseInt(r.data, 10); const d = dias[dia - 1];
@@ -651,13 +668,21 @@ export function analisar(emp) {
       const reg = d.turnoReg || [];
       if (reg.length && reg.length % 2 === 0) {
         let not = 0; for (let k = 0; k < reg.length; k += 2) not += minutosNoturnos(reg[k].t, reg[k + 1].t);
-        const exp = Math.round(not * 60 / 52.5);
+        const exp = d.feriado ? 0 : Math.round(not * 60 / 52.5); // feriado não tem adicional noturno
         d.adnotEsp = exp;
+        if (d.feriado) {
+          if (d.adnot > TOL_HC) addIssue(d, { nivel: 'verificar', tipo: 'adnot',
+            titulo: `Adicional noturno de ${hm(d.adnot)} lançado em feriado`,
+            aconteceu: 'Em feriado não há adicional noturno: as horas vão para a coluna Feriado.',
+            visual: conta([L('Adicional noturno esperado', '00:00'), L('No espelho', fmt(d.adnot), 'erro')]),
+            fazer: 'Conferir o lançamento do dia.' });
+          return;
+        }
         if (Math.abs((d.adnot || 0) - exp) > TOL_HC) addIssue(d, { nivel: 'verificar', tipo: 'adnot',
           titulo: d.adnot ? `Adicional noturno de ${hm(d.adnot)}, mas os registros dão ${hm(exp)}` : 'Adicional noturno não lançado',
           aconteceu: `O plantão teve ${hm(not)} entre 22h e 5h, que valem ${hm(exp)} de adicional noturno. O espelho mostra ${d.adnot ? fmt(d.adnot) : 'a coluna vazia'}.`,
           visual: conta([L('Entre 22h e 5h (relógio)', fmt(not)), L('Em horas noturnas (52min30s)', fmt(exp), 'sub'), L('No espelho', d.adnot ? fmt(d.adnot) : 'vazio', 'erro')]),
-          fazer: 'Conferir o lançamento do adicional noturno do dia.' + (d.feriado ? ' Em feriado, verificar se as horas foram só para a coluna Feriado.' : '') });
+          fazer: 'Conferir o lançamento do adicional noturno do dia.' });
       }
       if (d.pagamento) {
         const own = punches.filter(p => p.dia === d.dia);
@@ -670,7 +695,43 @@ export function analisar(emp) {
         if (d.valid && Pd.length) { const f = t => fmtT(t, d); d.valid.entrada = f(Pd[0].t); d.valid.saida = Pd.length % 2 === 0 ? f(Pd[Pd.length - 1].t) : ''; d.valid.semPar = Pd.length % 2 === 1; }
         const itens = Pd.map((p, k) => ({ h: (p.dia !== d.dia ? DOWC[dias[p.dia - 1].dow] + ' ' + String(p.dia).padStart(2, '0') + ' · ' : '') + hhmm(p.t), t: k % 2 ? 'saída' : 'entrada', estado: 'ok' }));
         const canceladas = !own.length && /c/.test(d.registros);
-        if (!d.extras) {
+        // batidas canceladas que separavam a extensão do plantão
+        const canc = []; { const re = /(\d{2}):(\d{2})\s*c/gi; let m; while ((m = re.exec(d.registros))) canc.push({ t: (d.dia - 1) * 1440 + +m[1] * 60 + +m[2], dia: d.dia, canc: true }); }
+        let alt = null;
+        if (canc.length && Pd.length) {
+          const all = [...Pd, ...canc].sort((a, b) => a.t - b.t);
+          if (all.length % 2 === 0) {
+            const pares = []; for (let k = 0; k < all.length; k += 2) pares.push([all[k], all[k + 1]]);
+            const ini = d.turnoIni ?? ((d.dia - 1) * 1440 + J.inicio), fim = ini + J.duracao;
+            const fora = pares.filter(([a, b]) => b.t <= ini + TOL_HC || a.t >= fim - TOL_HC);
+            const dentro = pares.filter(pp => !fora.includes(pp));
+            if (fora.length && dentro.length) {
+              const dur = ([a, b]) => b.t - a.t;
+              const ext = fora.reduce((x, pp) => x + dur(pp), 0);
+              const trabP = dentro.reduce((x, pp) => x + dur(pp), 0), notP = dentro.reduce((x, [a, b]) => x + minutosNoturnos(a.t, b.t), 0);
+              const exced = Math.max(0, trabP + Math.round(notP / 7) - J.ch);
+              alt = { ext, exced, fora, dentro, trabP, ficta: Math.round(notP / 7) };
+            }
+          }
+        }
+        // regra: extras da extensão = período fora do plantão + excedente do plantão
+        const altOk = alt && Math.abs((d.extras || 0) - (alt.ext + alt.exced)) <= TOL_HC;
+        if (altOk) d.extrasEsp = d.extras;
+        if (alt && d.extras && !altOk && (exp == null || Math.abs(d.extras - exp) > TOL_HC)) {
+          const f = p => (p.dia !== d.dia ? DOWC[dias[p.dia - 1].dow] + ' ' + String(p.dia).padStart(2, '0') + ' · ' : '') + hhmm(p.t);
+          const linhas = [
+            ...alt.fora.map(([a, b]) => L(`Extensão: ${f(a)} → ${f(b)}`, fmt(b.t - a.t))),
+            ...alt.dentro.map(([a, b]) => L(`Plantão: ${f(a)} → ${f(b)}`, fmt(b.t - a.t) + (alt.ficta ? ' + ' + hm(alt.ficta) + ' noturna' : ''))),
+            L('Excedente do plantão (− ' + hm(J.ch) + ')', fmt(alt.exced)),
+            L('Extras pelos registros (extensão + excedente)', fmt(alt.ext + alt.exced), 'sub'),
+            L('Extras no espelho', fmt(d.extras), 'erro')
+          ];
+          d.extrasEsp = null; d.extrasAlt = alt;
+          addIssue(d, { nivel: 'verificar', tipo: 'extras-cancelada', titulo: `Extras de ${hm(d.extras)} contadas sobre batidas canceladas`,
+            aconteceu: `As batidas ${canc.map(c => hhmm(c.t)).join(' e ')} foram canceladas. Sem elas, o espelho juntou ${f(Pd[0])} → ${f(Pd[Pd.length - 1])} num período só. Separando a extensão do plantão, as extras seriam ${hm(alt.ext + alt.exced)}.`,
+            visual: conta(linhas),
+            fazer: 'Conferir se o cancelamento estava correto. Se as batidas eram válidas, restabelecê-las para que a extensão e o plantão sejam calculados separadamente.' });
+        } else if (!d.extras) {
           let porque = 'A coluna Extras está vazia neste dia.';
           let fazer = 'Conferir o código de jornada e as batidas do dia para que o tempo seja pago como extra.';
           if (canceladas) porque = 'A coluna Extras está vazia e as batidas do dia foram canceladas.';
