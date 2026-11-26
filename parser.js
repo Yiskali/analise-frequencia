@@ -670,7 +670,39 @@ export function analisar(emp) {
         if (d.valid && Pd.length) { const f = t => fmtT(t, d); d.valid.entrada = f(Pd[0].t); d.valid.saida = Pd.length % 2 === 0 ? f(Pd[Pd.length - 1].t) : ''; d.valid.semPar = Pd.length % 2 === 1; }
         const itens = Pd.map((p, k) => ({ h: (p.dia !== d.dia ? DOWC[dias[p.dia - 1].dow] + ' ' + String(p.dia).padStart(2, '0') + ' · ' : '') + hhmm(p.t), t: k % 2 ? 'saída' : 'entrada', estado: 'ok' }));
         const canceladas = !own.length && /c/.test(d.registros);
-        if (!d.extras) {
+        // batidas canceladas que separavam a extensão do plantão
+        const canc = []; { const re = /(\d{2}):(\d{2})\s*c/gi; let m; while ((m = re.exec(d.registros))) canc.push({ t: (d.dia - 1) * 1440 + +m[1] * 60 + +m[2], dia: d.dia, canc: true }); }
+        let alt = null;
+        if (canc.length && Pd.length) {
+          const all = [...Pd, ...canc].sort((a, b) => a.t - b.t);
+          if (all.length % 2 === 0) {
+            const pares = []; for (let k = 0; k < all.length; k += 2) pares.push([all[k], all[k + 1]]);
+            const ini = d.turnoIni ?? ((d.dia - 1) * 1440 + J.inicio), fim = ini + J.duracao;
+            const fora = pares.filter(([a, b]) => b.t <= ini + TOL_HC || a.t >= fim - TOL_HC);
+            const dentro = pares.filter(pp => !fora.includes(pp));
+            if (fora.length && dentro.length) {
+              const dur = ([a, b]) => b.t - a.t;
+              const ext = fora.reduce((x, pp) => x + dur(pp), 0);
+              const trabP = dentro.reduce((x, pp) => x + dur(pp), 0), notP = dentro.reduce((x, [a, b]) => x + minutosNoturnos(a.t, b.t), 0);
+              const exced = Math.max(0, trabP + Math.round(notP / 7) - J.ch);
+              alt = { ext, exced, fora, dentro, trabP, ficta: Math.round(notP / 7) };
+            }
+          }
+        }
+        if (alt && d.extras) {
+          const f = p => (p.dia !== d.dia ? DOWC[dias[p.dia - 1].dow] + ' ' + String(p.dia).padStart(2, '0') + ' · ' : '') + hhmm(p.t);
+          const linhas = [
+            ...alt.fora.map(([a, b]) => L(`Extensão: ${f(a)} → ${f(b)}`, fmt(b.t - a.t))),
+            ...alt.dentro.map(([a, b]) => L(`Plantão: ${f(a)} → ${f(b)}`, fmt(b.t - a.t) + (alt.ficta ? ' + ' + hm(alt.ficta) + ' noturna' : ''))),
+            L('Excedente do plantão (− ' + hm(J.ch) + ')', fmt(alt.exced), 'sub'),
+            L('Extras no espelho', fmt(d.extras), 'erro')
+          ];
+          d.extrasEsp = null; d.extrasAlt = alt;
+          addIssue(d, { nivel: 'verificar', tipo: 'extras-cancelada', titulo: `Extras de ${hm(d.extras)} contadas sobre batidas canceladas`,
+            aconteceu: `As batidas ${canc.map(c => hhmm(c.t)).join(' e ')} foram canceladas. Sem elas, o espelho juntou ${f(Pd[0])} → ${f(Pd[Pd.length - 1])} num período só. Separando a extensão do plantão, a extensão foi de ${hm(alt.ext)}.`,
+            visual: conta(linhas),
+            fazer: 'Conferir se o cancelamento estava correto. Se as batidas eram válidas, restabelecê-las para que a extensão e o plantão sejam calculados separadamente.' });
+        } else if (!d.extras) {
           let porque = 'A coluna Extras está vazia neste dia.';
           let fazer = 'Conferir o código de jornada e as batidas do dia para que o tempo seja pago como extra.';
           if (canceladas) porque = 'A coluna Extras está vazia e as batidas do dia foram canceladas.';
